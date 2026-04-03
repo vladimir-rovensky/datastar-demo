@@ -4,10 +4,13 @@ import com.bookie.domain.TradeRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
+
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import static com.bookie.screens.Shell.shell;
 
@@ -82,8 +85,12 @@ public class TradesScreen {
                         </tr>
                         """.formatted(
                         t.getId(), t.getCusip(), t.getDirection(),
-                        t.getQuantity().toPlainString(), t.getTradeDate(), t.getSettleDate(),
-                        t.getAccruedInterest().toPlainString(), t.getBook(), t.getCounterparty()))
+                        usd(t.getQuantity()), t.getTradeDate(), t.getSettleDate(),
+                        usd(t.getAccruedInterest()), t.getBook(), t.getCounterparty()))
                 .reduce("", String::concat);
+    }
+
+    private static String usd(BigDecimal amount) {
+        return NumberFormat.getCurrencyInstance(Locale.US).format(amount);
     }
 }

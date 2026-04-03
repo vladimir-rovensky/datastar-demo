@@ -169,3 +169,35 @@ tbody tr:nth-child(even) {
 .form-fields input {
     width: 100%;
 }
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-wrapper[data-error] input,
+.input-wrapper[data-error] select {
+    border-color: #e05c5c;
+}
+
+.input-wrapper[data-error]::after {
+    content: attr(data-error);
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    background-color: #2a0f0f;
+    border: 1px solid #e05c5c;
+    color: #e05c5c;
+    padding: 4px 8px;
+    font-size: 12px;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.input-wrapper[data-error]:hover::after {
+    display: block;
+}

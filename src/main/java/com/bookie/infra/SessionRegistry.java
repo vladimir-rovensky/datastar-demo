@@ -8,6 +8,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class SessionRegistry {
@@ -33,11 +34,13 @@ public class SessionRegistry {
         return session;
     }
 
-    @Scheduled(fixedDelay = 60_000)
+    @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
     public synchronized void cleanup() {
         sessions.entrySet().removeIf(entry -> {
             var abandoned = entry.getValue().isAbandoned();
-            if (abandoned) entry.getValue().getClientChannel().complete();
+            if (abandoned) {
+                entry.getValue().getClientChannel().complete();
+            }
             return abandoned;
         });
     }

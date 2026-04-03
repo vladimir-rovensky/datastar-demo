@@ -43,14 +43,14 @@ DataStar is a lightweight hypermedia framework. The backend drives all UI update
 | `data-style-color="$color"` | Bind inline CSS property |
 
 ### Events & Effects
-| Attribute | Purpose |
-|---|---|
-| `data-on-click="@post('/endpoint')"` | Attach event listener (any event name after `data-on-`) |
-| `data-on-submit="@post('/endpoint')"` | Common: form submit |
-| `data-effect="@get('/endpoint')"` | Run expression on load and on signal change |
-| `data-on-interval__1000="..."` | Run every 1000ms |
-| `data-on-intersect="..."` | Run when element enters viewport |
-| `data-init="..."` | Run once when element is patched into DOM |
+| Attribute                             | Purpose |
+|---------------------------------------|---|
+| `data-on:click="@post('/endpoint')"`  | Attach event listener (any event name after `data-on-`) |
+| `data-on:submit="@post('/endpoint')"` | Common: form submit |
+| `data-effect="@get('/endpoint')"`     | Run expression on load and on signal change |
+| `data-on:interval__1000="..."`        | Run every 1000ms |
+| `data-on:intersect="..."`             | Run when element enters viewport |
+| `data-init="..."`                     | Run once when element is patched into DOM |
 
 ### Utility
 | Attribute | Purpose |

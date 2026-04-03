@@ -13,15 +13,13 @@ import java.util.Random;
 @Repository
 public class TradeRepository {
 
-    private static final int       TRADE_COUNT   = 1000;
-    private static final String[] BOOKS         = {"CREDIT-NY", "CREDIT-LN", "MUNI-EAST", "MUNI-WEST", "HY-DESK"};
-    private static final String[] COUNTERPARTIES = {"GOLDMAN", "MORGAN STANLEY", "BARCLAYS", "CITI", "DEUTSCHE", "UBS", "HSBC", "BOFA", "WELLS", "NOMURA"};
+    private static final int TRADE_COUNT = 1000;
 
     private final List<Trade> trades;
     private long nextId = 1001;
 
-    public TradeRepository(BondRepository bondRepository) {
-        trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository)));
+    public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository) {
+        trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
     }
 
     public List<Trade> getAllTrades() { return Collections.unmodifiableList(trades); }
@@ -36,8 +34,10 @@ public class TradeRepository {
         return trade;
     }
 
-    private static List<Trade> generate(BondRepository bondRepo) {
+    private static List<Trade> generate(BondRepository bondRepo, ReferenceDataRepository refData) {
         List<Bond> bonds = bondRepo.findAll();
+        List<String> books = refData.getAllBooks();
+        List<String> counterparties = refData.getAllCounterparties();
         List<Trade> list = new ArrayList<>();
         Random rng = new Random(42);
         LocalDate today = LocalDate.of(2026, 4, 3);
@@ -60,8 +60,8 @@ public class TradeRepository {
             t.setSettleDate(tradeDate.plusDays(2));
             t.setQuantity(quantity);
             t.setAccruedInterest(accrued);
-            t.setBook(BOOKS[rng.nextInt(BOOKS.length)]);
-            t.setCounterparty(COUNTERPARTIES[rng.nextInt(COUNTERPARTIES.length)]);
+            t.setBook(books.get(rng.nextInt(books.size())));
+            t.setCounterparty(counterparties.get(rng.nextInt(counterparties.size())));
             list.add(t);
         }
         return list;

@@ -1,5 +1,7 @@
 package com.bookie.screens;
 
+import java.util.UUID;
+
 public class Shell {
 
     private String title = "";
@@ -21,19 +23,20 @@ public class Shell {
 
     //language=HTML
     public String render() {
+        var tabId = UUID.randomUUID().toString();
         return """
                 <!DOCTYPE html>
-                <html lang="en">
+                <html lang="en-US">
                 <head>
                     <meta charset="UTF-8">
                     <title>%s</title>
                     <link rel="stylesheet" href="/global-styles.css">
                     <script type="module" src="/datastar.js"></script>
                 </head>
-                <body>
+                <body data-signals="{tabId: '%s'}" data-init="@post('/updates')">
                 %s
                 </body>
                 </html>
-                """.formatted(title, content);
+                """.formatted(title, tabId, content);
     }
 }

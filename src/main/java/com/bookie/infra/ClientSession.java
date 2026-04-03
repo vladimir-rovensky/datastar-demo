@@ -1,39 +1,21 @@
 package com.bookie.infra;
 
-import jakarta.servlet.http.HttpSession;
-
-import java.util.UUID;
-import java.util.function.Supplier;
+import java.time.Instant;
 
 public class ClientSession {
 
-    private final HttpSession session;
-    private final String tabID;
-
-    public static ClientSession createNew(HttpSession rawSession) {
-        return new ClientSession(rawSession, UUID.randomUUID().toString());
-    }
-
-    public ClientSession(HttpSession session, String tabID) {
-        this.session = session;
-        this.tabID = tabID;
-    }
-
-    public String getTabID() {
-        return tabID;
-    }
+    private final ClientChannel channel = new ClientChannel();
+    private volatile Instant lastActive = Instant.now();
 
     public ClientChannel getClientChannel() {
-        return getOrCreate("updateService", ClientChannel.class, ClientChannel::new);
+        return channel;
     }
 
-    public <T> T getOrCreate(String dataID, Class<T> clazz, Supplier<T> getDefaultValue) {
-        var attributeID = tabID + " - " +  dataID;
-        var value = session.getAttribute(attributeID);
-        if(value == null) { {
-            session.setAttribute(attributeID, clazz.cast(getDefaultValue.get())); }
-        }
+     public void touch() {
+        lastActive = Instant.now();
+    }
 
-        return clazz.cast(session.getAttribute(attributeID));
+    public boolean isAbandoned() {
+        return !channel.isAlive() && lastActive.isBefore(Instant.now().minusSeconds(1800));
     }
 }

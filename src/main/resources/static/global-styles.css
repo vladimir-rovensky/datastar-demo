@@ -81,3 +81,91 @@ tbody tr:hover {
 tbody tr:nth-child(even) {
     background-color: #0f2030;
 }
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background-color: #112236;
+    border-bottom: 1px solid #1e3d5c;
+    margin-bottom: 0;
+}
+
+.toolbar-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-left: auto;
+}
+
+.btn-buy {
+    background-color: #1a7a3a;
+    color: #ffffff;
+    border: 1px solid #25a34e;
+    font-size: 1.4rem;
+    font-weight: 700;
+    width: 60px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-buy:hover {
+    background-color: #22983f;
+}
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.popup {
+    background-color: #112236;
+    border: 1px solid #1e3d5c;
+    padding: 24px;
+    min-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.popup-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.form-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.form-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a0b4c8;
+}
+
+.form-fields input {
+    width: 100%;
+}

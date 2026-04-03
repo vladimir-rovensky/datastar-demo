@@ -4,9 +4,12 @@ import com.bookie.domain.TradeRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
+
+import static com.bookie.screens.Shell.shell;
 
 @Configuration
 public class TradesScreen {
@@ -20,13 +23,51 @@ public class TradesScreen {
     @Bean
     public RouterFunction<ServerResponse> tradesRoutes() {
         return RouterFunctions.route()
-                .GET("/trades", _ -> handle())
+                .GET("/trades", _ -> html(render()))
                 .build();
     }
 
+    private ServerResponse html(String content) {
+        return ServerResponse.ok().contentType(MediaType.TEXT_HTML).body(content);
+    }
+
+    private String render() {
+        return shell()
+                .withTitle("Trades")
+                .withContent(getContent())
+                .render();
+    }
+
     //language=HTML
-    private ServerResponse handle() {
-        String rows = tradeRepository.findAll().stream()
+    private String getContent() {
+        return """
+                    <div class="trades-screen">
+                    <h1>Trades</h1>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>CUSIP</th>
+                                <th>Direction</th>
+                                <th>Quantity</th>
+                                <th>Trade Date</th>
+                                <th>Settle Date</th>
+                                <th>Accrued Interest</th>
+                                <th>Book</th>
+                                <th>Counterparty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        %s
+                        </tbody>
+                    </table>
+                    </div>
+                """.formatted(getTradeRows());
+    }
+
+    //language=HTML
+    private String getTradeRows() {
+        return tradeRepository.findAll().stream()
                 .map(t -> """
                         <tr>
                             <td>%s</td>
@@ -44,28 +85,5 @@ public class TradesScreen {
                         t.getQuantity().toPlainString(), t.getTradeDate(), t.getSettleDate(),
                         t.getAccruedInterest().toPlainString(), t.getBook(), t.getCounterparty()))
                 .reduce("", String::concat);
-
-        String html = """
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>CUSIP</th>
-                            <th>Direction</th>
-                            <th>Quantity</th>
-                            <th>Trade Date</th>
-                            <th>Settle Date</th>
-                            <th>Accrued Interest</th>
-                            <th>Book</th>
-                            <th>Counterparty</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                """ + rows + """
-                    </tbody>
-                </table>
-                """;
-
-        return ServerResponse.ok().contentType(MediaType.TEXT_HTML).body(html);
     }
 }

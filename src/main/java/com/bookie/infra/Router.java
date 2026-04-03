@@ -33,10 +33,7 @@ public class Router {
 
     private ServerResponse handleUpdates(ServerRequest request) throws ServletException, IOException {
         var tabId = (String)request.body(Map.class).get("tabId");
-        var httpSessionId = request.servletRequest().getSession().getId();
-
-        var channel = sessionRegistry.getOrCreate(httpSessionId, tabId).getClientChannel();
-
+        var channel = sessionRegistry.getOrCreate(tabId).getClientChannel();
         return ServerResponse.sse(channel::connect);
     }
 }

@@ -15,21 +15,20 @@ public class SessionRegistry {
 
     private final HashMap<String, ClientSession> sessions = new HashMap<>();
 
-    public synchronized ClientSession getOrCreate(String httpSessionId, String tabId) {
-        var session = sessions.computeIfAbsent(key(httpSessionId, tabId), _ -> new ClientSession());
+    public synchronized ClientSession getOrCreate(String tabId) {
+        var session = sessions.computeIfAbsent(tabId, _ -> new ClientSession());
         session.touch();
         return session;
     }
 
-    public synchronized  ClientSession get(ServerRequest request) throws ServletException, IOException {
+    public synchronized ClientSession get(ServerRequest request) throws ServletException, IOException {
         var body = request.body(Map.class);
         var tabId = (String) body.get("tabId");
-        var httpSessionId = request.servletRequest().getSession().getId();
-        return get(httpSessionId, tabId);
+        return get(tabId);
     }
 
-    public synchronized ClientSession get(String httpSessionId, String tabId) {
-        var session = sessions.get(key(httpSessionId, tabId));
+    public synchronized ClientSession get(String tabId) {
+        var session = sessions.get(tabId);
         if (session != null) session.touch();
         return session;
     }
@@ -43,9 +42,5 @@ public class SessionRegistry {
             }
             return abandoned;
         });
-    }
-
-    private String key(String httpSessionId, String tabId) {
-        return httpSessionId + ":" + tabId;
     }
 }

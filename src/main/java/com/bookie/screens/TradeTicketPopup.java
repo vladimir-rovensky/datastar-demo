@@ -47,7 +47,7 @@ public class TradeTicketPopup {
 
     private ServerResponse handleInput(ServerRequest request) throws Exception {
         var ticket = request.body(TradeTicket.class);
-        var channel = sessionRegistry.get(request.servletRequest().getSession().getId(), ticket.getTabId()).getClientChannel();
+        var channel = sessionRegistry.get(ticket.getTabId()).getClientChannel();
         channel.updateFragment(this.render(ticket));
         return ServerResponse.ok().build();
     }

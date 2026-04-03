@@ -70,7 +70,7 @@ public class TradesScreen {
 
     //language=HTML
     private String getTradeRows() {
-        return tradeRepository.findAll().stream()
+        return tradeRepository.getAllTrades().stream()
                 .map(t -> """
                         <tr>
                             <td>%s</td>

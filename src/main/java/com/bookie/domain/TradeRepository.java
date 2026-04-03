@@ -24,7 +24,7 @@ public class TradeRepository {
         trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository)));
     }
 
-    public List<Trade> findAll() { return Collections.unmodifiableList(trades); }
+    public List<Trade> getAllTrades() { return Collections.unmodifiableList(trades); }
 
     public Trade findById(Long id) {
         return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);

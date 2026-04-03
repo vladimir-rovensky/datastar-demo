@@ -9,3 +9,7 @@ The focus is on simplicity and minimalism. Do not add any dependencies unless I 
 - IDE: IntelliJ IDEA on Windows
 - Build: Gradle (use `./gradlew` or `gradlew.bat`)
 - JDK: 24
+
+## Git
+
+- Commit messages must be a single line: brief description only, no body, no co-author trailer.

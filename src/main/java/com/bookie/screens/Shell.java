@@ -28,6 +28,7 @@ public class Shell {
                     <meta charset="UTF-8">
                     <title>%s</title>
                     <link rel="stylesheet" href="/global-styles.css">
+                    <script type="module" src="/datastar.js"></script>
                 </head>
                 <body>
                 %s

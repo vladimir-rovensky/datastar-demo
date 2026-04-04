@@ -2,6 +2,8 @@ package com.bookie.components;
 
 import java.util.List;
 
+import static com.bookie.infra.TemplatingEngine.format;
+
 public class SelectInput extends BaseInput {
     private List<String> options;
     private String selected;
@@ -25,6 +27,7 @@ public class SelectInput extends BaseInput {
                 sb.append("<option value=\"").append(value).append("\">").append(value).append("</option>");
             }
         }
-        return "<select name=\"" + name + "\" data-bind=\"" + name + "\" " + getAttrs() + ">" + sb + "</select>";
+        return format("<select name=\"${name}\" data-signals='{${name}: null}' data-bind=\"${name}\" ${attrs}>${options}</select>",
+                "name", name, "attrs", getAttrs(), "options", sb);
     }
 }

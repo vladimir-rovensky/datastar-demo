@@ -1,6 +1,6 @@
 package com.bookie.screens;
 
-import com.bookie.domain.TradeRepository;
+import com.bookie.domain.entity.TradeRepository;
 import com.bookie.infra.SessionRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

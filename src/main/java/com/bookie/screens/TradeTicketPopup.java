@@ -1,6 +1,7 @@
 package com.bookie.screens;
 
-import com.bookie.domain.ReferenceDataRepository;
+import com.bookie.domain.entity.ReferenceDataRepository;
+import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -15,9 +16,11 @@ import java.util.List;
 public class TradeTicketPopup extends BaseScreen{
 
     private final ReferenceDataRepository referenceDataRepository;
+    private final PricingService pricingService;
 
-    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository) {
+    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, PricingService pricingService) {
         this.referenceDataRepository = referenceDataRepository;
+        this.pricingService = pricingService;
     }
 
     public RouterFunction<ServerResponse> routes() {
@@ -38,7 +41,19 @@ public class TradeTicketPopup extends BaseScreen{
 
     private ServerResponse handleInput(ServerRequest request) throws Exception {
         var ticket = request.body(TradeTicket.class);
-        return html(render(ticket));
+
+        return ServerResponse.sse(b -> {
+            var channel = new ClientChannel();
+            channel.connect(b);
+            channel.updateFragment(this.render(ticket));
+
+            pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity())
+                    .thenAccept(accrued -> {
+                        ticket.setAccruedInterest(accrued);
+                        channel.updateFragment(this.render(ticket));
+                        channel.complete();
+                    });
+        });
     }
 
     public String render() {
@@ -53,13 +68,18 @@ public class TradeTicketPopup extends BaseScreen{
         boolean cusipBlank = ticket.getCusip() == null || ticket.getCusip().isBlank();
         return """
                 <div id="popup" class="popup-overlay">
-                    <div class="popup">
+                    <div class="popup" data-signals="{accruedInterest: %s}">
                         <div class="popup-title">Buy Ticket</div>
-                        <div class="form-fields" data-on:input="@post('/trades/input')">
-                            <label>CUSIP<div class="input-wrapper" %s><input type="text" name="cusip" data-bind="cusip" value="%s"></div></label>
+                        <div class="form-fields" data-on:change="@post('/trades/input')" data-indicator:fetching>
+                            <label>CUSIP<div class="input-wrapper" %s><input type="text" name="cusip" data-bind="cusip" value="%s" autocomplete='off'></div></label>
                             <label>Book%s</label>
-                            <label>Quantity<input type="number" name="quantity" data-bind="quantity" value="%s"></label>
-                            <label>Accrued Interest<input type="number" name="accruedInterest" data-bind="accruedInterest" value="%s"></label>
+                            <label>Quantity ($)<input type="number" name="quantity" data-bind="quantity" value="%s"  onfocus="this.select()"></label>
+                            <label>Accrued Interest ($)
+                                <div class="loading-field">
+                                    <input type="number" name="accruedInterest" data-bind="accruedInterest" value="%s" data-style-opacity="$fetching ? '0' : '1'" disabled>
+                                    <div class="loading-field-icon" data-show="$fetching"><div class="spinner"></div></div>
+                                </div>
+                            </label>
                             <label>Trade Date<input type="date" name="tradeDate" data-bind="tradeDate" value="%s" disabled></label>
                             <label>Settle Date<input type="date" name="settleDate" data-bind="settleDate" value="%s"></label>
                             <label>Counterparty%s</label>
@@ -71,6 +91,7 @@ public class TradeTicketPopup extends BaseScreen{
                     </div>
                 </div>
                 """.formatted(
+                ticket.getAccruedInterest(),
                 cusipBlank ? " data-error=\"This field is required\"" : "",
                 orEmpty(ticket.getCusip()),
                 select("book", referenceDataRepository.getAllBooks(), ticket.getBook()),

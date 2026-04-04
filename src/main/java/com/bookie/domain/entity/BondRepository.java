@@ -1,4 +1,4 @@
-package com.bookie.domain;
+package com.bookie.domain.entity;
 
 import org.springframework.stereotype.Repository;
 

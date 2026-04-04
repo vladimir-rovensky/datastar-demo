@@ -8,8 +8,8 @@ public class TradeTicket {
     private String tabId;
     private String cusip;
     private String book;
-    private BigDecimal quantity;
-    private BigDecimal accruedInterest;
+    private BigDecimal quantity = BigDecimal.ZERO;
+    private BigDecimal accruedInterest = BigDecimal.ZERO;
     private LocalDate tradeDate;
     private LocalDate settleDate;
     private String counterparty;

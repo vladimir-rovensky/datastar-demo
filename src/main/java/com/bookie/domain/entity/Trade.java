@@ -1,4 +1,4 @@
-package com.bookie.domain;
+package com.bookie.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

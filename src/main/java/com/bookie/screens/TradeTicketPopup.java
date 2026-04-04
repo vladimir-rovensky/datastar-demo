@@ -2,6 +2,7 @@ package com.bookie.screens;
 
 import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.ReferenceDataRepository;
+import com.bookie.domain.entity.TradeDirection;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
@@ -24,6 +25,8 @@ import static com.bookie.infra.TemplatingEngine.format;
 @Component
 public class TradeTicketPopup extends BaseScreen {
 
+    private TradeDirection direction = TradeDirection.BUY;
+
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
     private final BondRepository bondRepository;
@@ -36,6 +39,10 @@ public class TradeTicketPopup extends BaseScreen {
         this.pricingService = pricingService;
         this.bondRepository = bondRepository;
         this.tradeRepository = tradeRepository;
+    }
+
+    public void setDirection(TradeDirection direction) {
+        this.direction = direction;
     }
 
     public ServerResponse onCancel(ServerRequest request)  {
@@ -66,6 +73,7 @@ public class TradeTicketPopup extends BaseScreen {
 
     public String render() {
         var ticket = new TradeTicket();
+        ticket.setDirection(direction);
         ticket.setTradeDate(LocalDate.now());
         ticket.setSettleDate(LocalDate.now().plusDays(2));
         return render(ticket);
@@ -73,11 +81,15 @@ public class TradeTicketPopup extends BaseScreen {
 
     //language=HTML
     private String render(TradeTicket ticket) {
+        var isSell = ticket.getDirection() == TradeDirection.SELL;
+        var title = isSell ? "Sell Ticket" : "Buy Ticket";
+        var btnClass = isSell ? "btn-sell" : "btn-buy";
+        var btnLabel = isSell ? "Sell" : "Buy";
 
         return format("""
-                <div id="popup" class="popup-overlay">
+                <div id="popup" class="popup-overlay" data-signals='{direction: "${direction}"}'>
                     <div class="popup">
-                        <div class="popup-title">Buy Ticket</div>
+                        <div class="popup-title">${title}</div>
                         <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
                             ${cusip}
                             ${book}
@@ -88,12 +100,16 @@ public class TradeTicketPopup extends BaseScreen {
                             ${counterparty}
                         </div>
                         <div class="popup-actions">
-                            <button class="btn-buy" data-on:click="@post('/trades/book')">Buy</button>
+                            <button class="${btnClass}" data-on:click="@post('/trades/book')">${btnLabel}</button>
                             <button data-on:click="@post('/trades/cancel')">Cancel</button>
                         </div>
                     </div>
                 </div>
                 """,
+                "direction", ticket.getDirection(),
+                "title", title,
+                "btnClass", btnClass,
+                "btnLabel", btnLabel,
                 "accruedInterest", ticket.getAccruedInterest(),
 
                 "cusip", formField("CUSIP")

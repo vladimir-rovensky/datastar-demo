@@ -126,6 +126,25 @@ tbody tr:nth-child(even) {
     background-color: #22983f;
 }
 
+.btn-sell {
+    background-color: #7a1a1a;
+    color: #ffffff;
+    border: 1px solid #a32525;
+    font-size: 1.4rem;
+    font-weight: 700;
+    width: 60px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-sell:hover {
+    background-color: #983022;
+}
+
 .popup-overlay {
     position: fixed;
     inset: 0;

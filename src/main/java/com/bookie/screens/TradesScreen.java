@@ -1,6 +1,7 @@
 package com.bookie.screens;
 
 import com.bookie.domain.entity.Trade;
+import com.bookie.domain.entity.TradeDirection;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.infra.ClientChannel;
 import com.bookie.infra.MessageBus;
@@ -50,6 +51,9 @@ public class TradesScreen extends BaseScreen {
                 .POST("buy", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
                         .openBuyTicket(req))
+                .POST("sell", req -> sessionRegistry
+                        .getScreen(req, TradesScreen.class)
+                        .openSellTicket(req))
                 .POST("cancel", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
                         .getTradeTicketPopup()
@@ -71,7 +75,15 @@ public class TradesScreen extends BaseScreen {
         return html(render());
     }
 
-    public ServerResponse openBuyTicket(ServerRequest request) throws Exception {
+    public ServerResponse openBuyTicket(ServerRequest request) {
+        tradeTicketPopup.setDirection(TradeDirection.BUY);
+        var channel = sessionRegistry.getSession(request).getClientChannel();
+        channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
+        return ServerResponse.ok().build();
+    }
+
+    public ServerResponse openSellTicket(ServerRequest request) {
+        tradeTicketPopup.setDirection(TradeDirection.SELL);
         var channel = sessionRegistry.getSession(request).getClientChannel();
         channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
         return ServerResponse.ok().build();
@@ -94,6 +106,7 @@ public class TradesScreen extends BaseScreen {
                     <div id="trades-screen" class="trades-screen">
                     <div class="toolbar">
                         <button class="btn-buy" data-on:click="@post('/trades/buy')">B</button>
+                        <button class="btn-sell" data-on:click="@post('/trades/sell')">S</button>
                         <span class="toolbar-title">Trades</span>
                     </div>
                     <table>

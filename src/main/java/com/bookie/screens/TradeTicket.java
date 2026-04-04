@@ -9,6 +9,7 @@ import java.time.LocalDate;
 public class TradeTicket {
 
     private String tabId;
+    private TradeDirection direction;
     private String cusip;
     private String book;
     private BigDecimal quantity = BigDecimal.ZERO;
@@ -20,7 +21,7 @@ public class TradeTicket {
     public Trade toTrade() {
         Trade trade = new Trade();
         trade.setCusip(cusip);
-        trade.setDirection(TradeDirection.BUY);
+        trade.setDirection(direction);
         trade.setQuantity(quantity);
         trade.setAccruedInterest(accruedInterest);
         trade.setTradeDate(tradeDate);
@@ -55,6 +56,9 @@ public class TradeTicket {
 
     public LocalDate getSettleDate() { return settleDate; }
     public void setSettleDate(LocalDate settleDate) { this.settleDate = settleDate; }
+
+    public TradeDirection getDirection() { return direction; }
+    public void setDirection(TradeDirection direction) { this.direction = direction; }
 
     public String getCounterparty() { return counterparty; }
     public void setCounterparty(String counterparty) { this.counterparty = counterparty; }

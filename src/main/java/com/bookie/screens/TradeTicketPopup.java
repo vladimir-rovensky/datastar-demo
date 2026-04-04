@@ -2,57 +2,46 @@ package com.bookie.screens;
 
 import com.bookie.domain.ReferenceDataRepository;
 import com.bookie.infra.ClientChannel;
-import com.bookie.infra.SessionRegistry;
-import jakarta.servlet.ServletException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
 @Component
-public class TradeTicketPopup {
+public class TradeTicketPopup extends BaseScreen{
 
     private final ReferenceDataRepository referenceDataRepository;
-    private final SessionRegistry sessionRegistry;
 
-    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, SessionRegistry sessionRegistry) {
+    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository) {
         this.referenceDataRepository = referenceDataRepository;
-        this.sessionRegistry = sessionRegistry;
     }
 
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
-                .POST("/trades/buy", this::openBuyTicket)
                 .POST("/trades/cancel", this::cancelTicket)
                 .POST("/trades/input", this::handleInput)
                 .build();
     }
 
-    private ServerResponse openBuyTicket(ServerRequest request) throws Exception {
-        var channel = getUpdateChannel(request);
-        channel.updateFragment(render(), "#trades-screen", "append");
-        return ServerResponse.ok().build();
-    }
-
-    private ServerResponse cancelTicket(ServerRequest request) throws Exception {
-        var channel = getUpdateChannel(request);
-        channel.updateFragment("", "#popup", "remove");
-        return ServerResponse.ok().build();
+    private ServerResponse cancelTicket(ServerRequest request) {
+        return ServerResponse.sse(b -> {
+            var channel = new ClientChannel();
+            channel.connect(b);
+            channel.updateFragment("", "#popup", "remove");
+            channel.complete();
+        });
     }
 
     private ServerResponse handleInput(ServerRequest request) throws Exception {
         var ticket = request.body(TradeTicket.class);
-        var channel = sessionRegistry.get(ticket.getTabId()).getClientChannel();
-        channel.updateFragment(this.render(ticket));
-        return ServerResponse.ok().build();
+        return html(render(ticket));
     }
 
-    private String render() {
+    public String render() {
         var ticket = new TradeTicket();
         ticket.setTradeDate(LocalDate.now());
         ticket.setSettleDate(LocalDate.now().plusDays(2));
@@ -67,7 +56,7 @@ public class TradeTicketPopup {
                     <div class="popup">
                         <div class="popup-title">Buy Ticket</div>
                         <div class="form-fields" data-on:input="@post('/trades/input')">
-                            <label>CUSIP<div class="input-wrapper"%s><input type="text" name="cusip" data-bind="cusip" value="%s"></div></label>
+                            <label>CUSIP<div class="input-wrapper" %s><input type="text" name="cusip" data-bind="cusip" value="%s"></div></label>
                             <label>Book%s</label>
                             <label>Quantity<input type="number" name="quantity" data-bind="quantity" value="%s"></label>
                             <label>Accrued Interest<input type="number" name="accruedInterest" data-bind="accruedInterest" value="%s"></label>
@@ -111,7 +100,4 @@ public class TradeTicketPopup {
         return value != null ? value.toString() : "";
     }
 
-    private ClientChannel getUpdateChannel(ServerRequest request) throws ServletException, IOException {
-        return sessionRegistry.get(request).getClientChannel();
-    }
 }

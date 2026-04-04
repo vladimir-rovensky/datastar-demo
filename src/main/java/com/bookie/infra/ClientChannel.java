@@ -14,6 +14,10 @@ public class ClientChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientChannel.class);
 
+    public ClientChannel() {
+        this("");
+    }
+
     public ClientChannel(String tabId) {
         this.tabId = tabId;
     }
@@ -33,7 +37,10 @@ public class ClientChannel {
         });
 
         builder.onComplete(() -> {
-            logger.info("Completed channel {}", tabId);
+            if(!tabId.isEmpty()) {
+                logger.info("Completed channel {}", tabId);
+            }
+
             alive.set(false);
         });
     }

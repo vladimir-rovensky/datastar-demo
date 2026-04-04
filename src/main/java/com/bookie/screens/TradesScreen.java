@@ -1,11 +1,13 @@
 package com.bookie.screens;
 
 import com.bookie.domain.TradeRepository;
+import com.bookie.infra.SessionRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.math.BigDecimal;
@@ -19,22 +21,27 @@ public class TradesScreen {
 
     private final TradeRepository tradeRepository;
     private final TradeTicketPopup tradeTicketPopup;
+    private final SessionRegistry sessionRegistry;
 
-    public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup) {
+    public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup, SessionRegistry sessionRegistry) {
         this.tradeRepository = tradeRepository;
         this.tradeTicketPopup = tradeTicketPopup;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @Bean
     public RouterFunction<ServerResponse> tradesRoutes() {
         return RouterFunctions.route()
-                .GET("/trades", _ -> html(render()))
+                .GET("/trades", _ -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).body(render()))
+                .POST("/trades/buy", this::openBuyTicket)
                 .add(tradeTicketPopup.routes())
                 .build();
     }
 
-    private ServerResponse html(String content) {
-        return ServerResponse.ok().contentType(MediaType.TEXT_HTML).body(content);
+    private ServerResponse openBuyTicket(ServerRequest request) throws Exception {
+        var channel = sessionRegistry.get(request).getClientChannel();
+        channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
+        return ServerResponse.ok().build();
     }
 
     private String render() {
@@ -99,4 +106,5 @@ public class TradesScreen {
     private static String usd(BigDecimal amount) {
         return NumberFormat.getCurrencyInstance(Locale.US).format(amount);
     }
+
 }

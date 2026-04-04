@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static com.bookie.infra.Util.sleep;
+
 @Repository
 public class TradeRepository {
 
@@ -27,7 +29,10 @@ public class TradeRepository {
         this.messageBus = messageBus;
     }
 
-    public List<Trade> getAllTrades() { return Collections.unmodifiableList(trades); }
+    public List<Trade> getAllTrades() {
+        sleep(1000); //This is a slow DB load
+        return new ArrayList<>(trades);
+    }
 
     public Trade findById(Long id) {
         return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);

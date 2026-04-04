@@ -33,6 +33,11 @@ public class SessionRegistry implements SmartLifecycle {
         return getSession(req).getScreen(clazz);
     }
 
+    public synchronized <T> T getScreen(String tabID, Class<T> clazz) {
+        return getSession(tabID)
+                .getScreen(clazz);
+    }
+
     public synchronized <T extends BaseScreen> ClientSession createSession(Class<T> screenType) {
         var tabID = UUID.randomUUID().toString();
 

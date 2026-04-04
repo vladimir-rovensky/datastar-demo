@@ -1,6 +1,8 @@
 package com.bookie.screens;
 
+import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeRepository;
+import com.bookie.infra.ClientChannel;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.infra.events.TradeBookedEvent;
@@ -12,6 +14,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 
 import static com.bookie.screens.Shell.shell;
@@ -23,6 +26,8 @@ public class TradesScreen extends BaseScreen {
     private final TradeTicketPopup tradeTicketPopup;
     private final SessionRegistry sessionRegistry;
     private final MessageBus messageBus;
+
+    private List<Trade> trades;
 
     public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
                         SessionRegistry sessionRegistry, MessageBus messageBus) {
@@ -60,7 +65,9 @@ public class TradesScreen extends BaseScreen {
     }
 
     public ServerResponse initialRender(ServerRequest request) {
-        return html(render(this.tabID));
+        this.trades = tradeRepository.getAllTrades();
+
+        return html(render());
     }
 
     public ServerResponse openBuyTicket(ServerRequest request) throws Exception {
@@ -73,8 +80,8 @@ public class TradesScreen extends BaseScreen {
         return tradeTicketPopup;
     }
 
-    public String render(String tabId) {
-        return shell(tabId)
+    public String render() {
+        return shell(this.tabID)
                 .withTitle("Trades")
                 .withContent(getContent())
                 .render();
@@ -112,7 +119,7 @@ public class TradesScreen extends BaseScreen {
 
     //language=HTML
     private String getTradeRows() {
-        return tradeRepository.getAllTrades().reversed().stream()
+        return this.trades.reversed().stream()
                 .map(t -> """
                         <tr>
                             <td>%s</td>
@@ -133,7 +140,13 @@ public class TradesScreen extends BaseScreen {
     }
 
     private void onTradeBooked(TradeBookedEvent event) {
-        //TODO
+        this.trades.add(event.getTrade());
+        getClientChannel().updateFragment(this.render());
+    }
+
+    private ClientChannel getClientChannel() {
+        return this.sessionRegistry.getSession(tabID)
+                .getClientChannel();
     }
 
     private static String usd(BigDecimal amount) {

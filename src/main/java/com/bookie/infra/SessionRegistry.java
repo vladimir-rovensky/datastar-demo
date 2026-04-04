@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -14,10 +15,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class SessionRegistry {
+public class SessionRegistry implements SmartLifecycle {
 
     private final HashMap<String, ClientSession> sessions = new HashMap<>();
     private final long sessionTimeoutSeconds;
+    private volatile boolean running = false;
 
     private static final Logger logger = LoggerFactory.getLogger(SessionRegistry.class);
 
@@ -53,5 +55,30 @@ public class SessionRegistry {
             }
             return abandoned;
         });
+    }
+
+    @Override
+    public void start() {
+        running = true;
+    }
+
+    @Override
+    public void stop() {
+        running = false;
+        synchronized (this) {
+            sessions.values().forEach(session -> session.getClientChannel().fail());
+            sessions.clear();
+        }
+        logger.info("Closed all client channels on shutdown");
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public int getPhase() {
+        return Integer.MAX_VALUE;
     }
 }

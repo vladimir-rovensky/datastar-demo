@@ -48,6 +48,13 @@ public class ClientChannel {
         }
     }
 
+    public synchronized void fail() {
+        alive.set(false);
+        if (sseBuilder != null) {
+            sseBuilder.error(new Exception("Connection Aborted by Server"));
+        }
+    }
+
     public void updateFragment(String fragment) {
         updateFragment(fragment, null, null);
     }

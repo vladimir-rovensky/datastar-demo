@@ -64,14 +64,14 @@ public class TradeTicketPopup extends BaseScreen {
                 <div id="popup" class="popup-overlay">
                     <div class="popup" data-signals="{accruedInterest: %s}">
                         <div class="popup-title">Buy Ticket</div>
-                        <div class="form-fields" data-on:change="@post('/trades/input')" data-indicator:fetching>
+                        <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
                             %s
                             <label>Book%s</label>
                             <label>Quantity ($)<input type="number" name="quantity" data-bind="quantity" value="%s"  onfocus="this.select()"></label>
                             <label>Accrued Interest ($)
                                 <div class="loading-field">
-                                    <input type="number" name="accruedInterest" data-bind="accruedInterest" value="%s" data-style-opacity="$fetching ? '0' : '1'" disabled>
-                                    <div class="loading-field-icon" data-show="$fetching"><div class="spinner"></div></div>
+                                    <input type="number" name="accruedInterest" data-bind="accruedInterest" value="%s" data-style-opacity="$_fetching ? '0' : '1'" disabled>
+                                    <div class="loading-field-icon" data-show="$_fetching"><div class="spinner"></div></div>
                                 </div>
                             </label>
                             <label>Trade Date<input type="date" name="tradeDate" data-bind="tradeDate" value="%s" disabled></label>

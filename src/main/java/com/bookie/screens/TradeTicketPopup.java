@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Component
-public class TradeTicketPopup extends BaseScreen{
+public class TradeTicketPopup extends BaseScreen {
 
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
@@ -26,34 +26,26 @@ public class TradeTicketPopup extends BaseScreen{
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
                 .POST("/trades/cancel", this::cancelTicket)
-                .POST("/trades/input", this::handleInput)
+                .POST("/trades/input", request -> {
+                    var ticket = request.body(TradeTicket.class);
+                    return sse(channel -> handleInput(ticket, channel));
+                })
                 .build();
     }
 
     private ServerResponse cancelTicket(ServerRequest request) {
-        return ServerResponse.sse(b -> {
-            var channel = new ClientChannel();
-            channel.connect(b);
-            channel.updateFragment("", "#popup", "remove");
-            channel.complete();
-        });
+        return removeFragment("#popup");
     }
 
-    private ServerResponse handleInput(ServerRequest request) throws Exception {
-        var ticket = request.body(TradeTicket.class);
+    private void handleInput(TradeTicket ticket, ClientChannel channel) {
+        channel.updateFragment(this.render(ticket));
 
-        return ServerResponse.sse(b -> {
-            var channel = new ClientChannel();
-            channel.connect(b);
-            channel.updateFragment(this.render(ticket));
-
-            pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity())
-                    .thenAccept(accrued -> {
-                        ticket.setAccruedInterest(accrued);
-                        channel.updateFragment(this.render(ticket));
-                        channel.complete();
-                    });
-        });
+        pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity())
+                .thenAccept(accrued -> {
+                    ticket.setAccruedInterest(accrued);
+                    channel.updateFragment(this.render(ticket));
+                    channel.complete();
+                });
     }
 
     public String render() {

@@ -62,12 +62,16 @@ public class ClientChannel {
         }
     }
 
-    public void updateFragment(String fragment) {
-        updateFragment(fragment, null, null);
+    public ClientChannel updateFragment(String fragment) {
+        return updateFragment(fragment, null, null);
     }
 
-    public void updateFragment(String fragment, String selector, String mode) {
-        if (!alive.get()) return;
+    public ClientChannel removeFragment(String selector) {
+        return updateFragment("", selector, "remove");
+    }
+
+    public ClientChannel updateFragment(String fragment, String selector, String mode) {
+        if (!alive.get()) return this;
 
         synchronized (this) {
             try {
@@ -89,5 +93,7 @@ public class ClientChannel {
                 alive.set(false);
             }
         }
+
+        return this;
     }
 }

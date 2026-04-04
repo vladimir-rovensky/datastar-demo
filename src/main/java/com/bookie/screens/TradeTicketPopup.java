@@ -12,6 +12,8 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.bookie.components.TextInput.textInput;
+
 @Component
 public class TradeTicketPopup extends BaseScreen {
 
@@ -57,13 +59,13 @@ public class TradeTicketPopup extends BaseScreen {
 
     //language=HTML
     private String render(TradeTicket ticket) {
-        boolean cusipBlank = ticket.getCusip() == null || ticket.getCusip().isBlank();
+
         return """
                 <div id="popup" class="popup-overlay">
                     <div class="popup" data-signals="{accruedInterest: %s}">
                         <div class="popup-title">Buy Ticket</div>
                         <div class="form-fields" data-on:change="@post('/trades/input')" data-indicator:fetching>
-                            <label>CUSIP<div class="input-wrapper" %s><input type="text" name="cusip" data-bind="cusip" value="%s" autocomplete='off'></div></label>
+                            %s
                             <label>Book%s</label>
                             <label>Quantity ($)<input type="number" name="quantity" data-bind="quantity" value="%s"  onfocus="this.select()"></label>
                             <label>Accrued Interest ($)
@@ -84,14 +86,20 @@ public class TradeTicketPopup extends BaseScreen {
                 </div>
                 """.formatted(
                 ticket.getAccruedInterest(),
-                cusipBlank ? " data-error=\"This field is required\"" : "",
-                orEmpty(ticket.getCusip()),
+                textInput("cusip", ticket.getCusip())
+                        .withLabel("CUSIP")
+                        .withError(validateCusip(ticket.getCusip())),
                 select("book", referenceDataRepository.getAllBooks(), ticket.getBook()),
                 orEmpty(ticket.getQuantity()),
                 orEmpty(ticket.getAccruedInterest()),
                 orEmpty(ticket.getTradeDate()),
                 orEmpty(ticket.getSettleDate()),
                 select("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty()));
+    }
+
+    private static String validateCusip(String cusip) {
+        boolean cusipBlank = cusip == null || cusip.isBlank();
+        return cusipBlank ? "This field is required" : null;
     }
 
     //language=HTML

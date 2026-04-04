@@ -1,5 +1,7 @@
-package com.bookie.infra;
+package com.bookie;
 
+import com.bookie.infra.ClientSession;
+import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.TradesScreen;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

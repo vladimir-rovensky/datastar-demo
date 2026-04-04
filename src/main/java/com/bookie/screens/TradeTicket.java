@@ -1,5 +1,8 @@
 package com.bookie.screens;
 
+import com.bookie.domain.entity.Trade;
+import com.bookie.domain.entity.TradeDirection;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -13,6 +16,19 @@ public class TradeTicket {
     private LocalDate tradeDate;
     private LocalDate settleDate;
     private String counterparty;
+
+    public Trade toTrade() {
+        Trade trade = new Trade();
+        trade.setCusip(cusip);
+        trade.setDirection(TradeDirection.BUY);
+        trade.setQuantity(quantity);
+        trade.setAccruedInterest(accruedInterest);
+        trade.setTradeDate(tradeDate);
+        trade.setSettleDate(settleDate);
+        trade.setBook(book);
+        trade.setCounterparty(counterparty);
+        return trade;
+    }
 
     public String getTabId() {
         return tabId;

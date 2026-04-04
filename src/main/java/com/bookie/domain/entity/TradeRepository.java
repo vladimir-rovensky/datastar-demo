@@ -1,11 +1,14 @@
 package com.bookie.domain.entity;
 
+import com.bookie.infra.MessageBus;
+import com.bookie.infra.events.TradeBookedEvent;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -17,9 +20,11 @@ public class TradeRepository {
 
     private final List<Trade> trades;
     private long nextId = 1001;
+    private final MessageBus messageBus;
 
-    public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository) {
-        trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
+    public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, MessageBus messageBus) {
+        this.trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
+        this.messageBus = messageBus;
     }
 
     public List<Trade> getAllTrades() { return Collections.unmodifiableList(trades); }
@@ -28,9 +33,17 @@ public class TradeRepository {
         return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
     }
 
-    public Trade save(Trade trade) {
-        if (trade.getId() == null) trade.setId(nextId++);
+    public Trade bookTrade(Trade trade) {
+        if (trade.getId() == null) {
+            trade.setId(nextId++);
+        }
+
+        trade.setExecutionTime(new Date());
+
         trades.add(trade);
+
+        messageBus.publish(new TradeBookedEvent(trade));
+
         return trade;
     }
 

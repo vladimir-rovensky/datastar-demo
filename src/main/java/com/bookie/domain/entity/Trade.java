@@ -2,11 +2,13 @@ package com.bookie.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Date;
 
 public class Trade {
 
     private Long id;
     private String cusip;
+    private Date executionTime;
     private TradeDirection direction;
     private BigDecimal quantity;
     private LocalDate tradeDate;
@@ -41,4 +43,7 @@ public class Trade {
 
     public String getCounterparty() { return counterparty; }
     public void setCounterparty(String counterparty) { this.counterparty = counterparty; }
+
+    public Date getExecutionTime() { return executionTime; }
+    public void setExecutionTime(Date executionTime) { this.executionTime = executionTime; }
 }

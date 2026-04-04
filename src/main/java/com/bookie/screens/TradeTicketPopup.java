@@ -2,12 +2,12 @@ package com.bookie.screens;
 
 import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.ReferenceDataRepository;
+import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
-import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.math.BigDecimal;
@@ -26,25 +26,30 @@ public class TradeTicketPopup extends BaseScreen {
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
     private final BondRepository bondRepository;
+    private final TradeRepository tradeRepository;
 
-    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, PricingService pricingService, BondRepository bondRepository) {
+    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, PricingService pricingService,
+                            BondRepository bondRepository, TradeRepository tradeRepository) {
+
         this.referenceDataRepository = referenceDataRepository;
         this.pricingService = pricingService;
         this.bondRepository = bondRepository;
+        this.tradeRepository = tradeRepository;
     }
 
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
-                .POST("/trades/cancel", this::cancelTicket)
+                .POST("/trades/book", request -> {
+                    var ticket = request.body(TradeTicket.class);
+                    bookTicket(ticket);
+                    return removeFragment("#popup");
+                })
+                .POST("/trades/cancel", request -> removeFragment("#popup"))
                 .POST("/trades/input", request -> {
                     var ticket = request.body(TradeTicket.class);
                     return sse(channel -> handleInput(ticket, channel));
                 })
                 .build();
-    }
-
-    private ServerResponse cancelTicket(ServerRequest request) {
-        return removeFragment("#popup");
     }
 
     private void handleInput(TradeTicket ticket, ClientChannel channel) {
@@ -82,7 +87,7 @@ public class TradeTicketPopup extends BaseScreen {
                             ${counterparty}
                         </div>
                         <div class="popup-actions">
-                            <button class="btn-buy">Buy</button>
+                            <button class="btn-buy" data-on:click="@post('/trades/book')">Buy</button>
                             <button data-on:click="@post('/trades/cancel')">Cancel</button>
                         </div>
                     </div>
@@ -115,6 +120,18 @@ public class TradeTicketPopup extends BaseScreen {
 
                 "counterparty", formField("Counterparty")
                         .withInput(selectInput("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty())));
+    }
+
+    private void bookTicket(TradeTicket ticket) {
+        if (!isValid(ticket)) {
+            throw new RuntimeException("Tried to book an invalid ticket.");
+        }
+
+        tradeRepository.bookTrade(ticket.toTrade());
+    }
+
+    private boolean isValid(TradeTicket ticket) {
+        return validateCusip(ticket.getCusip()) == null && validateQuantity(ticket.getQuantity()) == null;
     }
 
     private String validateCusip(String cusip) {

@@ -15,7 +15,7 @@ public class PricingService {
     public CompletableFuture<BigDecimal> calculateAccruedInterest(String cusip, BigDecimal quantity) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

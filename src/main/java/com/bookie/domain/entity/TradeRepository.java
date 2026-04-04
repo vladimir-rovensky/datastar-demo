@@ -35,7 +35,7 @@ public class TradeRepository {
     }
 
     private static List<Trade> generate(BondRepository bondRepo, ReferenceDataRepository refData) {
-        List<Bond> bonds = bondRepo.findAll();
+        List<Bond> bonds = bondRepo.getAllBonds();
         List<String> books = refData.getAllBooks();
         List<String> counterparties = refData.getAllCounterparties();
         List<Trade> list = new ArrayList<>();

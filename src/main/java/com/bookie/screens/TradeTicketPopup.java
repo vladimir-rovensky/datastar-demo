@@ -1,5 +1,6 @@
 package com.bookie.screens;
 
+import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.ReferenceDataRepository;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
@@ -9,20 +10,27 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
+import static com.bookie.components.DateInput.dateInput;
+import static com.bookie.components.FormField.formField;
+import static com.bookie.components.NumberInput.numberInput;
+import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
+import static com.bookie.infra.TemplatingEngine.format;
 
 @Component
 public class TradeTicketPopup extends BaseScreen {
 
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
+    private final BondRepository bondRepository;
 
-    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, PricingService pricingService) {
+    public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, PricingService pricingService, BondRepository bondRepository) {
         this.referenceDataRepository = referenceDataRepository;
         this.pricingService = pricingService;
+        this.bondRepository = bondRepository;
     }
 
     public RouterFunction<ServerResponse> routes() {
@@ -60,23 +68,18 @@ public class TradeTicketPopup extends BaseScreen {
     //language=HTML
     private String render(TradeTicket ticket) {
 
-        return """
+        return format("""
                 <div id="popup" class="popup-overlay">
-                    <div class="popup" data-signals="{accruedInterest: %s}">
+                    <div class="popup">
                         <div class="popup-title">Buy Ticket</div>
                         <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
-                            %s
-                            <label>Book%s</label>
-                            <label>Quantity ($)<input type="number" name="quantity" data-bind="quantity" value="%s"  onfocus="this.select()"></label>
-                            <label>Accrued Interest ($)
-                                <div class="loading-field">
-                                    <input type="number" name="accruedInterest" data-bind="accruedInterest" value="%s" data-style-opacity="$_fetching ? '0' : '1'" disabled>
-                                    <div class="loading-field-icon" data-show="$_fetching"><div class="spinner"></div></div>
-                                </div>
-                            </label>
-                            <label>Trade Date<input type="date" name="tradeDate" data-bind="tradeDate" value="%s" disabled></label>
-                            <label>Settle Date<input type="date" name="settleDate" data-bind="settleDate" value="%s"></label>
-                            <label>Counterparty%s</label>
+                            ${cusip}
+                            ${book}
+                            ${quantity}
+                            ${accruedInterestField}
+                            ${tradeDate}
+                            ${settleDate}
+                            ${counterparty}
                         </div>
                         <div class="popup-actions">
                             <button class="btn-buy">Buy</button>
@@ -84,41 +87,57 @@ public class TradeTicketPopup extends BaseScreen {
                         </div>
                     </div>
                 </div>
-                """.formatted(
-                ticket.getAccruedInterest(),
-                textInput("cusip", ticket.getCusip())
-                        .withLabel("CUSIP")
+                """,
+                "accruedInterest", ticket.getAccruedInterest(),
+
+                "cusip", formField("CUSIP")
+                        .withInput(textInput("cusip", ticket.getCusip()))
                         .withError(validateCusip(ticket.getCusip())),
-                select("book", referenceDataRepository.getAllBooks(), ticket.getBook()),
-                orEmpty(ticket.getQuantity()),
-                orEmpty(ticket.getAccruedInterest()),
-                orEmpty(ticket.getTradeDate()),
-                orEmpty(ticket.getSettleDate()),
-                select("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty()));
+
+                "book", formField("Book")
+                        .withInput(selectInput("book", referenceDataRepository.getAllBooks(), ticket.getBook())),
+
+                "quantity", formField("Quantity ($)")
+                        .withInput(numberInput("quantity", ticket.getQuantity()))
+                        .withError(validateQuantity(ticket.getQuantity())),
+
+                "accruedInterestField", formField("Accrued Interest ($)")
+                        .withInput(numberInput("accruedInterest", ticket.getAccruedInterest())
+                                .withLoadIndicator("_fetching")
+                                .withDisabled(true)),
+
+                "tradeDate", formField("Trade Date")
+                        .withInput(dateInput("tradeDate", ticket.getTradeDate())
+                                .withDisabled(true)),
+
+                "settleDate", formField("Settle Date")
+                        .withInput(dateInput("settleDate", ticket.getSettleDate())),
+
+                "counterparty", formField("Counterparty")
+                        .withInput(selectInput("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty())));
     }
 
-    private static String validateCusip(String cusip) {
-        boolean cusipBlank = cusip == null || cusip.isBlank();
-        return cusipBlank ? "This field is required" : null;
-    }
-
-    //language=HTML
-    private String select(String name, List<String> options, String selected) {
-        var sb = new StringBuilder();
-        for (String value : options) {
-            if (value.equals(selected)) {
-                sb.append("<option value=\"").append(value).append("\" selected>").append(value).append("</option>");
-            } else {
-                sb.append("<option value=\"").append(value).append("\">").append(value).append("</option>");
-            }
+    private String validateCusip(String cusip) {
+        if(cusip == null || cusip.isBlank()) {
+            return "This field is required";
         }
-        return """
-                <select name="%s" data-bind="%s">%s</select>
-            """.formatted(name, name, sb.toString());
+
+        if(!this.bondRepository.isValidCusip(cusip)) {
+            return "The CUSIP is invalid - please specify a known CUSIP";
+        }
+
+        return null;
     }
 
-    private static String orEmpty(Object value) {
-        return value != null ? value.toString() : "";
-    }
+    private String validateQuantity(BigDecimal quantity) {
+        if(quantity == null) {
+            return "This field is required";
+        }
 
+        if(quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return "Quantity has to be > 0";
+        }
+
+        return null;
+    }
 }

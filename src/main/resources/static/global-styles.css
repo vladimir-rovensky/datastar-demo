@@ -48,6 +48,11 @@ input, select {
 input:focus, select:focus {
     border-color: #5b9bd5;
 }
+input:disabled, select:disabled {
+    background-color: #0a1a2a;
+    color: #4a6070;
+    border-color: #1e3d5c;
+}
 
 table {
     border-collapse: collapse;
@@ -166,7 +171,7 @@ tbody tr:nth-child(even) {
     color: #a0b4c8;
 }
 
-.form-fields input {
+.form-fields input, .form-fields select {
     width: 100%;
 }
 
@@ -208,28 +213,32 @@ input[type=number]::-webkit-outer-spin-button {
     margin: 0;
 }
 
-.loading-field {
-    position: relative;
-    width: 100%;
+input.loading {
+    opacity: 0;
 }
 
-.loading-field-icon {
+.input-wrapper:has(input.loading)::before {
+    content: "";
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
+    background-color: #112236;
+    border: 1px solid #2e5f8a;
 }
 
-.spinner {
+.input-wrapper:has(input.loading)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
     width: 16px;
     height: 16px;
     border: 2px solid #2e5f8a;
     border-top-color: #5b9bd5;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
+    pointer-events: none;
 }
+
 
 @keyframes spin {
     to { transform: rotate(360deg); }

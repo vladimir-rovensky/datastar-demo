@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class BondRepository {
@@ -17,12 +18,17 @@ public class BondRepository {
         bonds = Collections.unmodifiableList(generateData());
     }
 
-    public List<Bond> findAll() {
+    public List<Bond> getAllBonds() {
         return bonds;
     }
 
-    public Bond findByCusip(String cusip) {
+    public Bond findBondByCusip(String cusip) {
         return bonds.stream().filter(b -> b.getCusip().equals(cusip)).findFirst().orElse(null);
+    }
+
+    public boolean isValidCusip(String cusip) {
+        //Pretend this is a bloom filter or something clever. Pretend to be impressed.
+        return getAllBonds().stream().anyMatch(b -> Objects.equals(b.getCusip(), cusip));
     }
 
     private static List<Bond> generateData() {

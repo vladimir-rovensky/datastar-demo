@@ -4,7 +4,6 @@ import com.bookie.domain.entity.TradeRepository;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.infra.events.TradeBookedEvent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -36,23 +35,46 @@ public class TradesScreen extends BaseScreen {
         messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
     }
 
-    @Bean
-    public RouterFunction<ServerResponse> tradesRoutes() {
+    public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
-                .GET("/trades", _ -> html(render()))
-                .POST("/trades/buy", this::openBuyTicket)
-                .add(tradeTicketPopup.routes())
+                .GET("", req -> sessionRegistry
+                        .createSession(TradesScreen.class)
+                        .getScreen(TradesScreen.class)
+                        .initialRender(req))
+                .POST("buy", req -> sessionRegistry
+                        .getScreen(req, TradesScreen.class)
+                        .openBuyTicket(req))
+                .POST("cancel", req -> sessionRegistry
+                        .getScreen(req, TradesScreen.class)
+                        .getTradeTicketPopup()
+                        .onCancel(req))
+                .POST("input", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .getTradeTicketPopup()
+                        .onInput(request))
+                .POST("book", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .getTradeTicketPopup()
+                        .onBookTrade(request))
                 .build();
     }
 
-    private ServerResponse openBuyTicket(ServerRequest request) throws Exception {
-        var channel = sessionRegistry.get(request).getClientChannel();
+    public ServerResponse initialRender(ServerRequest request) {
+        return html(render(this.tabID));
+    }
+
+    public ServerResponse openBuyTicket(ServerRequest request) throws Exception {
+        var channel = sessionRegistry.getSession(request).getClientChannel();
         channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
         return ServerResponse.ok().build();
     }
 
-    private String render() {
-        return shell()
+    public TradeTicketPopup getTradeTicketPopup() {
+        return tradeTicketPopup;
+    }
+
+    public String render(String tabId) {
+        return shell(tabId)
                 .withTitle("Trades")
                 .withContent(getContent())
                 .render();

@@ -1,14 +1,17 @@
 package com.bookie.screens;
 
-import java.util.UUID;
+import static com.bookie.infra.TemplatingEngine.format;
 
 public class Shell {
 
+    private String tabId = "";
     private String title = "";
     private String content = "";
 
-    public static Shell shell() {
-        return new Shell();
+    public static Shell shell(String tabId) {
+        var shell = new Shell();
+        shell.tabId = tabId;
+        return shell;
     }
 
     public Shell withTitle(String title) {
@@ -23,20 +26,31 @@ public class Shell {
 
     //language=HTML
     public String render() {
-        var tabId = UUID.randomUUID().toString();
-        return """
+        return format("""
                 <!DOCTYPE html>
                 <html lang="en-US">
                 <head>
                     <meta charset="UTF-8">
-                    <title>Bookie - %s</title>
+                    <title>Bookie - ${title}</title>
                     <link rel="stylesheet" href="/global-styles.css">
+                    <script>
+                        const _fetch = window.fetch;
+                        window.fetch = (url, opts = {}) => {
+                            if (opts.headers?.['Datastar-Request']) {
+                                opts.headers['X-tabID'] = '${tabId}';
+                            }
+                            return _fetch(url, opts);
+                        };
+                    </script>
                     <script type="module" src="/datastar.js"></script>
                 </head>
-                <body data-signals="{tabId: '%s'}" data-init="@post('/updates', {retry: 'error'})">
-                %s
+                <body data-init="@post('/updates', {retry: 'error'})">
+                ${content}
                 </body>
                 </html>
-                """.formatted(title, tabId, content);
+                """,
+                "title", title,
+                "tabId", tabId,
+                "content", content);
     }
 }

@@ -11,16 +11,15 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
+
+import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
 public class Router {
 
-    private final TradesScreen tradesScreen;
     private final SessionRegistry sessionRegistry;
 
-    public Router(TradesScreen tradesScreen, SessionRegistry sessionRegistry) {
-        this.tradesScreen = tradesScreen;
+    public Router(SessionRegistry sessionRegistry) {
         this.sessionRegistry = sessionRegistry;
     }
 
@@ -28,13 +27,12 @@ public class Router {
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
                 .POST("/updates", this::handleUpdates)
-                .add(tradesScreen.tradesRoutes())
+                .nest(path("/trades"), () -> TradesScreen.setupRoutes(sessionRegistry))
                 .build();
     }
 
     private ServerResponse handleUpdates(ServerRequest request) throws ServletException, IOException {
-        var tabId = (String)request.body(Map.class).get("tabId");
-        var channel = sessionRegistry.getOrCreate(tabId).getClientChannel();
+        var channel = sessionRegistry.getSession(request).getClientChannel();
         return ServerResponse.sse(channel::connect, Duration.ZERO);
     }
 }

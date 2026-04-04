@@ -5,11 +5,12 @@ import com.bookie.domain.entity.ReferenceDataRepository;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
+import jakarta.servlet.ServletException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.function.RouterFunction;
-import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -37,19 +38,19 @@ public class TradeTicketPopup extends BaseScreen {
         this.tradeRepository = tradeRepository;
     }
 
-    public RouterFunction<ServerResponse> routes() {
-        return RouterFunctions.route()
-                .POST("/trades/book", request -> {
-                    var ticket = request.body(TradeTicket.class);
-                    bookTicket(ticket);
-                    return removeFragment("#popup");
-                })
-                .POST("/trades/cancel", request -> removeFragment("#popup"))
-                .POST("/trades/input", request -> {
-                    var ticket = request.body(TradeTicket.class);
-                    return sse(channel -> handleInput(ticket, channel));
-                })
-                .build();
+    public ServerResponse onCancel(ServerRequest request)  {
+        return removeFragment("#popup");
+    }
+
+    public ServerResponse onInput(ServerRequest request) throws ServletException, IOException {
+        var ticket = request.body(TradeTicket.class);
+        return sse(channel -> handleInput(ticket, channel));
+    }
+
+    public ServerResponse onBookTrade(ServerRequest request) throws ServletException, IOException {
+        var ticket = request.body(TradeTicket.class);
+        bookTicket(ticket);
+        return removeFragment("#popup");
     }
 
     private void handleInput(TradeTicket ticket, ClientChannel channel) {

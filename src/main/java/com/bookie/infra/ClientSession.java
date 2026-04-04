@@ -6,20 +6,23 @@ public class ClientSession {
 
     private final String tabId;
     private final ClientChannel channel;
+    private final Object screen;
     private final long timeoutSeconds;
     private volatile Instant lastActive = Instant.now();
 
-    public ClientSession(String tabId, long timeoutSeconds) {
+    public ClientSession(String tabId, Object screen, long timeoutSeconds) {
         this.tabId = tabId;
+        this.screen = screen;
         this.channel = new ClientChannel(tabId);
         this.timeoutSeconds = timeoutSeconds;
+        this.touch();
     }
 
     public ClientChannel getClientChannel() {
         return channel;
     }
 
-     public void touch() {
+    public void touch() {
         lastActive = Instant.now();
     }
 
@@ -29,5 +32,9 @@ public class ClientSession {
 
     public String getTabId() {
         return tabId;
+    }
+
+    public <T> T getScreen(Class<T> clazz) {
+        return clazz.cast(screen);
     }
 }

@@ -11,7 +11,6 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.Map;
 
 @Configuration
@@ -36,6 +35,6 @@ public class Router {
     private ServerResponse handleUpdates(ServerRequest request) throws ServletException, IOException {
         var tabId = (String)request.body(Map.class).get("tabId");
         var channel = sessionRegistry.getOrCreate(tabId).getClientChannel();
-        return ServerResponse.sse(channel::connect, Duration.ofDays(365));
+        return ServerResponse.sse(channel::connect, Duration.ZERO);
     }
 }

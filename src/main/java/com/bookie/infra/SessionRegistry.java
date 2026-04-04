@@ -1,6 +1,9 @@
 package com.bookie.infra;
 
 import jakarta.servlet.ServletException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -14,9 +17,16 @@ import java.util.concurrent.TimeUnit;
 public class SessionRegistry {
 
     private final HashMap<String, ClientSession> sessions = new HashMap<>();
+    private final long sessionTimeoutSeconds;
+
+    private static final Logger logger = LoggerFactory.getLogger(SessionRegistry.class);
+
+    public SessionRegistry(@Value("${bookie.session.timeout-seconds}") long sessionTimeoutSeconds) {
+        this.sessionTimeoutSeconds = sessionTimeoutSeconds;
+    }
 
     public synchronized ClientSession getOrCreate(String tabId) {
-        var session = sessions.computeIfAbsent(tabId, _ -> new ClientSession());
+        var session = sessions.computeIfAbsent(tabId, _ -> new ClientSession(tabId, sessionTimeoutSeconds));
         session.touch();
         return session;
     }
@@ -39,6 +49,7 @@ public class SessionRegistry {
             var abandoned = entry.getValue().isAbandoned();
             if (abandoned) {
                 entry.getValue().getClientChannel().complete();
+                logger.info("Cleaning session {}", entry.getValue().getTabId());
             }
             return abandoned;
         });

@@ -77,6 +77,7 @@ public class TradesScreen extends BaseScreen {
 
     public ServerResponse openBuyTicket(ServerRequest request) {
         tradeTicketPopup.setDirection(TradeDirection.BUY);
+        tradeTicketPopup.setVisible(true);
         var channel = sessionRegistry.getSession(request).getClientChannel();
         channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
         return ServerResponse.ok().build();
@@ -84,6 +85,7 @@ public class TradesScreen extends BaseScreen {
 
     public ServerResponse openSellTicket(ServerRequest request) {
         tradeTicketPopup.setDirection(TradeDirection.SELL);
+        tradeTicketPopup.setVisible(true);
         var channel = sessionRegistry.getSession(request).getClientChannel();
         channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
         return ServerResponse.ok().build();

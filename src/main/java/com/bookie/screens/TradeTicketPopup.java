@@ -26,6 +26,7 @@ import static com.bookie.infra.TemplatingEngine.format;
 public class TradeTicketPopup extends BaseScreen {
 
     private TradeDirection direction = TradeDirection.BUY;
+    private boolean visible;
 
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
@@ -45,7 +46,16 @@ public class TradeTicketPopup extends BaseScreen {
         this.direction = direction;
     }
 
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
     public ServerResponse onCancel(ServerRequest request)  {
+        return closePopup();
+    }
+
+    private ServerResponse closePopup() {
+        this.visible = false;
         return removeFragment("#popup");
     }
 
@@ -57,7 +67,7 @@ public class TradeTicketPopup extends BaseScreen {
     public ServerResponse onBookTrade(ServerRequest request) throws ServletException, IOException {
         var ticket = request.body(TradeTicket.class);
         bookTicket(ticket);
-        return removeFragment("#popup");
+        return closePopup();
     }
 
     private void handleInput(TradeTicket ticket, ClientChannel channel) {
@@ -66,7 +76,9 @@ public class TradeTicketPopup extends BaseScreen {
         pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity())
                 .thenAccept(accrued -> {
                     ticket.setAccruedInterest(accrued);
-                    channel.updateFragment(this.render(ticket));
+                    if(this.visible) {
+                        channel.updateFragment(this.render(ticket));
+                    }
                     channel.complete();
                 });
     }

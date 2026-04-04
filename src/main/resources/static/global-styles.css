@@ -95,6 +95,9 @@ tbody tr:nth-child(even) {
     background-color: #112236;
     border-bottom: 1px solid #1e3d5c;
     margin-bottom: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .toolbar-title {

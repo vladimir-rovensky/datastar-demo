@@ -1,3 +1,4 @@
 * Style management - state on the client (TradeTicketPopup) vs state on the server.
 
 * Possible DataStar bug in data-indicator?
+* Had to monkey patch fetch to auto-include header

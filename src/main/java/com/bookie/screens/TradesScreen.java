@@ -17,6 +17,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
+import static com.bookie.infra.TemplatingEngine.format;
 import static com.bookie.screens.Shell.shell;
 
 @Configuration
@@ -89,7 +90,7 @@ public class TradesScreen extends BaseScreen {
 
     //language=HTML
     private String getContent() {
-        return """
+        return format("""
                     <div id="trades-screen" class="trades-screen">
                     <div class="toolbar">
                         <button class="btn-buy" data-on:click="@post('/trades/buy')">B</button>
@@ -110,32 +111,39 @@ public class TradesScreen extends BaseScreen {
                             </tr>
                         </thead>
                         <tbody>
-                        %s
+                        ${rows}
                         </tbody>
                     </table>
                     </div>
-                """.formatted(getTradeRows());
+                """,
+                "rows", getTradeRows());
     }
 
     //language=HTML
     private String getTradeRows() {
         return this.trades.reversed().stream()
-                .map(t -> """
+                .map(t -> format("""
                         <tr>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
-                            <td>%s</td>
+                            <td>${id}</td>
+                            <td>${cusip}</td>
+                            <td>${direction}</td>
+                            <td>${quantity}</td>
+                            <td>${tradeDate}</td>
+                            <td>${settleDate}</td>
+                            <td>${accruedInterest}</td>
+                            <td>${book}</td>
+                            <td>${counterparty}</td>
                         </tr>
-                        """.formatted(
-                        t.getId(), t.getCusip(), t.getDirection(),
-                        usd(t.getQuantity()), t.getTradeDate(), t.getSettleDate(),
-                        usd(t.getAccruedInterest()), t.getBook(), t.getCounterparty()))
+                        """,
+                        "id", t.getId(),
+                        "cusip", t.getCusip(),
+                        "direction", t.getDirection(),
+                        "quantity", usd(t.getQuantity()),
+                        "tradeDate", t.getTradeDate(),
+                        "settleDate", t.getSettleDate(),
+                        "accruedInterest", usd(t.getAccruedInterest()),
+                        "book", t.getBook(),
+                        "counterparty", t.getCounterparty()))
                 .reduce("", String::concat);
     }
 

@@ -32,6 +32,7 @@ public class Shell {
                 <head>
                     <meta charset="UTF-8">
                     <title>Bookie - ${title}</title>
+                    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
                     <script>
                         const _fetch = window.fetch;

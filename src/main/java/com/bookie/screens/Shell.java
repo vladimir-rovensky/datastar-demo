@@ -35,6 +35,7 @@ public class Shell {
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
                     <script>
+                    //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this. 
                         const _fetch = window.fetch;
                         window.fetch = (url, opts = {}) => {
                             if (opts.headers?.['Datastar-Request']) {

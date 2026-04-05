@@ -28,7 +28,6 @@ public class TradesScreen extends BaseScreen {
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
     private final BondRepository bondRepository;
-    private final MessageBus messageBus;
 
     private List<Trade> trades;
     private TradeTicketPopup tradeTicketPopup;
@@ -44,7 +43,6 @@ public class TradesScreen extends BaseScreen {
         this.referenceDataRepository = referenceDataRepository;
         this.pricingService = pricingService;
         this.bondRepository = bondRepository;
-        this.messageBus = messageBus;
 
         this.unsubscribeFromTradeBooked = messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
         this.unsubscribeFromTradeModified = messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified);

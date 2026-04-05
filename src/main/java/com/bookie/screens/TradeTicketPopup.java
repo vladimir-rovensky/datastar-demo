@@ -21,6 +21,7 @@ import static com.bookie.components.FormField.formField;
 import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
+import static com.bookie.components.Popup.popup;
 import static com.bookie.infra.Response.removeFragment;
 import static com.bookie.infra.Response.sse;
 import static com.bookie.infra.TemplatingEngine.format;
@@ -96,48 +97,20 @@ public class TradeTicketPopup {
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
         var tradeIdSignal = isModify ? ticket.getTradeId().toString() : "null";
 
-        return format("""
-                <div id="popup" class="popup-overlay" data-signals="{tradeId: ${tradeIdSignal}, accruedInterest: ${accruedInterest}}">
-                    <div class="popup">
-                        <div class="popup-title">${title}</div>
-                        <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
-                            ${cusip}
-                            ${book}
-                            ${type}
-                            ${counterparty}
-                            ${quantity}
-                            ${accruedInterestField}
-                            ${tradeDate}
-                            ${settleDate}
-                        </div>
-                        <div class="popup-actions">
-                            <button class="${btnClass}" data-on:click="@post('/trades/book')">${btnLabel}</button>
-                            <button data-on:click="@post('/trades/cancel')">Cancel</button>
-                        </div>
-                    </div>
-                    <script type="module">
-                        const popup = document.getElementById('popup').querySelector('.popup');
-                        const title = popup.querySelector('.popup-title');
-                        let position = {dx: 0, dy: 0};
-                        popup.style.transform = `translate(${position.dx}px,${position.dy}px)`;
-                        title.style.cursor = 'move';
-                        title.addEventListener('pointerdown', e => {
-                            e.currentTarget.setPointerCapture(e.pointerId);
-                            const onMove = e => {
-                                position.dx += e.movementX;
-                                position.dy += e.movementY;
-                                popup.style.transform = `translate(${position.dx}px,${position.dy}px)`;
-                            };
-                            title.addEventListener('pointermove', onMove);
-                            title.addEventListener('pointerup', () => title.removeEventListener('pointermove', onMove), {once: true});
-                        });
-                    </script>
+        var content = format("""
+                <div class="form-fields" data-signals="{tradeId: ${tradeIdSignal}, accruedInterest: ${accruedInterest}}" data-indicator:_fetching data-on:change="@post('/trades/input')">
+                    ${cusip}
+                    ${book}
+                    ${type}
+                    ${counterparty}
+                    ${quantity}
+                    ${accruedInterestField}
+                    ${tradeDate}
+                    ${settleDate}
                 </div>
                 """,
                 "tradeIdSignal", tradeIdSignal,
-                "title", title,
-                "btnClass", btnClass,
-                "btnLabel", btnLabel,
+                "accruedInterest", ticket.getAccruedInterest(),
 
                 "cusip", formField("CUSIP")
                         .withInput(textInput("cusip", ticket.getCusip()))
@@ -156,7 +129,6 @@ public class TradeTicketPopup {
                         .withInput(numberInput("quantity", ticket.getQuantity()))
                         .withError(validateQuantity(ticket.getQuantity())),
 
-                "accruedInterest", ticket.getAccruedInterest(),
                 "accruedInterestField", formField("Accrued Interest ($)")
                         .withInput(numberInput("accruedInterest", ticket.getAccruedInterest())
                                 .withLoadIndicator("_fetching")
@@ -168,6 +140,19 @@ public class TradeTicketPopup {
 
                 "settleDate", formField("Settle Date")
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
+
+        var actions = format("""
+                <button class="${btnClass}" data-on:click="@post('/trades/book')">${btnLabel}</button>
+                <button data-on:click="@post('/trades/cancel')">Cancel</button>
+                """,
+                "btnClass", btnClass,
+                "btnLabel", btnLabel);
+
+        return popup()
+                .withTitle(title)
+                .withContent(content)
+                .withActions(actions)
+                .render();
     }
 
     private void bookTicket(TradeTicket ticket) {

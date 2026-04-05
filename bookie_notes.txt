@@ -6,3 +6,4 @@
       - Settings → Build, Execution, Deployment → Compiler → enable "Build project automatically"
       - Settings → Advanced Settings → enable "Allow auto-make to start even if developed application is currently running"
 * Clearing signals on popup hide - expected signals to auto-clear when their defining element is removed - not the case.
+* Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);

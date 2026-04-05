@@ -3,8 +3,10 @@ package com.bookie.screens;
 import com.bookie.components.Popup;
 import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeRepository;
+import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.infra.TemplatingEngine;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +20,6 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
-import com.bookie.infra.EscapedHtml;
-import com.bookie.infra.TemplatingEngine;
 import static com.bookie.infra.Response.html;
 
 @Configuration

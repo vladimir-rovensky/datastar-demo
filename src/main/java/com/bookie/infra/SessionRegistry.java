@@ -58,6 +58,7 @@ public class SessionRegistry implements SmartLifecycle {
 
     @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
     public synchronized void cleanup() {
+        sessions.values().forEach(session -> session.getClientChannel().heartbeat());
         sessions.entrySet().removeIf(entry -> {
             var abandoned = entry.getValue().isAbandoned();
             if (abandoned) {

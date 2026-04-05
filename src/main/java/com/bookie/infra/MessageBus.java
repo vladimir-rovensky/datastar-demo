@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 @Component
@@ -22,16 +23,14 @@ public class MessageBus {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> void subscribe(Class<T> eventType, Consumer<T> handler) {
+    public <T> Runnable subscribe(Class<T> eventType, Consumer<T> handler) {
         getConsumersFor(eventType)
                 .add((Consumer<Object>) handler);
-    }
 
-    public <T> void unsubscribe(Class<T> eventType, Consumer<T> handler) {
-        getConsumersFor(eventType).remove(handler);
+        return () -> getConsumersFor(eventType).remove(handler);
     }
 
     private <T> List<Consumer<Object>> getConsumersFor(Class<T> eventType) {
-        return subscribers.computeIfAbsent(eventType, k -> new ArrayList<>());
+        return subscribers.computeIfAbsent(eventType, _ -> new ArrayList<>());
     }
 }

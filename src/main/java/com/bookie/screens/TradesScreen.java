@@ -30,6 +30,7 @@ public class TradesScreen extends BaseScreen {
 
     private List<Trade> trades;
     private TradeTicketPopup tradeTicketPopup;
+    private final Runnable unsubscribeFromTradeBooked;
 
     public TradesScreen(TradeRepository tradeRepository, ReferenceDataRepository referenceDataRepository,
                         PricingService pricingService, BondRepository bondRepository,
@@ -42,12 +43,12 @@ public class TradesScreen extends BaseScreen {
         this.bondRepository = bondRepository;
         this.messageBus = messageBus;
 
-        messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
+        this.unsubscribeFromTradeBooked = messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
     }
 
     @Override
     public void dispose() {
-        messageBus.unsubscribe(TradeBookedEvent.class, this::onTradeBooked);
+        this.unsubscribeFromTradeBooked.run();
     }
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {

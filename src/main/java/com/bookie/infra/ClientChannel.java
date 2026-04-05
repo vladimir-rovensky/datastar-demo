@@ -62,6 +62,15 @@ public class ClientChannel {
         }
     }
 
+    public synchronized void heartbeat() {
+        if (!alive.get() || sseBuilder == null) return;
+        try {
+             sseBuilder.comment("heartbeat").send();
+        } catch (Exception e) {
+            alive.set(false);
+        }
+    }
+
     public ClientChannel updateFragment(String fragment) {
         return updateFragment(fragment, null, null);
     }

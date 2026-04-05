@@ -1,12 +1,10 @@
 package com.bookie.screens;
 
+import com.bookie.components.DataGrid;
 import com.bookie.components.Popup;
 import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeRepository;
-import com.bookie.infra.EscapedHtml;
-import com.bookie.infra.MessageBus;
-import com.bookie.infra.SessionRegistry;
-import com.bookie.infra.TemplatingEngine;
+import com.bookie.infra.*;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import org.springframework.context.annotation.Configuration;
@@ -15,12 +13,11 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
-import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 
-import static com.bookie.infra.Response.html;
+import static com.bookie.components.DataGrid.column;
+import static com.bookie.infra.Format.usd;
+import static com.bookie.infra.TemplatingEngine.html;
 
 @Configuration
 public class TradesScreen extends BaseScreen {
@@ -64,7 +61,7 @@ public class TradesScreen extends BaseScreen {
     public ServerResponse initialRender() {
         this.trades = tradeRepository.getAllTrades();
 
-        return html(render());
+        return Response.html(render());
     }
 
     public ServerResponse openModifyTicket(ServerRequest request) {
@@ -73,59 +70,28 @@ public class TradesScreen extends BaseScreen {
         return Popup.open(tradeTicketPopup.render(trade));
     }
 
-
     @Override
     protected EscapedHtml getContent() {
-        return TemplatingEngine.html("""
+        var grid = DataGrid.withColumns(
+                        column("ID", Trade::getId),
+                        column("CUSIP", Trade::getCusip),
+                        column("Book", Trade::getBook),
+                        column("Type", Trade::getDirection),
+                        column("Counterparty", Trade::getCounterparty),
+                        column("Quantity", t -> usd(t.getQuantity())),
+                        column("Accrued Interest", t -> usd(t.getAccruedInterest())),
+                        column("Trade Date", Trade::getTradeDate),
+                        column("Settle Date", Trade::getSettleDate))
+                .onRowDoubleClick(t -> "@post('/trades/modify/" + t.getId() + "')")
+                .withRows(this.trades.reversed())
+                .render();
+
+        return html("""
                     <div id="trades-screen" class="trades-screen">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>CUSIP</th>
-                                <th>Book</th>
-                                <th>Type</th>
-                                <th>Counterparty</th>
-                                <th>Quantity</th>
-                                <th>Accrued Interest</th>
-                                <th>Trade Date</th>
-                                <th>Settle Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @{rows}
-                        </tbody>
-                    </table>
+                    @{grid}
                     </div>
                 """,
-                "rows", getTradeRows());
-    }
-
-    private EscapedHtml getTradeRows() {
-        return EscapedHtml.html(this.trades.reversed().stream()
-                .map(t -> TemplatingEngine.html("""
-                        <tr data-on:dblclick="@post('/trades/modify/${id}')">
-                            <td>${id}</td>
-                            <td>${cusip}</td>
-                            <td>${book}</td>
-                            <td>${direction}</td>
-                            <td>${counterparty}</td>
-                            <td>${quantity}</td>
-                            <td>${accruedInterest}</td>
-                            <td>${tradeDate}</td>
-                            <td>${settleDate}</td>
-                        </tr>
-                        """,
-                        "id", t.getId(),
-                        "cusip", t.getCusip(),
-                        "direction", t.getDirection(),
-                        "quantity", usd(t.getQuantity()),
-                        "tradeDate", t.getTradeDate(),
-                        "settleDate", t.getSettleDate(),
-                        "accruedInterest", usd(t.getAccruedInterest()),
-                        "book", t.getBook(),
-                        "counterparty", t.getCounterparty()).html())
-                .reduce("", String::concat));
+                "grid", grid);
     }
 
     private void onTradeBooked(TradeBookedEvent event) {
@@ -136,10 +102,6 @@ public class TradesScreen extends BaseScreen {
     private void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
         reRender();
-    }
-
-    private static String usd(BigDecimal amount) {
-        return NumberFormat.getCurrencyInstance(Locale.US).format(amount);
     }
 
 }

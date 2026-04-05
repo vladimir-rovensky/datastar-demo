@@ -1,8 +1,11 @@
+Open
 * Style management - state on the client (TradeTicketPopup) vs state on the server.
 * Possible DataStar bug in data-indicator?
-* Had to monkey patch fetch to auto-include header
-* Live reload - both server restart and hot reload work
-* Editor support - language injections
-* XSS protection
+* Had to monkey patch fetch to auto-include header.
 * Clearing signals on popup hide - expected signals to auto-clear when their defining element is removed - not the case.
 * Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);
+
+Solved
+* Live reload - both server restart and hot reload work.
+* Editor support - language injections
+* XSS protection

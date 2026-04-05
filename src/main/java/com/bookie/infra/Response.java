@@ -3,6 +3,7 @@ package com.bookie.infra;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class Response {
@@ -28,6 +29,10 @@ public class Response {
             channel.connect(b);
             handler.accept(channel);
         });
+    }
+
+    public static ServerResponse patchSignals(Map<String, Object> signals) {
+        return sse(channel -> channel.patchSignals(signals).complete());
     }
 
     public static ServerResponse html(String content) {

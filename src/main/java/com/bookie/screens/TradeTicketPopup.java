@@ -1,5 +1,6 @@
 package com.bookie.screens;
 
+import com.bookie.components.Popup;
 import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.ReferenceDataRepository;
 import com.bookie.domain.entity.TradeDirection;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.io.IOException;
+import java.util.Map;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -22,15 +24,12 @@ import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
 import static com.bookie.components.Popup.popup;
-import static com.bookie.infra.Response.removeFragment;
+import static com.bookie.infra.Response.patchSignals;
 import static com.bookie.infra.Response.sse;
 import static com.bookie.infra.TemplatingEngine.format;
 
 @Component
 public class TradeTicketPopup {
-
-    private TradeDirection direction = TradeDirection.BUY;
-    private boolean visible;
 
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
@@ -44,16 +43,10 @@ public class TradeTicketPopup {
         this.pricingService = pricingService;
         this.bondRepository = bondRepository;
         this.tradeRepository = tradeRepository;
-        this.visible = true;
-    }
-
-    public void setDirection(TradeDirection direction) {
-        this.direction = direction;
     }
 
     public ServerResponse close() {
-        this.visible = false;
-        return removeFragment("#popup");
+        return Popup.open();
     }
 
     public ServerResponse onInput(ServerRequest request) throws ServletException, IOException {
@@ -70,16 +63,13 @@ public class TradeTicketPopup {
     private void handleInput(TradeTicket ticket, ClientChannel channel) {
         channel.updateFragment(this.render(ticket));
 
-        //We're in a virtual thread, blocking here is ok.
         var accrued = pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity());
         ticket.setAccruedInterest(accrued);
-        if (this.visible) {
-            channel.updateFragment(this.render(ticket));
-        }
+        channel.updateFragment(this.render(ticket));
         channel.complete();
     }
 
-    public String render() {
+    public String render(TradeDirection direction) {
         var ticket = new TradeTicket();
         ticket.setDirection(direction);
         ticket.setTradeDate(LocalDate.now());

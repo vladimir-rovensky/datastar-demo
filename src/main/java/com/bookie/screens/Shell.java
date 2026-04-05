@@ -48,6 +48,7 @@ public class Shell {
                 </head>
                 <body data-init="@post('/updates', {retry: 'error'})">
                 ${content}
+                <div id="popup" data-signals__ifmissing="{popupVisible: false}"/>
                 </body>
                 </html>
                 """,

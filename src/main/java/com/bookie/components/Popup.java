@@ -1,5 +1,10 @@
 package com.bookie.components;
 
+import org.springframework.web.servlet.function.ServerResponse;
+
+import java.util.Map;
+
+import static com.bookie.infra.Response.patchSignals;
 import static com.bookie.infra.TemplatingEngine.format;
 
 public class Popup {
@@ -30,7 +35,7 @@ public class Popup {
     //language=HTML
     public String render() {
         return format("""
-                <div id="popup" class="popup-overlay">
+                <div id="popup" class="popup-overlay" data-show="$popupVisible">
                     <div class="popup"
                          data-signals:_dx__ifmissing="0"
                          data-signals:_dy__ifmissing="0"
@@ -57,5 +62,13 @@ public class Popup {
     @Override
     public String toString() {
         return render();
+    }
+
+    public static ServerResponse open() {
+        return patchSignals(Map.of("popupVisible", true));
+    }
+
+    public static ServerResponse close() {
+        return patchSignals(Map.of("popupVisible", false));
     }
 }

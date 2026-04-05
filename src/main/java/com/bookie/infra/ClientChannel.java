@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientChannel {
@@ -81,6 +82,30 @@ public class ClientChannel {
 
     public ClientChannel removeFragment(String selector) {
         return updateFragment("", selector, "remove");
+    }
+
+    public ClientChannel patchSignals(Map<String, Object> signals) {
+        if (!alive.get()) return this;
+        synchronized (this) {
+            try {
+                sseBuilder.event("datastar-patch-signals");
+                sseBuilder.data("signals " + toJson(signals));
+            } catch (Exception e) {
+                alive.set(false);
+            }
+        }
+        return this;
+    }
+
+    private static String toJson(Map<String, Object> map) {
+        var sb = new StringBuilder("{");
+        map.forEach((k, v) -> {
+            if (sb.length() > 1) sb.append(",");
+            sb.append("\"").append(k).append("\":");
+            if (v instanceof String s) sb.append("\"").append(s).append("\"");
+            else sb.append(v);
+        });
+        return sb.append("}").toString();
     }
 
     public ClientChannel updateFragment(String fragment, String selector, String mode) {

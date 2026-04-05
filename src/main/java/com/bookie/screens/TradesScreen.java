@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.bookie.infra.Response.html;
 import static com.bookie.infra.TemplatingEngine.format;
@@ -92,15 +93,13 @@ public class TradesScreen extends BaseScreen {
 
     public ServerResponse openBuyTicket() {
         tradeTicketPopup = createTicketPopup();
-        tradeTicketPopup.setDirection(TradeDirection.BUY);
-        showTradeTicket(tradeTicketPopup.render());
+        showTradeTicket(tradeTicketPopup.render(TradeDirection.BUY));
         return ServerResponse.ok().build();
     }
 
     public ServerResponse openSellTicket() {
         tradeTicketPopup = createTicketPopup();
-        tradeTicketPopup.setDirection(TradeDirection.SELL);
-        showTradeTicket(tradeTicketPopup.render());
+        showTradeTicket(tradeTicketPopup.render(TradeDirection.SELL));
         return ServerResponse.ok().build();
     }
 
@@ -194,7 +193,9 @@ public class TradesScreen extends BaseScreen {
     }
 
     private void showTradeTicket(String content) {
-        getUpdateChannel().appendFragment(content, "#trades-screen");
+        getUpdateChannel()
+                .updateFragment(content)
+                .patchSignals(Map.of("popupVisible", true));
     }
 
     private TradeTicketPopup getTradeTicketPopup() {

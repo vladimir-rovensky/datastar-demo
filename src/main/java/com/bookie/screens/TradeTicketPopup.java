@@ -88,16 +88,18 @@ public class TradeTicketPopup {
     }
 
     //language=HTML
-    private String render(TradeTicket ticket) {
-        var isSell = ticket.getDirection() == TradeDirection.SELL;
-        var btnClass = isSell ? "btn-sell" : "btn-buy";
-        var btnLabel = isSell ? "Sell" : "Buy";
+    public String render(TradeTicket ticket) {
+        var isModify = ticket.getTradeId() != null;
+        var btnClass = ticket.getDirection() == TradeDirection.BUY ? "btn-buy" : "btn-sell";
+        var btnLabel = isModify ? "OK" : ticket.getDirection().getLabel();
+        var title = isModify ? "Modify Trade" : "Book a Trade";
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
+        var tradeIdSignal = isModify ? ticket.getTradeId().toString() : "null";
 
         return format("""
-                <div id="popup" class="popup-overlay">
+                <div id="popup" class="popup-overlay" data-signals="{tradeId: ${tradeIdSignal}, accruedInterest: ${accruedInterest}}">
                     <div class="popup">
-                        <div class="popup-title">Book a Trade</div>
+                        <div class="popup-title">${title}</div>
                         <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
                             ${cusip}
                             ${book}
@@ -115,6 +117,8 @@ public class TradeTicketPopup {
                     </div>
                 </div>
                 """,
+                "tradeIdSignal", tradeIdSignal,
+                "title", title,
                 "btnClass", btnClass,
                 "btnLabel", btnLabel,
 
@@ -135,6 +139,7 @@ public class TradeTicketPopup {
                         .withInput(numberInput("quantity", ticket.getQuantity()))
                         .withError(validateQuantity(ticket.getQuantity())),
 
+                "accruedInterest", ticket.getAccruedInterest(),
                 "accruedInterestField", formField("Accrued Interest ($)")
                         .withInput(numberInput("accruedInterest", ticket.getAccruedInterest())
                                 .withLoadIndicator("_fetching")
@@ -153,7 +158,12 @@ public class TradeTicketPopup {
             throw new RuntimeException("Tried to book an invalid ticket.");
         }
 
-        tradeRepository.bookTrade(ticket.toTrade());
+        var trade = ticket.toTrade();
+        if (trade.getId() != null) {
+            tradeRepository.modifyTrade(trade);
+        } else {
+            tradeRepository.bookTrade(trade);
+        }
     }
 
     private boolean isValid(TradeTicket ticket) {

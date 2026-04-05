@@ -2,6 +2,7 @@ package com.bookie.domain.entity;
 
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.events.TradeBookedEvent;
+import com.bookie.infra.events.TradeModifiedEvent;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -36,6 +37,14 @@ public class TradeRepository {
 
     public Trade findById(Long id) {
         return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    public Trade modifyTrade(Trade trade) {
+        trades.removeIf(t -> t.getId().equals(trade.getId()));
+        trade.setExecutionTime(new Date());
+        trades.add(trade);
+        messageBus.publish(new TradeModifiedEvent(trade));
+        return trade;
     }
 
     public Trade bookTrade(Trade trade) {

@@ -5,9 +5,11 @@ import com.bookie.domain.service.PricingService;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.infra.events.TradeBookedEvent;
+import com.bookie.infra.events.TradeModifiedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.math.BigDecimal;
@@ -31,6 +33,7 @@ public class TradesScreen extends BaseScreen {
     private List<Trade> trades;
     private TradeTicketPopup tradeTicketPopup;
     private final Runnable unsubscribeFromTradeBooked;
+    private final Runnable unsubscribeFromTradeModified;
 
     public TradesScreen(TradeRepository tradeRepository, ReferenceDataRepository referenceDataRepository,
                         PricingService pricingService, BondRepository bondRepository,
@@ -44,11 +47,13 @@ public class TradesScreen extends BaseScreen {
         this.messageBus = messageBus;
 
         this.unsubscribeFromTradeBooked = messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
+        this.unsubscribeFromTradeModified = messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified);
     }
 
     @Override
     public void dispose() {
         this.unsubscribeFromTradeBooked.run();
+        this.unsubscribeFromTradeModified.run();
     }
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
@@ -63,6 +68,9 @@ public class TradesScreen extends BaseScreen {
                 .POST("sell", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
                         .openSellTicket())
+                .POST("modify/{id}", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .openModifyTicket(request))
                 .POST("cancel", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
                         .getTradeTicketPopup()
@@ -85,17 +93,29 @@ public class TradesScreen extends BaseScreen {
     }
 
     public ServerResponse openBuyTicket() {
-        tradeTicketPopup = new TradeTicketPopup(referenceDataRepository, pricingService, bondRepository, tradeRepository);
+        tradeTicketPopup = createTicketPopup();
         tradeTicketPopup.setDirection(TradeDirection.BUY);
-        showTradeTicket(tradeTicketPopup);
+        showTradeTicket(tradeTicketPopup.render());
         return ServerResponse.ok().build();
     }
 
     public ServerResponse openSellTicket() {
-        tradeTicketPopup = new TradeTicketPopup(referenceDataRepository, pricingService, bondRepository, tradeRepository);
+        tradeTicketPopup = createTicketPopup();
         tradeTicketPopup.setDirection(TradeDirection.SELL);
-        showTradeTicket(tradeTicketPopup);
+        showTradeTicket(tradeTicketPopup.render());
         return ServerResponse.ok().build();
+    }
+
+    public ServerResponse openModifyTicket(ServerRequest request) {
+        var tradeID = Long.parseLong(request.pathVariable("id"));
+        var trade = tradeRepository.findById(tradeID);
+        tradeTicketPopup = createTicketPopup();
+        showTradeTicket(tradeTicketPopup.render(TradeTicket.fromTrade(trade)));
+        return ServerResponse.ok().build();
+    }
+
+    private TradeTicketPopup createTicketPopup() {
+        return new TradeTicketPopup(referenceDataRepository, pricingService, bondRepository, tradeRepository);
     }
 
     public String render() {
@@ -141,7 +161,7 @@ public class TradesScreen extends BaseScreen {
     private String getTradeRows() {
         return this.trades.reversed().stream()
                 .map(t -> format("""
-                        <tr>
+                        <tr data-on:dblclick="@post('/trades/modify/${id}')">
                             <td>${id}</td>
                             <td>${cusip}</td>
                             <td>${book}</td>
@@ -170,8 +190,13 @@ public class TradesScreen extends BaseScreen {
         getUpdateChannel().updateFragment(this.render());
     }
 
-    private void showTradeTicket(TradeTicketPopup ticket) {
-        getUpdateChannel().appendFragment(ticket.render(), "#trades-screen");
+    private void onTradeModified(TradeModifiedEvent event) {
+        this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
+        getUpdateChannel().updateFragment(this.render());
+    }
+
+    private void showTradeTicket(String content) {
+        getUpdateChannel().appendFragment(content, "#trades-screen");
     }
 
     private TradeTicketPopup getTradeTicketPopup() {

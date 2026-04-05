@@ -9,6 +9,7 @@ import java.time.LocalDate;
 public class TradeTicket {
 
     private String tabId;
+    private Long tradeId;
     private TradeDirection direction;
     private String cusip;
     private String book;
@@ -18,8 +19,23 @@ public class TradeTicket {
     private LocalDate settleDate;
     private String counterparty;
 
+    public static TradeTicket fromTrade(Trade trade) {
+        var ticket = new TradeTicket();
+        ticket.setTradeId(trade.getId());
+        ticket.setDirection(trade.getDirection());
+        ticket.setCusip(trade.getCusip());
+        ticket.setBook(trade.getBook());
+        ticket.setQuantity(trade.getQuantity());
+        ticket.setAccruedInterest(trade.getAccruedInterest());
+        ticket.setTradeDate(trade.getTradeDate());
+        ticket.setSettleDate(trade.getSettleDate());
+        ticket.setCounterparty(trade.getCounterparty());
+        return ticket;
+    }
+
     public Trade toTrade() {
         Trade trade = new Trade();
+        trade.setId(tradeId);
         trade.setCusip(cusip);
         trade.setDirection(direction);
         trade.setQuantity(quantity);
@@ -38,6 +54,9 @@ public class TradeTicket {
     public void setTabId(String tabId) {
         this.tabId = tabId;
     }
+
+    public Long getTradeId() { return tradeId; }
+    public void setTradeId(Long tradeId) { this.tradeId = tradeId; }
 
     public String getCusip() { return cusip; }
     public void setCusip(String cusip) { this.cusip = cusip; }

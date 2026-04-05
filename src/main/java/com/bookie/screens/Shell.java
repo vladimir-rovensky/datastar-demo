@@ -59,6 +59,7 @@ public class Shell {
                 </div>
                 ${content}
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}"/>
+                <script id="script-runner" />
                 </body>
                 </html>
                 """,

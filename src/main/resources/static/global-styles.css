@@ -79,7 +79,8 @@ td {
     border-bottom: 1px solid #152b42;
 }
 
-tbody tr:hover {
+tbody tr:hover,
+tbody tr:nth-child(even):hover {
     background-color: #152b42;
 }
 

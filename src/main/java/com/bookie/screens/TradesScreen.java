@@ -2,7 +2,6 @@ package com.bookie.screens;
 
 import com.bookie.components.Popup;
 import com.bookie.domain.entity.*;
-import com.bookie.domain.service.PricingService;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.infra.events.TradeBookedEvent;
@@ -20,7 +19,6 @@ import java.util.Locale;
 
 import static com.bookie.infra.Response.html;
 import static com.bookie.infra.TemplatingEngine.format;
-import static com.bookie.screens.Shell.shell;
 
 @Configuration
 public class TradesScreen extends BaseScreen {
@@ -34,7 +32,7 @@ public class TradesScreen extends BaseScreen {
 
     public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
                         SessionRegistry sessionRegistry, MessageBus messageBus) {
-        super(sessionRegistry);
+        super("Trades", sessionRegistry);
 
         this.tradeRepository = tradeRepository;
         this.tradeTicketPopup = tradeTicketPopup;
@@ -99,15 +97,10 @@ public class TradesScreen extends BaseScreen {
         return Popup.open(tradeTicketPopup.render(trade));
     }
 
-    public String render() {
-        return shell(this.getTabID())
-                .withTitle("Trades")
-                .withContent(getContent())
-                .render();
-    }
 
     //language=HTML
-    private String getContent() {
+    @Override
+    protected String getContent() {
         return format("""
                     <div id="trades-screen" class="trades-screen">
                     <div class="toolbar">

@@ -56,6 +56,15 @@ public class SessionRegistry implements SmartLifecycle {
         return session;
     }
 
+    public synchronized void reRenderAll() {
+        sessions.values().forEach(ClientSession::reRenderScreen);
+    }
+
+    public synchronized void reloadStylesheets() {
+        sessions.values().forEach(s -> s.getClientChannel().executeScript(
+                "document.querySelectorAll('link[rel=\"stylesheet\"]').forEach(l => l.href = l.href.split('?')[0] + '?' + Date.now())"));
+    }
+
     @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
     public synchronized void cleanup() {
         sessions.values().forEach(session -> session.getClientChannel().heartbeat());

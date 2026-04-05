@@ -40,6 +40,10 @@ public abstract class BaseScreen {
         return TradeTicketPopup.getToolbarButtons();
     }
 
+    public void reRender() {
+        getUpdateChannel().updateFragment(this.render());
+    }
+
     protected ClientChannel getUpdateChannel() {
         return this.sessionRegistry.getSession(tabID)
                 .getClientChannel();

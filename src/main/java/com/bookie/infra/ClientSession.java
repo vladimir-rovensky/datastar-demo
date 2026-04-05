@@ -39,4 +39,8 @@ public class ClientSession {
     public <T> T getScreen(Class<T> clazz) {
         return clazz.cast(screen);
     }
+
+    public void reRenderScreen() {
+        this.screen.reRender();
+    }
 }

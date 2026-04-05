@@ -131,12 +131,12 @@ public class TradesScreen extends BaseScreen {
 
     private void onTradeBooked(TradeBookedEvent event) {
         this.trades.add(event.getTrade());
-        getUpdateChannel().updateFragment(this.render());
+        reRender();
     }
 
     private void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
-        getUpdateChannel().updateFragment(this.render());
+        reRender();
     }
 
     private static String usd(BigDecimal amount) {

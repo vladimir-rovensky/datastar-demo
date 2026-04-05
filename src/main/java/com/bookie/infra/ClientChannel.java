@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ClientChannel {
 
     private ServerResponse.SseBuilder sseBuilder;
+    private final AtomicBoolean wasConnected = new AtomicBoolean(false);
     private final AtomicBoolean alive = new AtomicBoolean(false);
     private final String tabId;
 
@@ -26,6 +27,7 @@ public class ClientChannel {
     public synchronized void connect(ServerResponse.SseBuilder builder) {
         this.sseBuilder = builder;
         alive.set(true);
+        wasConnected.set(true);
 
         builder.onTimeout(() -> {
             logger.info("Timeout of channel {}", tabId);
@@ -50,6 +52,8 @@ public class ClientChannel {
         return alive.get();
     }
 
+    public boolean wasConnected() { return wasConnected.get(); }
+
     public synchronized void complete() {
         if (alive.getAndSet(false) && sseBuilder != null) {
             sseBuilder.complete();
@@ -70,6 +74,11 @@ public class ClientChannel {
         } catch (Exception e) {
             alive.set(false);
         }
+    }
+
+    public ClientChannel executeScript(String script) {
+        return removeFragment("#script-runner")
+                .appendFragment("<script id=\"script-runner\">" + script + "</script>", "body");
     }
 
     public ClientChannel updateFragment(String fragment) {

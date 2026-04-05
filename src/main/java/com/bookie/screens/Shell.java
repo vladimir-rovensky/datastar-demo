@@ -52,7 +52,7 @@ public class Shell {
                     </script>
                     <script type="module" src="/datastar.js"></script>
                 </head>
-                <body data-init="@post('/updates', {retry: 'error'})">
+                <body data-init="@post('/updates', {retry: 'error'})" data-tab-id='${tabId}'>
                 <div class="toolbar">
                     ${toolbarContent}
                     <span class="toolbar-title">${title}</span>

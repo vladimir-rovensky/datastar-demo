@@ -25,7 +25,7 @@ public abstract class BaseScreen {
         this.tabID = tabID;
     }
 
-    public void dispose() {};
+    public void dispose() {}
 
     public EscapedHtml render() {
         return shell(this.getTabID())

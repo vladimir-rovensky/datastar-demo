@@ -18,7 +18,6 @@ public abstract class BaseInput implements Renderable {
         return EscapedHtml.html(disabled ? "disabled" : "");
     }
 
-    public BaseInput withName(String name) { this.name = name; return this; }
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }
     public BaseInput withLoadIndicator(String signal) { this.loadIndicator = signal; return this; }
 

@@ -13,8 +13,6 @@ public class TextInput extends BaseInput {
         return input;
     }
 
-    public TextInput withValue(String value) { this.value = value; return this; }
-
     @Override
     public EscapedHtml render() {
         return html("""

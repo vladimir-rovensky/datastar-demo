@@ -1,6 +1,5 @@
 package com.bookie.infra;
 
-import com.bookie.infra.EscapedHtml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.function.ServerResponse;

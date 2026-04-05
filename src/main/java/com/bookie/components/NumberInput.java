@@ -13,8 +13,6 @@ public class NumberInput extends BaseInput {
         return input;
     }
 
-    public NumberInput withValue(Number value) { this.value = value; return this; }
-
     @Override
     public EscapedHtml render() {
         return html("""

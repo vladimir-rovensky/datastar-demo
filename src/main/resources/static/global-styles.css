@@ -37,7 +37,17 @@ button:hover {
     background-color: #254f7a;
 }
 button[disabled], button[disabled]:hover {
-    background-color: gray;
+    background-color: #0a1a2a;
+    color: #4a6070;
+    border-color: #1e3d5c;
+    cursor: default;
+}
+
+.btn-buy[disabled], .btn-buy[disabled]:hover,
+.btn-sell[disabled], .btn-sell[disabled]:hover {
+    background-color: #0a1a2a;
+    color: #4a6070;
+    border-color: #1e3d5c;
     cursor: default;
 }
 

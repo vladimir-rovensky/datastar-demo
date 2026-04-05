@@ -119,13 +119,13 @@ public class TradesScreen extends BaseScreen {
                             <tr>
                                 <th>ID</th>
                                 <th>CUSIP</th>
-                                <th>Direction</th>
+                                <th>Book</th>
+                                <th>Type</th>
+                                <th>Counterparty</th>
                                 <th>Quantity</th>
+                                <th>Accrued Interest</th>
                                 <th>Trade Date</th>
                                 <th>Settle Date</th>
-                                <th>Accrued Interest</th>
-                                <th>Book</th>
-                                <th>Counterparty</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -144,13 +144,13 @@ public class TradesScreen extends BaseScreen {
                         <tr>
                             <td>${id}</td>
                             <td>${cusip}</td>
+                            <td>${book}</td>
                             <td>${direction}</td>
+                            <td>${counterparty}</td>
                             <td>${quantity}</td>
+                            <td>${accruedInterest}</td>
                             <td>${tradeDate}</td>
                             <td>${settleDate}</td>
-                            <td>${accruedInterest}</td>
-                            <td>${book}</td>
-                            <td>${counterparty}</td>
                         </tr>
                         """,
                         "id", t.getId(),

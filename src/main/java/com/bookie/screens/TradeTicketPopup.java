@@ -14,6 +14,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static com.bookie.components.DateInput.dateInput;
 import static com.bookie.components.FormField.formField;
@@ -89,22 +90,23 @@ public class TradeTicketPopup {
     //language=HTML
     private String render(TradeTicket ticket) {
         var isSell = ticket.getDirection() == TradeDirection.SELL;
-        var title = isSell ? "Sell Ticket" : "Buy Ticket";
         var btnClass = isSell ? "btn-sell" : "btn-buy";
         var btnLabel = isSell ? "Sell" : "Buy";
+        var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
 
         return format("""
-                <div id="popup" class="popup-overlay" data-signals='{direction: "${direction}"}'>
+                <div id="popup" class="popup-overlay">
                     <div class="popup">
-                        <div class="popup-title">${title}</div>
+                        <div class="popup-title">Book a Trade</div>
                         <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
                             ${cusip}
                             ${book}
+                            ${type}
+                            ${counterparty}
                             ${quantity}
                             ${accruedInterestField}
                             ${tradeDate}
                             ${settleDate}
-                            ${counterparty}
                         </div>
                         <div class="popup-actions">
                             <button class="${btnClass}" data-on:click="@post('/trades/book')">${btnLabel}</button>
@@ -113,11 +115,8 @@ public class TradeTicketPopup {
                     </div>
                 </div>
                 """,
-                "direction", ticket.getDirection(),
-                "title", title,
                 "btnClass", btnClass,
                 "btnLabel", btnLabel,
-                "accruedInterest", ticket.getAccruedInterest(),
 
                 "cusip", formField("CUSIP")
                         .withInput(textInput("cusip", ticket.getCusip()))
@@ -125,6 +124,12 @@ public class TradeTicketPopup {
 
                 "book", formField("Book")
                         .withInput(selectInput("book", referenceDataRepository.getAllBooks(), ticket.getBook())),
+
+                "type", formField("Type")
+                        .withInput(selectInput("direction", List.of("BUY", "SELL"), directionName)),
+
+                "counterparty", formField("Counterparty")
+                        .withInput(selectInput("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty())),
 
                 "quantity", formField("Quantity ($)")
                         .withInput(numberInput("quantity", ticket.getQuantity()))
@@ -140,10 +145,7 @@ public class TradeTicketPopup {
                                 .withDisabled(true)),
 
                 "settleDate", formField("Settle Date")
-                        .withInput(dateInput("settleDate", ticket.getSettleDate())),
-
-                "counterparty", formField("Counterparty")
-                        .withInput(selectInput("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty())));
+                        .withInput(dateInput("settleDate", ticket.getSettleDate())));
     }
 
     private void bookTicket(TradeTicket ticket) {

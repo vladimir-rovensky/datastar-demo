@@ -64,6 +64,14 @@ public class TradeTicketPopup {
     }
 
     //language=HTML
+    public static String getToolbarButtons() {
+        return """
+                <button class="btn-buy" data-on:click="@post('/trades/buy')">B</button>
+                <button class="btn-sell" data-on:click="@post('/trades/sell')">S</button>
+                """;
+    }
+
+    //language=HTML
     public String render(Trade ticket) {
         var isModify = ticket.getId() != null;
         var btnClass = ticket.getDirection() == TradeDirection.BUY ? "btn-buy" : "btn-sell";

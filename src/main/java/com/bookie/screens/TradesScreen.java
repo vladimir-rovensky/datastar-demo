@@ -103,11 +103,6 @@ public class TradesScreen extends BaseScreen {
     protected String getContent() {
         return format("""
                     <div id="trades-screen" class="trades-screen">
-                    <div class="toolbar">
-                        <button class="btn-buy" data-on:click="@post('/trades/buy')">B</button>
-                        <button class="btn-sell" data-on:click="@post('/trades/sell')">S</button>
-                        <span class="toolbar-title">Trades</span>
-                    </div>
                     <table>
                         <thead>
                             <tr>

@@ -7,6 +7,7 @@ public class Shell {
     private String tabId = "";
     private String title = "";
     private String content = "";
+    private String toolbarContent = "";
 
     public static Shell shell(String tabId) {
         var shell = new Shell();
@@ -21,6 +22,11 @@ public class Shell {
 
     public Shell withContent(String content) {
         this.content = content;
+        return this;
+    }
+
+    public Shell withToolbar(String toolbarContent) {
+        this.toolbarContent = toolbarContent;
         return this;
     }
 
@@ -47,6 +53,10 @@ public class Shell {
                     <script type="module" src="/datastar.js"></script>
                 </head>
                 <body data-init="@post('/updates', {retry: 'error'})">
+                <div class="toolbar">
+                    ${toolbarContent}
+                    <span class="toolbar-title">${title}</span>
+                </div>
                 ${content}
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}"/>
                 </body>
@@ -54,6 +64,7 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
-                "content", content);
+                "content", content,
+                "toolbarContent", toolbarContent);
     }
 }

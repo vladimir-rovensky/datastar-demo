@@ -29,11 +29,16 @@ public abstract class BaseScreen {
     public String render() {
         return shell(this.getTabID())
                 .withTitle(title)
+                .withToolbar(getToolbarContent())
                 .withContent(getContent())
                 .render();
     }
 
     protected abstract String getContent();
+
+    protected String getToolbarContent() {
+        return TradeTicketPopup.getToolbarButtons();
+    }
 
     protected ClientChannel getUpdateChannel() {
         return this.sessionRegistry.getSession(tabID)

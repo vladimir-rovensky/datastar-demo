@@ -68,7 +68,8 @@ public class Popup {
     public static ServerResponse open(String content) {
         return sse(ch -> ch
                 .updateFragment(content)
-                .patchSignals(Map.of("popupVisible", true)));
+                .patchSignals(Map.of("popupVisible", true))
+                .complete());
     }
 
     public static ServerResponse close() {

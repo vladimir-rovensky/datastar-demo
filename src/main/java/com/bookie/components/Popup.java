@@ -37,7 +37,6 @@ public class Popup {
                          data-signals:_dragging__ifmissing="false"
                          data-style="{'transform': 'translate(' + $_dx + 'px,' + $_dy + 'px)'}">
                         <div class="popup-title"
-                             style="cursor: move"
                              data-on:pointerdown__prevent="$_dragging = true; el.setPointerCapture(evt.pointerId)"
                              data-on:pointermove="if ($_dragging) { $_dx += evt.movementX; $_dy += evt.movementY }"
                              data-on:pointerup="$_dragging = false">

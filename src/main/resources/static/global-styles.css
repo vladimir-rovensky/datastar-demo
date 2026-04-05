@@ -170,6 +170,10 @@ tbody tr:nth-child(even) {
     font-size: 1.1rem;
     font-weight: 600;
     color: #ffffff;
+    margin: -24px -24px 0 -24px;
+    padding: 16px 24px;
+    cursor: move;
+    border-bottom: 1px solid #1e3d5c;
 }
 
 .popup-actions {

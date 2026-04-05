@@ -1,7 +1,8 @@
 package com.bookie.screens;
 
 import com.bookie.components.Popup;
-import com.bookie.domain.entity.*;
+import com.bookie.domain.entity.Trade;
+import com.bookie.domain.entity.TradeRepository;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.infra.events.TradeBookedEvent;
@@ -24,7 +25,7 @@ import static com.bookie.infra.TemplatingEngine.format;
 public class TradesScreen extends BaseScreen {
 
     private final TradeRepository tradeRepository;
-    private TradeTicketPopup tradeTicketPopup;
+    private final TradeTicketPopup tradeTicketPopup;
 
     private List<Trade> trades;
     private final Runnable unsubscribeFromTradeBooked;
@@ -53,27 +54,9 @@ public class TradesScreen extends BaseScreen {
                         .createSession(TradesScreen.class)
                         .getScreen(TradesScreen.class)
                         .initialRender())
-                .POST("buy", req -> sessionRegistry
-                        .getScreen(req, TradesScreen.class)
-                        .openBuyTicket())
-                .POST("sell", req -> sessionRegistry
-                        .getScreen(req, TradesScreen.class)
-                        .openSellTicket())
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openModifyTicket(request))
-                .POST("cancel", req -> sessionRegistry
-                        .getScreen(req, TradesScreen.class)
-                        .getTradeTicketPopup()
-                        .close())
-                .POST("input", request -> sessionRegistry
-                        .getScreen(request, TradesScreen.class)
-                        .getTradeTicketPopup()
-                        .onInput(request))
-                .POST("book", request -> sessionRegistry
-                        .getScreen(request, TradesScreen.class)
-                        .getTradeTicketPopup()
-                        .onBookTrade(request))
                 .build();
     }
 
@@ -81,14 +64,6 @@ public class TradesScreen extends BaseScreen {
         this.trades = tradeRepository.getAllTrades();
 
         return html(render());
-    }
-
-    public ServerResponse openBuyTicket() {
-        return Popup.open(tradeTicketPopup.render(Trade.aBlankTrade(TradeDirection.BUY)));
-    }
-
-    public ServerResponse openSellTicket() {
-        return Popup.open(tradeTicketPopup.render(Trade.aBlankTrade(TradeDirection.SELL)));
     }
 
     public ServerResponse openModifyTicket(ServerRequest request) {
@@ -162,10 +137,6 @@ public class TradesScreen extends BaseScreen {
     private void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
         getUpdateChannel().updateFragment(this.render());
-    }
-
-    private TradeTicketPopup getTradeTicketPopup() {
-        return tradeTicketPopup;
     }
 
     private static String usd(BigDecimal amount) {

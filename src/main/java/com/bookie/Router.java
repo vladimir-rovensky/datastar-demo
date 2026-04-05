@@ -2,7 +2,9 @@ package com.bookie;
 
 import com.bookie.infra.ClientSession;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.screens.TradeTicketPopup;
 import com.bookie.screens.TradesScreen;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -19,9 +21,11 @@ import static org.springframework.web.servlet.function.RequestPredicates.path;
 public class Router {
 
     private final SessionRegistry sessionRegistry;
+    private final AutowireCapableBeanFactory beanFactory;
 
-    public Router(SessionRegistry sessionRegistry) {
+    public Router(SessionRegistry sessionRegistry, AutowireCapableBeanFactory beanFactory) {
         this.sessionRegistry = sessionRegistry;
+        this.beanFactory = beanFactory;
     }
 
     @Bean
@@ -29,13 +33,13 @@ public class Router {
         return RouterFunctions.route()
                 .POST("/updates", this::handleUpdates)
                 .nest(path("/trades"), () -> TradesScreen.setupRoutes(sessionRegistry))
+                .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
                 .build();
     }
 
     private ServerResponse handleUpdates(ServerRequest request) {
         ClientSession session = sessionRegistry.getSession(request);
         if(session == null) {
-            //Session was lost (perhaps the server was restarted) - reload the page.
             return ServerResponse.ok()
                     .contentType(new MediaType("text", "JavaScript"))
                     .body("window.location.reload();");

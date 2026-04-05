@@ -9,6 +9,8 @@ import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
 import jakarta.servlet.ServletException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -39,6 +41,24 @@ public class TradeTicketPopup {
         this.tradeRepository = tradeRepository;
     }
 
+    public RouterFunction<ServerResponse> setupRoutes() {
+        return RouterFunctions.route()
+                .POST("buy", _ -> this.openBuyTicket())
+                .POST("sell", _ -> this.openSellTicket())
+                .POST("cancel", _ -> this.close())
+                .POST("input", this::onInput)
+                .POST("book", this::onBookTrade)
+                .build();
+    }
+
+    public ServerResponse openBuyTicket() {
+        return Popup.open(this.render(Trade.aBlankTrade(TradeDirection.BUY)));
+    }
+
+    public ServerResponse openSellTicket() {
+        return Popup.open(this.render(Trade.aBlankTrade(TradeDirection.SELL)));
+    }
+
     public ServerResponse close() {
         return Popup.close();
     }
@@ -66,8 +86,8 @@ public class TradeTicketPopup {
     //language=HTML
     public static String getToolbarButtons() {
         return """
-                <button class="btn-buy" data-on:click="@post('/trades/buy')">B</button>
-                <button class="btn-sell" data-on:click="@post('/trades/sell')">S</button>
+                <button class="btn-buy" data-on:click="@post('/tradeTicket/buy')">B</button>
+                <button class="btn-sell" data-on:click="@post('/tradeTicket/sell')">S</button>
                 """;
     }
 
@@ -80,7 +100,7 @@ public class TradeTicketPopup {
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
 
         var content = format("""
-                <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
+                <div class="form-fields" data-indicator:_fetching data-on:change="@post('/tradeTicket/input')">
                     ${cusip}
                     ${book}
                     ${type}
@@ -124,8 +144,8 @@ public class TradeTicketPopup {
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
 
         var actions = format("""
-                <button class="${btnClass}" data-on:click="@post('/trades/book')">${btnLabel}</button>
-                <button data-on:click="@post('/trades/cancel')">Cancel</button>
+                <button class="${btnClass}" data-on:click="@post('/tradeTicket/book')">${btnLabel}</button>
+                <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
                 """,
                 "btnClass", btnClass,
                 "btnLabel", btnLabel);

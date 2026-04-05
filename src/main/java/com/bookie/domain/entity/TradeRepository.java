@@ -24,10 +24,14 @@ public class TradeRepository {
     private final List<Trade> trades;
     private long nextId = 1001;
     private final MessageBus messageBus;
+    private final BondRepository bondRepository;
+    private final ReferenceDataRepository referenceDataRepository;
 
     public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, MessageBus messageBus) {
         this.trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
         this.messageBus = messageBus;
+        this.bondRepository = bondRepository;
+        this.referenceDataRepository = referenceDataRepository;
     }
 
     public List<Trade> getAllTrades() {
@@ -37,6 +41,53 @@ public class TradeRepository {
 
     public Trade findById(Long id) {
         return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    public boolean isValid(Trade trade) {
+        return validateCusip(trade.getCusip()) == null
+                && validateQuantity(trade.getQuantity()) == null
+                && validateBook(trade.getBook()) == null
+                && validateCounterparty(trade.getCounterparty()) == null;
+    }
+
+    public String validateCusip(String cusip) {
+        if (cusip == null || cusip.isBlank()) {
+            return "This field is required";
+        }
+        if (!bondRepository.isValidCusip(cusip)) {
+            return "The CUSIP is invalid - please specify a known CUSIP";
+        }
+        return null;
+    }
+
+    public String validateBook(String book) {
+        if (book == null || book.isBlank()) {
+            return "This field is required";
+        }
+        if (!referenceDataRepository.getAllBooks().contains(book)) {
+            return "Invalid book";
+        }
+        return null;
+    }
+
+    public String validateCounterparty(String counterparty) {
+        if (counterparty == null || counterparty.isBlank()) {
+            return "This field is required";
+        }
+        if (!referenceDataRepository.getAllCounterparties().contains(counterparty)) {
+            return "Invalid counterparty";
+        }
+        return null;
+    }
+
+    public String validateQuantity(BigDecimal quantity) {
+        if (quantity == null) {
+            return "This field is required";
+        }
+        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return "Quantity has to be > 0";
+        }
+        return null;
     }
 
     public Trade modifyTrade(Trade trade) {

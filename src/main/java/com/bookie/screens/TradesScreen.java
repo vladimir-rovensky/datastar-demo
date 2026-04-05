@@ -86,17 +86,17 @@ public class TradesScreen extends BaseScreen {
     }
 
     public ServerResponse openBuyTicket() {
-        return Popup.open(tradeTicketPopup.render(TradeTicket.aBlankTrade(TradeDirection.BUY)));
+        return Popup.open(tradeTicketPopup.render(Trade.aBlankTrade(TradeDirection.BUY)));
     }
 
     public ServerResponse openSellTicket() {
-        return Popup.open(tradeTicketPopup.render(TradeTicket.aBlankTrade(TradeDirection.SELL)));
+        return Popup.open(tradeTicketPopup.render(Trade.aBlankTrade(TradeDirection.SELL)));
     }
 
     public ServerResponse openModifyTicket(ServerRequest request) {
         var tradeID = Long.parseLong(request.pathVariable("id"));
         var trade = tradeRepository.findById(tradeID);
-        return Popup.open(tradeTicketPopup.render(TradeTicket.fromTrade(trade)));
+        return Popup.open(tradeTicketPopup.render(trade));
     }
 
     public String render() {

@@ -1,20 +1,18 @@
 package com.bookie.screens;
 
 import com.bookie.components.Popup;
-import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.ReferenceDataRepository;
+import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
-import com.bookie.infra.Util;
 import jakarta.servlet.ServletException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.List;
 
 import static com.bookie.components.DateInput.dateInput;
@@ -31,15 +29,13 @@ public class TradeTicketPopup {
 
     private final ReferenceDataRepository referenceDataRepository;
     private final PricingService pricingService;
-    private final BondRepository bondRepository;
     private final TradeRepository tradeRepository;
 
     public TradeTicketPopup(ReferenceDataRepository referenceDataRepository, PricingService pricingService,
-                            BondRepository bondRepository, TradeRepository tradeRepository) {
+                            TradeRepository tradeRepository) {
 
         this.referenceDataRepository = referenceDataRepository;
         this.pricingService = pricingService;
-        this.bondRepository = bondRepository;
         this.tradeRepository = tradeRepository;
     }
 
@@ -48,17 +44,17 @@ public class TradeTicketPopup {
     }
 
     public ServerResponse onInput(ServerRequest request) throws ServletException, IOException {
-        var ticket = request.body(TradeTicket.class);
+        var ticket = request.body(Trade.class);
         return sse(channel -> handleInput(ticket, channel));
     }
 
     public ServerResponse onBookTrade(ServerRequest request) throws ServletException, IOException {
-        var ticket = request.body(TradeTicket.class);
+        var ticket = request.body(Trade.class);
         bookTicket(ticket);
         return close();
     }
 
-    private void handleInput(TradeTicket ticket, ClientChannel channel) {
+    private void handleInput(Trade ticket, ClientChannel channel) {
         channel.updateFragment(this.render(ticket));
 
         var accrued = pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity());
@@ -68,8 +64,8 @@ public class TradeTicketPopup {
     }
 
     //language=HTML
-    public String render(TradeTicket ticket) {
-        var isModify = ticket.getTradeId() != null;
+    public String render(Trade ticket) {
+        var isModify = ticket.getId() != null;
         var btnClass = ticket.getDirection() == TradeDirection.BUY ? "btn-buy" : "btn-sell";
         var btnLabel = isModify ? "OK" : ticket.getDirection().getLabel();
         var title = isModify ? "Modify Trade" : "Book a Trade";
@@ -85,26 +81,27 @@ public class TradeTicketPopup {
                     ${accruedInterestField}
                     ${tradeDate}
                     ${settleDate}
-                    <pre data-json-signals></pre>
                 </div>
                 """,
 
                 "cusip", formField("CUSIP")
                         .withInput(textInput("cusip", ticket.getCusip()))
-                        .withError(validateCusip(ticket.getCusip())),
+                        .withError(tradeRepository.validateCusip(ticket.getCusip())),
 
                 "book", formField("Book")
-                        .withInput(selectInput("book", referenceDataRepository.getAllBooks(), ticket.getBook())),
+                        .withInput(selectInput("book", referenceDataRepository.getAllBooks(), ticket.getBook()))
+                        .withError(tradeRepository.validateBook(ticket.getBook())),
 
                 "type", formField("Type")
                         .withInput(selectInput("direction", List.of("BUY", "SELL"), directionName)),
 
                 "counterparty", formField("Counterparty")
-                        .withInput(selectInput("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty())),
+                        .withInput(selectInput("counterparty", referenceDataRepository.getAllCounterparties(), ticket.getCounterparty()))
+                        .withError(tradeRepository.validateCounterparty(ticket.getCounterparty())),
 
                 "quantity", formField("Quantity ($)")
                         .withInput(numberInput("quantity", ticket.getQuantity()))
-                        .withError(validateQuantity(ticket.getQuantity())),
+                        .withError(tradeRepository.validateQuantity(ticket.getQuantity())),
 
                 "accruedInterestField", formField("Accrued Interest ($)")
                         .withInput(numberInput("accruedInterest", ticket.getAccruedInterest())
@@ -132,44 +129,15 @@ public class TradeTicketPopup {
                 .render();
     }
 
-    private void bookTicket(TradeTicket ticket) {
-        if (!isValid(ticket)) {
+    private void bookTicket(Trade ticket) {
+        if (!tradeRepository.isValid(ticket)) {
             throw new RuntimeException("Tried to book an invalid ticket.");
         }
 
-        var trade = ticket.toTrade();
-        if (trade.getId() != null) {
-            tradeRepository.modifyTrade(trade);
+        if (ticket.getId() != null) {
+            tradeRepository.modifyTrade(ticket);
         } else {
-            tradeRepository.bookTrade(trade);
+            tradeRepository.bookTrade(ticket);
         }
-    }
-
-    private boolean isValid(TradeTicket ticket) {
-        return validateCusip(ticket.getCusip()) == null && validateQuantity(ticket.getQuantity()) == null;
-    }
-
-    private String validateCusip(String cusip) {
-        if(cusip == null || cusip.isBlank()) {
-            return "This field is required";
-        }
-
-        if(!this.bondRepository.isValidCusip(cusip)) {
-            return "The CUSIP is invalid - please specify a known CUSIP";
-        }
-
-        return null;
-    }
-
-    private String validateQuantity(BigDecimal quantity) {
-        if(quantity == null) {
-            return "This field is required";
-        }
-
-        if(quantity.compareTo(BigDecimal.ZERO) <= 0) {
-            return "Quantity has to be > 0";
-        }
-
-        return null;
     }
 }

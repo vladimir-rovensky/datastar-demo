@@ -10,12 +10,20 @@ public class Trade {
     private String cusip;
     private Date executionTime;
     private TradeDirection direction;
-    private BigDecimal quantity;
+    private BigDecimal quantity = BigDecimal.ZERO;
     private LocalDate tradeDate;
     private LocalDate settleDate;
-    private BigDecimal accruedInterest;
+    private BigDecimal accruedInterest = BigDecimal.ZERO;
     private String book;
     private String counterparty;
+
+    public static Trade aBlankTrade(TradeDirection direction) {
+        var trade = new Trade();
+        trade.setDirection(direction);
+        trade.setTradeDate(LocalDate.now());
+        trade.setSettleDate(LocalDate.now().plusDays(2));
+        return trade;
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

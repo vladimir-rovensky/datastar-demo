@@ -81,7 +81,7 @@ public class ClientChannel {
     public ClientChannel executeScript(String script) {
         EscapedHtml scriptFragment = html("""
                 <script id="script-runner">@{script}</script>
-                """, "script", script);
+                """, "script", EscapedHtml.rawHtml(script));
 
         return removeFragment("#script-runner")
                 .appendFragment(scriptFragment, "body");
@@ -126,7 +126,7 @@ public class ClientChannel {
                 if (mode != null) {
                     data.append("mode ").append(mode).append("\n");
                 }
-                for (String line : fragment.html().split("\n")) {
+                for (String line : fragment.rawHtml().split("\n")) {
                     data.append("elements ").append(line).append("\n");
                 }
 

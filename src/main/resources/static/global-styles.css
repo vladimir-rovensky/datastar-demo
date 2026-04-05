@@ -1,3 +1,7 @@
+:root {
+    --tooltip-delay: 0.6s;
+}
+
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -283,4 +287,43 @@ input.loading {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+[data-tooltip] {
+    anchor-name: --tooltip-anchor;
+    anchor-scope: --tooltip-anchor;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: fixed;
+    position-anchor: --tooltip-anchor;
+    inset: auto;
+    left: calc(anchor(right) + 6px);
+    top: anchor(top);
+    background-color: #1e3d5c;
+    border: 1px solid #2e5f8a;
+    color: #e8edf2;
+    padding: 4px 8px;
+    font-size: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s, visibility 0.15s;
+    transition-delay: 0s;
+    position-try-fallbacks: --tooltip-below;
+}
+
+@position-try --tooltip-below {
+    inset: auto;
+    top: calc(anchor(bottom) + 6px);
+    left: anchor(left);
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: var(--tooltip-delay, 0.6s);
 }

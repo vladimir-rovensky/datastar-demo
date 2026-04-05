@@ -3,9 +3,9 @@ package com.bookie.infra;
 import java.util.List;
 import java.util.function.Function;
 
-public record EscapedHtml(String html) implements Renderable {
+public record EscapedHtml(String rawHtml) implements Renderable {
 
-    static EscapedHtml html(String html) {
+    static EscapedHtml rawHtml(String html) {
         return new EscapedHtml(html != null ? html : "");
     }
 
@@ -19,7 +19,7 @@ public record EscapedHtml(String html) implements Renderable {
     }
 
     public EscapedHtml concat(EscapedHtml other) {
-        return html(html + other.html);
+        return rawHtml(rawHtml + other.rawHtml);
     }
 
     @Override
@@ -29,7 +29,7 @@ public record EscapedHtml(String html) implements Renderable {
 
     @Override
     public String toString() {
-        return html;
+        return rawHtml;
     }
 
 }

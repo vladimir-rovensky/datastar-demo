@@ -44,6 +44,6 @@ public class FormField implements Renderable {
 
     @Override
     public String toString() {
-        return render().html();
+        return render().rawHtml();
     }
 }

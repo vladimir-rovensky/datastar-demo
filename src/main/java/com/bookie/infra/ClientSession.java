@@ -43,4 +43,9 @@ public class ClientSession {
     public void reRenderScreen() {
         this.screen.reRender();
     }
+
+    public ClientChannel reloadStylesheet() {
+        return this.getClientChannel().executeScript(
+                "document.querySelectorAll('link[rel=\"stylesheet\"]').forEach(l => l.href = l.href.split('?')[0] + '?' + Date.now())");
+    }
 }

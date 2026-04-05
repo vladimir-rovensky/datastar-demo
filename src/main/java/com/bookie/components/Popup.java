@@ -62,7 +62,7 @@ public class Popup {
 
     @Override
     public String toString() {
-        return render().html();
+        return render().rawHtml();
     }
 
     public static ServerResponse open(EscapedHtml content) {

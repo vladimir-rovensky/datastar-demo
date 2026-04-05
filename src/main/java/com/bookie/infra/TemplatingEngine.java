@@ -17,14 +17,14 @@ public class TemplatingEngine {
             }
 
             var encoded = value != null ? value.toString() : "";
-            var raw = value instanceof Renderable r ? r.render().html() : "";
+            var raw = value instanceof Renderable r ? r.render().rawHtml() : "";
 
             result = result
                     .replace("${" + key + "}", HtmlUtils.htmlEscape(encoded))
                     .replace("@{" + key + "}", raw);
         }
 
-        return EscapedHtml.html(result);
+        return EscapedHtml.rawHtml(result);
     }
 
 }

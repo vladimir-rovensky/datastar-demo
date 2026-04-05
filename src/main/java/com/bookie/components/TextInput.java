@@ -18,7 +18,7 @@ public class TextInput extends BaseInput {
     @Override
     public String render() {
         return format("""
-            <input type="text" name="${name}" data-signals='{${name}: null}' data-bind="${name}" value="${value}" autocomplete="off" onfocus="this.select()" ${attrs}>
+            <input type="text" name="${name}" data-signals='{${name}: null}' data-bind="${name}" value="${value}" autocomplete="off" ${attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value : "",

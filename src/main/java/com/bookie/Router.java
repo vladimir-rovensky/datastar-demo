@@ -34,6 +34,7 @@ public class Router {
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
                 .POST("/updates", this::handleUpdates)
+                .GET("/", req -> ServerResponse.temporaryRedirect(java.net.URI.create("/trades")).build())
                 .nest(path("/trades"), () -> TradesScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
                 .build();

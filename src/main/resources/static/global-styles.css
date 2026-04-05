@@ -36,6 +36,10 @@ button {
 button:hover {
     background-color: #254f7a;
 }
+button[disabled], button[disabled]:hover {
+    background-color: gray;
+    cursor: default;
+}
 
 input, select {
     background-color: #112236;

@@ -7,15 +7,14 @@ import com.bookie.domain.entity.TradeDirection;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.ClientChannel;
+import com.bookie.infra.Util;
 import jakarta.servlet.ServletException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.io.IOException;
-import java.util.Map;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import static com.bookie.components.DateInput.dateInput;
@@ -24,7 +23,6 @@ import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
 import static com.bookie.components.Popup.popup;
-import static com.bookie.infra.Response.patchSignals;
 import static com.bookie.infra.Response.sse;
 import static com.bookie.infra.TemplatingEngine.format;
 
@@ -46,7 +44,7 @@ public class TradeTicketPopup {
     }
 
     public ServerResponse close() {
-        return Popup.open();
+        return Popup.close();
     }
 
     public ServerResponse onInput(ServerRequest request) throws ServletException, IOException {
@@ -69,14 +67,6 @@ public class TradeTicketPopup {
         channel.complete();
     }
 
-    public String render(TradeDirection direction) {
-        var ticket = new TradeTicket();
-        ticket.setDirection(direction);
-        ticket.setTradeDate(LocalDate.now());
-        ticket.setSettleDate(LocalDate.now().plusDays(2));
-        return render(ticket);
-    }
-
     //language=HTML
     public String render(TradeTicket ticket) {
         var isModify = ticket.getTradeId() != null;
@@ -84,10 +74,9 @@ public class TradeTicketPopup {
         var btnLabel = isModify ? "OK" : ticket.getDirection().getLabel();
         var title = isModify ? "Modify Trade" : "Book a Trade";
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
-        var tradeIdSignal = isModify ? ticket.getTradeId().toString() : "null";
 
         var content = format("""
-                <div class="form-fields" data-signals="{tradeId: ${tradeIdSignal}, accruedInterest: ${accruedInterest}}" data-indicator:_fetching data-on:change="@post('/trades/input')">
+                <div class="form-fields" data-indicator:_fetching data-on:change="@post('/trades/input')">
                     ${cusip}
                     ${book}
                     ${type}
@@ -96,10 +85,9 @@ public class TradeTicketPopup {
                     ${accruedInterestField}
                     ${tradeDate}
                     ${settleDate}
+                    <pre data-json-signals></pre>
                 </div>
                 """,
-                "tradeIdSignal", tradeIdSignal,
-                "accruedInterest", ticket.getAccruedInterest(),
 
                 "cusip", formField("CUSIP")
                         .withInput(textInput("cusip", ticket.getCusip()))

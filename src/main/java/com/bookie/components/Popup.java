@@ -5,6 +5,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.util.Map;
 
 import static com.bookie.infra.Response.patchSignals;
+import static com.bookie.infra.Response.sse;
 import static com.bookie.infra.TemplatingEngine.format;
 
 public class Popup {
@@ -64,8 +65,10 @@ public class Popup {
         return render();
     }
 
-    public static ServerResponse open() {
-        return patchSignals(Map.of("popupVisible", true));
+    public static ServerResponse open(String content) {
+        return sse(ch -> ch
+                .updateFragment(content)
+                .patchSignals(Map.of("popupVisible", true)));
     }
 
     public static ServerResponse close() {

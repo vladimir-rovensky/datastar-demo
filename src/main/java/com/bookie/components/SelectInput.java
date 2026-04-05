@@ -19,15 +19,20 @@ public class SelectInput extends BaseInput {
     //language=HTML
     @Override
     public String render() {
-        var sb = new StringBuilder();
-        for (String value : options) {
+        var options = new StringBuilder();
+        for (String value : this.options) {
             if (value.equals(selected)) {
-                sb.append("<option value=\"").append(value).append("\" selected>").append(value).append("</option>");
+                options.append("<option value=\"").append(value).append("\" selected>").append(value).append("</option>");
             } else {
-                sb.append("<option value=\"").append(value).append("\">").append(value).append("</option>");
+                options.append("<option value=\"").append(value).append("\">").append(value).append("</option>");
             }
         }
-        return format("<select name=\"${name}\" data-signals='{${name}: null}' data-bind=\"${name}\" ${attrs}>${options}</select>",
-                "name", name, "attrs", getAttrs(), "options", sb);
+        return format("""       
+                        <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" ${attrs}>${options}</select>
+            """,
+                "name", name,
+                "selected", selected != null ? selected : "",
+                "attrs", getAttrs(),
+                "options", options);
     }
 }

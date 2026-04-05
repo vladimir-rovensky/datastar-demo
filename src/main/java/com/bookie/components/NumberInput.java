@@ -18,7 +18,7 @@ public class NumberInput extends BaseInput {
     @Override
     public String render() {
         return format("""
-            <input type="number" name="${name}" data-signals='{${name}: null}' data-bind="${name}" value="${value}" ${attrs}>
+            <input type="number" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" ${attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value.toString() : "",

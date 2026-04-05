@@ -89,23 +89,12 @@ public class ClientChannel {
         synchronized (this) {
             try {
                 sseBuilder.event("datastar-patch-signals");
-                sseBuilder.data("signals " + toJson(signals));
+                sseBuilder.data("signals " + Util.toJson(signals));
             } catch (Exception e) {
                 alive.set(false);
             }
         }
         return this;
-    }
-
-    private static String toJson(Map<String, Object> map) {
-        var sb = new StringBuilder("{");
-        map.forEach((k, v) -> {
-            if (sb.length() > 1) sb.append(",");
-            sb.append("\"").append(k).append("\":");
-            if (v instanceof String s) sb.append("\"").append(s).append("\"");
-            else sb.append(v);
-        });
-        return sb.append("}").toString();
     }
 
     public ClientChannel updateFragment(String fragment, String selector, String mode) {

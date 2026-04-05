@@ -1,5 +1,6 @@
 package com.bookie.screens;
 
+import com.bookie.components.Popup;
 import com.bookie.domain.entity.*;
 import com.bookie.domain.service.PricingService;
 import com.bookie.infra.MessageBus;
@@ -16,7 +17,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import static com.bookie.infra.Response.html;
 import static com.bookie.infra.TemplatingEngine.format;
@@ -26,24 +26,18 @@ import static com.bookie.screens.Shell.shell;
 public class TradesScreen extends BaseScreen {
 
     private final TradeRepository tradeRepository;
-    private final ReferenceDataRepository referenceDataRepository;
-    private final PricingService pricingService;
-    private final BondRepository bondRepository;
+    private TradeTicketPopup tradeTicketPopup;
 
     private List<Trade> trades;
-    private TradeTicketPopup tradeTicketPopup;
     private final Runnable unsubscribeFromTradeBooked;
     private final Runnable unsubscribeFromTradeModified;
 
-    public TradesScreen(TradeRepository tradeRepository, ReferenceDataRepository referenceDataRepository,
-                        PricingService pricingService, BondRepository bondRepository,
+    public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
                         SessionRegistry sessionRegistry, MessageBus messageBus) {
         super(sessionRegistry);
 
         this.tradeRepository = tradeRepository;
-        this.referenceDataRepository = referenceDataRepository;
-        this.pricingService = pricingService;
-        this.bondRepository = bondRepository;
+        this.tradeTicketPopup = tradeTicketPopup;
 
         this.unsubscribeFromTradeBooked = messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
         this.unsubscribeFromTradeModified = messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified);
@@ -92,27 +86,17 @@ public class TradesScreen extends BaseScreen {
     }
 
     public ServerResponse openBuyTicket() {
-        tradeTicketPopup = createTicketPopup();
-        showTradeTicket(tradeTicketPopup.render(TradeDirection.BUY));
-        return ServerResponse.ok().build();
+        return Popup.open(tradeTicketPopup.render(TradeTicket.aBlankTrade(TradeDirection.BUY)));
     }
 
     public ServerResponse openSellTicket() {
-        tradeTicketPopup = createTicketPopup();
-        showTradeTicket(tradeTicketPopup.render(TradeDirection.SELL));
-        return ServerResponse.ok().build();
+        return Popup.open(tradeTicketPopup.render(TradeTicket.aBlankTrade(TradeDirection.SELL)));
     }
 
     public ServerResponse openModifyTicket(ServerRequest request) {
         var tradeID = Long.parseLong(request.pathVariable("id"));
         var trade = tradeRepository.findById(tradeID);
-        tradeTicketPopup = createTicketPopup();
-        showTradeTicket(tradeTicketPopup.render(TradeTicket.fromTrade(trade)));
-        return ServerResponse.ok().build();
-    }
-
-    private TradeTicketPopup createTicketPopup() {
-        return new TradeTicketPopup(referenceDataRepository, pricingService, bondRepository, tradeRepository);
+        return Popup.open(tradeTicketPopup.render(TradeTicket.fromTrade(trade)));
     }
 
     public String render() {
@@ -190,12 +174,6 @@ public class TradesScreen extends BaseScreen {
     private void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
         getUpdateChannel().updateFragment(this.render());
-    }
-
-    private void showTradeTicket(String content) {
-        getUpdateChannel()
-                .updateFragment(content)
-                .patchSignals(Map.of("popupVisible", true));
     }
 
     private TradeTicketPopup getTradeTicketPopup() {

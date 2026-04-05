@@ -115,6 +115,23 @@ public class TradeTicketPopup {
                             <button data-on:click="@post('/trades/cancel')">Cancel</button>
                         </div>
                     </div>
+                    <script type="module">
+                        const popup = document.getElementById('popup').querySelector('.popup');
+                        const title = popup.querySelector('.popup-title');
+                        let position = {dx: 0, dy: 0};
+                        popup.style.transform = `translate(${position.dx}px,${position.dy}px)`;
+                        title.style.cursor = 'move';
+                        title.addEventListener('pointerdown', e => {
+                            e.currentTarget.setPointerCapture(e.pointerId);
+                            const onMove = e => {
+                                position.dx += e.movementX;
+                                position.dy += e.movementY;
+                                popup.style.transform = `translate(${position.dx}px,${position.dy}px)`;
+                            };
+                            title.addEventListener('pointermove', onMove);
+                            title.addEventListener('pointerup', () => title.removeEventListener('pointermove', onMove), {once: true});
+                        });
+                    </script>
                 </div>
                 """,
                 "tradeIdSignal", tradeIdSignal,

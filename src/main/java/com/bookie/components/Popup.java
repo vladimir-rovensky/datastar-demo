@@ -1,18 +1,19 @@
 package com.bookie.components;
 
+import com.bookie.infra.EscapedHtml;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.Map;
 
 import static com.bookie.infra.Response.patchSignals;
 import static com.bookie.infra.Response.sse;
-import static com.bookie.infra.TemplatingEngine.format;
+import static com.bookie.infra.TemplatingEngine.html;
 
 public class Popup {
 
     private String title;
-    private String content;
-    private String actions;
+    private EscapedHtml content;
+    private EscapedHtml actions;
 
     public static Popup popup() {
         return new Popup();
@@ -23,19 +24,18 @@ public class Popup {
         return this;
     }
 
-    public Popup withContent(Object content) {
-        this.content = content != null ? content.toString() : "";
+    public Popup withContent(EscapedHtml content) {
+        this.content = content != null ? content.render() : EscapedHtml.blank();
         return this;
     }
 
-    public Popup withActions(Object actions) {
-        this.actions = actions != null ? actions.toString() : "";
+    public Popup withActions(EscapedHtml actions) {
+        this.actions = actions != null ? actions.render() : EscapedHtml.blank();
         return this;
     }
 
-    //language=HTML
-    public String render() {
-        return format("""
+    public EscapedHtml render() {
+        return html("""
                 <div id="popup" class="popup-overlay" data-show="$popupVisible">
                     <div class="popup"
                          data-signals:_dx__ifmissing="0"
@@ -48,9 +48,9 @@ public class Popup {
                              data-on:pointerup="$_dragging = false">
                             ${title}
                         </div>
-                        ${content}
+                        @{content}
                         <div class="popup-actions">
-                            ${actions}
+                            @{actions}
                         </div>
                     </div>
                 </div>
@@ -62,10 +62,10 @@ public class Popup {
 
     @Override
     public String toString() {
-        return render();
+        return render().html();
     }
 
-    public static ServerResponse open(String content) {
+    public static ServerResponse open(EscapedHtml content) {
         return sse(ch -> ch
                 .updateFragment(content)
                 .patchSignals(Map.of("popupVisible", true))

@@ -1,5 +1,6 @@
 package com.bookie.infra;
 
+import com.bookie.infra.EscapedHtml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -78,19 +79,19 @@ public class ClientChannel {
 
     public ClientChannel executeScript(String script) {
         return removeFragment("#script-runner")
-                .appendFragment("<script id=\"script-runner\">" + script + "</script>", "body");
+                .appendFragment(EscapedHtml.html("<script id=\"script-runner\">" + script + "</script>"), "body");
     }
 
-    public ClientChannel updateFragment(String fragment) {
+    public ClientChannel updateFragment(EscapedHtml fragment) {
         return updateFragment(fragment, null, null);
     }
 
-    public ClientChannel appendFragment(String fragment, String selector) {
+    public ClientChannel appendFragment(EscapedHtml fragment, String selector) {
         return updateFragment(fragment, selector, "append");
     }
 
     public ClientChannel removeFragment(String selector) {
-        return updateFragment("", selector, "remove");
+        return updateFragment(EscapedHtml.html(""), selector, "remove");
     }
 
     public ClientChannel patchSignals(Map<String, Object> signals) {
@@ -106,7 +107,7 @@ public class ClientChannel {
         return this;
     }
 
-    public ClientChannel updateFragment(String fragment, String selector, String mode) {
+    private ClientChannel updateFragment(EscapedHtml fragment, String selector, String mode) {
         if (!alive.get()) return this;
 
         synchronized (this) {
@@ -120,7 +121,7 @@ public class ClientChannel {
                 if (mode != null) {
                     data.append("mode ").append(mode).append("\n");
                 }
-                for (String line : fragment.split("\n")) {
+                for (String line : fragment.html().split("\n")) {
                     data.append("elements ").append(line).append("\n");
                 }
 

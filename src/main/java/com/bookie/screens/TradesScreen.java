@@ -18,8 +18,9 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
+import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.TemplatingEngine;
 import static com.bookie.infra.Response.html;
-import static com.bookie.infra.TemplatingEngine.format;
 
 @Configuration
 public class TradesScreen extends BaseScreen {
@@ -73,10 +74,9 @@ public class TradesScreen extends BaseScreen {
     }
 
 
-    //language=HTML
     @Override
-    protected String getContent() {
-        return format("""
+    protected EscapedHtml getContent() {
+        return TemplatingEngine.html("""
                     <div id="trades-screen" class="trades-screen">
                     <table>
                         <thead>
@@ -93,7 +93,7 @@ public class TradesScreen extends BaseScreen {
                             </tr>
                         </thead>
                         <tbody>
-                        ${rows}
+                        @{rows}
                         </tbody>
                     </table>
                     </div>
@@ -101,10 +101,9 @@ public class TradesScreen extends BaseScreen {
                 "rows", getTradeRows());
     }
 
-    //language=HTML
-    private String getTradeRows() {
-        return this.trades.reversed().stream()
-                .map(t -> format("""
+    private EscapedHtml getTradeRows() {
+        return EscapedHtml.html(this.trades.reversed().stream()
+                .map(t -> TemplatingEngine.html("""
                         <tr data-on:dblclick="@post('/trades/modify/${id}')">
                             <td>${id}</td>
                             <td>${cusip}</td>
@@ -125,8 +124,8 @@ public class TradesScreen extends BaseScreen {
                         "settleDate", t.getSettleDate(),
                         "accruedInterest", usd(t.getAccruedInterest()),
                         "book", t.getBook(),
-                        "counterparty", t.getCounterparty()))
-                .reduce("", String::concat);
+                        "counterparty", t.getCounterparty()).html())
+                .reduce("", String::concat));
     }
 
     private void onTradeBooked(TradeBookedEvent event) {

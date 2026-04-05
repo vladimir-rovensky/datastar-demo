@@ -2,7 +2,8 @@ package com.bookie.components;
 
 import java.util.List;
 
-import static com.bookie.infra.TemplatingEngine.format;
+import com.bookie.infra.EscapedHtml;
+import static com.bookie.infra.TemplatingEngine.html;
 
 public class SelectInput extends BaseInput {
     private List<String> options;
@@ -16,23 +17,21 @@ public class SelectInput extends BaseInput {
         return input;
     }
 
-    //language=HTML
     @Override
-    public String render() {
+    public EscapedHtml render() {
         var options = new StringBuilder();
         for (String value : this.options) {
-            if (value.equals(selected)) {
-                options.append("<option value=\"").append(value).append("\" selected>").append(value).append("</option>");
-            } else {
-                options.append("<option value=\"").append(value).append("\">").append(value).append("</option>");
-            }
+            options.append(html(value.equals(selected)
+                            ? "<option value=\"${v}\" selected>${v}</option>"
+                            : "<option value=\"${v}\">${v}</option>",
+                    "v", value).html());
         }
-        return format("""       
-                        <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" ${attrs}>${options}</select>
+        return html("""
+                        <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" @{attrs}>@{options}</select>
             """,
                 "name", name,
                 "selected", selected != null ? selected : "",
                 "attrs", getAttrs(),
-                "options", options);
+                "options", EscapedHtml.html(options.toString()));
     }
 }

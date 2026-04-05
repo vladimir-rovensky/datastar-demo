@@ -2,7 +2,8 @@ package com.bookie.components;
 
 import java.time.LocalDate;
 
-import static com.bookie.infra.TemplatingEngine.format;
+import com.bookie.infra.EscapedHtml;
+import static com.bookie.infra.TemplatingEngine.html;
 
 public class DateInput extends BaseInput {
     private LocalDate value;
@@ -14,11 +15,10 @@ public class DateInput extends BaseInput {
         return input;
     }
 
-    //language=HTML
     @Override
-    public String render() {
-        return format("""
-            <input type="date" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" ${attrs}>
+    public EscapedHtml render() {
+        return html("""
+            <input type="date" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" @{attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value.toString() : "",

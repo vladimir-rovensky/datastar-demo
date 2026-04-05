@@ -1,18 +1,21 @@
 package com.bookie.components;
 
-public abstract class BaseInput {
+import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.Renderable;
+
+public abstract class BaseInput implements Renderable {
     protected String name;
     protected String loadIndicator;
     protected boolean disabled;
 
-    public abstract String render();
+    public abstract EscapedHtml render();
 
-    protected String getAttrs() {
+    protected EscapedHtml getAttrs() {
         if (loadIndicator != null) {
-            return "data-class=\"{loading: $" + loadIndicator + "}\" data-attr:disabled=\"$" + loadIndicator + " || " + disabled + "\"";
+            return EscapedHtml.html("data-class=\"{loading: $" + loadIndicator + "}\" data-attr:disabled=\"$" + loadIndicator + " || " + disabled + "\"");
         }
 
-        return disabled ? "disabled" : "";
+        return EscapedHtml.html(disabled ? "disabled" : "");
     }
 
     public BaseInput withName(String name) { this.name = name; return this; }
@@ -20,5 +23,5 @@ public abstract class BaseInput {
     public BaseInput withLoadIndicator(String signal) { this.loadIndicator = signal; return this; }
 
     @Override
-    public String toString() { return render(); }
+    public String toString() { return render().html(); }
 }

@@ -1,6 +1,7 @@
 package com.bookie.screens;
 
 import com.bookie.infra.ClientChannel;
+import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.SessionRegistry;
 
 import static com.bookie.screens.Shell.shell;
@@ -26,7 +27,7 @@ public abstract class BaseScreen {
 
     public void dispose() {};
 
-    public String render() {
+    public EscapedHtml render() {
         return shell(this.getTabID())
                 .withTitle(title)
                 .withToolbar(getToolbarContent())
@@ -34,10 +35,10 @@ public abstract class BaseScreen {
                 .render();
     }
 
-    protected abstract String getContent();
+    protected abstract EscapedHtml getContent();
 
-    protected String getToolbarContent() {
-        return TradeTicketPopup.getToolbarButtons();
+    protected EscapedHtml getToolbarContent() {
+        return EscapedHtml.html(TradeTicketPopup.getToolbarButtons());
     }
 
     public void reRender() {

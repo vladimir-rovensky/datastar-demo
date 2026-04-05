@@ -23,8 +23,9 @@ import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
 import static com.bookie.components.Popup.popup;
+import com.bookie.infra.EscapedHtml;
 import static com.bookie.infra.Response.sse;
-import static com.bookie.infra.TemplatingEngine.format;
+import static com.bookie.infra.TemplatingEngine.html;
 
 @Component
 public class TradeTicketPopup {
@@ -83,7 +84,6 @@ public class TradeTicketPopup {
         channel.complete();
     }
 
-    //language=HTML
     public static String getToolbarButtons() {
         return """
                 <button class="btn-buy" data-on:click="@post('/tradeTicket/buy')">B</button>
@@ -91,24 +91,23 @@ public class TradeTicketPopup {
                 """;
     }
 
-    //language=HTML
-    public String render(Trade ticket) {
+    public EscapedHtml render(Trade ticket) {
         var isModify = ticket.getId() != null;
         var btnClass = ticket.getDirection() == TradeDirection.BUY ? "btn-buy" : "btn-sell";
         var btnLabel = isModify ? "OK" : ticket.getDirection().getLabel();
         var title = isModify ? "Modify Trade" : "Book a Trade";
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
 
-        var content = format("""
+        var content = html("""
                 <div class="form-fields" data-indicator:_fetching data-on:change="@post('/tradeTicket/input')">
-                    ${cusip}
-                    ${book}
-                    ${type}
-                    ${counterparty}
-                    ${quantity}
-                    ${accruedInterestField}
-                    ${tradeDate}
-                    ${settleDate}
+                    @{cusip}
+                    @{book}
+                    @{type}
+                    @{counterparty}
+                    @{quantity}
+                    @{accruedInterestField}
+                    @{tradeDate}
+                    @{settleDate}
                 </div>
                 """,
 
@@ -143,7 +142,7 @@ public class TradeTicketPopup {
                 "settleDate", formField("Settle Date")
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
 
-        var actions = format("""
+        var actions = html("""
                 <button class="${btnClass}" data-on:click="@post('/tradeTicket/book')">${btnLabel}</button>
                 <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
                 """,

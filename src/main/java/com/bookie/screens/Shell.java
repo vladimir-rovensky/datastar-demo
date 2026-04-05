@@ -1,13 +1,14 @@
 package com.bookie.screens;
 
-import static com.bookie.infra.TemplatingEngine.format;
+import com.bookie.infra.EscapedHtml;
+import static com.bookie.infra.TemplatingEngine.html;
 
 public class Shell {
 
     private String tabId = "";
     private String title = "";
-    private String content = "";
-    private String toolbarContent = "";
+    private EscapedHtml content = EscapedHtml.html("");
+    private EscapedHtml toolbarContent = EscapedHtml.html("");
 
     public static Shell shell(String tabId) {
         var shell = new Shell();
@@ -20,19 +21,18 @@ public class Shell {
         return this;
     }
 
-    public Shell withContent(String content) {
+    public Shell withContent(EscapedHtml content) {
         this.content = content;
         return this;
     }
 
-    public Shell withToolbar(String toolbarContent) {
+    public Shell withToolbar(EscapedHtml toolbarContent) {
         this.toolbarContent = toolbarContent;
         return this;
     }
 
-    //language=HTML
-    public String render() {
-        return format("""
+    public EscapedHtml render() {
+        return html("""
                 <!DOCTYPE html>
                 <html lang="en-US">
                 <head>
@@ -41,7 +41,7 @@ public class Shell {
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
                     <script>
-                    //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this. 
+                    //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this.
                         const _fetch = window.fetch;
                         window.fetch = (url, opts = {}) => {
                             if (opts.headers?.['Datastar-Request']) {
@@ -54,10 +54,10 @@ public class Shell {
                 </head>
                 <body data-init="@post('/updates', {retry: 'error'})" data-tab-id='${tabId}'>
                 <div class="toolbar">
-                    ${toolbarContent}
+                    @{toolbarContent}
                     <span class="toolbar-title">${title}</span>
                 </div>
-                ${content}
+                @{content}
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}"/>
                 <script id="script-runner" />
                 </body>

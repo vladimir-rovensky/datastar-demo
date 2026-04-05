@@ -19,4 +19,5 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
+    compileOnly("org.jetbrains:annotations:26.0.2")
 }

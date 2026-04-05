@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 public record EscapedHtml(String html) implements Renderable {
 
-    public static EscapedHtml html(String html) {
+    static EscapedHtml html(String html) {
         return new EscapedHtml(html != null ? html : "");
     }
 

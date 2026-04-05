@@ -38,7 +38,7 @@ public abstract class BaseScreen {
     protected abstract EscapedHtml getContent();
 
     protected EscapedHtml getToolbarContent() {
-        return EscapedHtml.html(TradeTicketPopup.getToolbarButtons());
+        return TradeTicketPopup.getToolbarButtons();
     }
 
     public void reRender() {

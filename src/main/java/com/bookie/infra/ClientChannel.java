@@ -7,6 +7,8 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.bookie.infra.TemplatingEngine.html;
+
 public class ClientChannel {
 
     private ServerResponse.SseBuilder sseBuilder;
@@ -77,8 +79,12 @@ public class ClientChannel {
     }
 
     public ClientChannel executeScript(String script) {
+        EscapedHtml scriptFragment = html("""
+                <script id="script-runner">@{script}</script>
+                """, "script", script);
+
         return removeFragment("#script-runner")
-                .appendFragment(EscapedHtml.html("<script id=\"script-runner\">" + script + "</script>"), "body");
+                .appendFragment(scriptFragment, "body");
     }
 
     public ClientChannel updateFragment(EscapedHtml fragment) {
@@ -90,7 +96,7 @@ public class ClientChannel {
     }
 
     public ClientChannel removeFragment(String selector) {
-        return updateFragment(EscapedHtml.html(""), selector, "remove");
+        return updateFragment(EscapedHtml.blank(), selector, "remove");
     }
 
     public ClientChannel patchSignals(Map<String, Object> signals) {

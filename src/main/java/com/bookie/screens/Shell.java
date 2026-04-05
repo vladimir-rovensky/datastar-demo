@@ -7,8 +7,8 @@ public class Shell {
 
     private String tabId = "";
     private String title = "";
-    private EscapedHtml content = EscapedHtml.html("");
-    private EscapedHtml toolbarContent = EscapedHtml.html("");
+    private EscapedHtml content = EscapedHtml.blank();
+    private EscapedHtml toolbarContent = EscapedHtml.blank();
 
     public static Shell shell(String tabId) {
         var shell = new Shell();

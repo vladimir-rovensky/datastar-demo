@@ -23,8 +23,8 @@ public class FormField implements Renderable {
             </label>
         """,
                 "label", this.label,
-                "error", this.error != null ? html("data-error=\"${msg}\"", "msg", this.error) : EscapedHtml.html(""),
-                "input", this.input != null ? this.input : EscapedHtml.html(""));
+                "error", this.error != null ? html("data-error=\"${msg}\"", "msg", this.error) : EscapedHtml.blank(),
+                "input", this.input != null ? this.input : EscapedHtml.blank());
     }
 
     public FormField withLabel(String label) {

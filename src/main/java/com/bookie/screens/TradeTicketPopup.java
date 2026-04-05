@@ -84,11 +84,11 @@ public class TradeTicketPopup {
         channel.complete();
     }
 
-    public static String getToolbarButtons() {
-        return """
-                <button class="btn-buy" data-on:click="@post('/tradeTicket/buy')">B</button>
-                <button class="btn-sell" data-on:click="@post('/tradeTicket/sell')">S</button>
-                """;
+    public static EscapedHtml getToolbarButtons() {
+        return html("""
+                <button class="btn-buy" data-on:click="@post('/tradeTicket/buy')" data-tooltip='Book a new BUY Trade'>B</button>
+                <button class="btn-sell" data-on:click="@post('/tradeTicket/sell')" data-tooltip='Book a new SELL Trade'>S</button>
+                """);
     }
 
     public EscapedHtml render(Trade ticket) {

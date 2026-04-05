@@ -19,19 +19,18 @@ public class SelectInput extends BaseInput {
 
     @Override
     public EscapedHtml render() {
-        var options = new StringBuilder();
-        for (String value : this.options) {
-            options.append(html(value.equals(selected)
-                            ? "<option value=\"${v}\" selected>${v}</option>"
-                            : "<option value=\"${v}\">${v}</option>",
-                    "v", value).html());
-        }
+        var renderedOptions = EscapedHtml.concat(options, value -> html(
+                value.equals(selected)
+                        ? "<option value=\"${v}\" selected>${v}</option>"
+                        : "<option value=\"${v}\">${v}</option>",
+                "v", value));
+
         return html("""
                         <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" @{attrs}>@{options}</select>
             """,
                 "name", name,
                 "selected", selected != null ? selected : "",
                 "attrs", getAttrs(),
-                "options", EscapedHtml.html(options.toString()));
+                "options", renderedOptions);
     }
 }

@@ -3,6 +3,8 @@ package com.bookie.components;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Renderable;
 
+import static com.bookie.infra.TemplatingEngine.html;
+
 public abstract class BaseInput implements Renderable {
     protected String name;
     protected String loadIndicator;
@@ -12,10 +14,12 @@ public abstract class BaseInput implements Renderable {
 
     protected EscapedHtml getAttrs() {
         if (loadIndicator != null) {
-            return EscapedHtml.html("data-class=\"{loading: $" + loadIndicator + "}\" data-attr:disabled=\"$" + loadIndicator + " || " + disabled + "\"");
+            return html("""
+                    data-class="{loading: $" + loadIndicator + "}" data-attr:disabled="$" + loadIndicator + " || " + disabled + ""
+                    """);
         }
 
-        return EscapedHtml.html(disabled ? "disabled" : "");
+        return html(disabled ? "disabled" : "");
     }
 
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }

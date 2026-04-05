@@ -1,5 +1,6 @@
 package com.bookie.infra;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,6 +23,15 @@ public class MessageBus {
 
     @SuppressWarnings("unchecked")
     public <T> void subscribe(Class<T> eventType, Consumer<T> handler) {
-        subscribers.computeIfAbsent(eventType, k -> new ArrayList<>()).add((Consumer<Object>) handler);
+        getConsumersFor(eventType)
+                .add((Consumer<Object>) handler);
+    }
+
+    public <T> void unsubscribe(Class<T> eventType, Consumer<T> handler) {
+        getConsumersFor(eventType).remove(handler);
+    }
+
+    private <T> List<Consumer<Object>> getConsumersFor(Class<T> eventType) {
+        return subscribers.computeIfAbsent(eventType, k -> new ArrayList<>());
     }
 }

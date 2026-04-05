@@ -1,16 +1,18 @@
 package com.bookie.infra;
 
+import com.bookie.screens.BaseScreen;
+
 import java.time.Instant;
 
 public class ClientSession {
 
     private final String tabId;
     private final ClientChannel channel;
-    private final Object screen;
+    private final BaseScreen screen;
     private final long timeoutSeconds;
     private volatile Instant lastActive = Instant.now();
 
-    public ClientSession(String tabId, Object screen, long timeoutSeconds) {
+    public ClientSession(String tabId, BaseScreen screen, long timeoutSeconds) {
         this.tabId = tabId;
         this.screen = screen;
         this.channel = new ClientChannel(tabId);

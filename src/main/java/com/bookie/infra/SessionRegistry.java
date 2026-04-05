@@ -33,11 +33,6 @@ public class SessionRegistry implements SmartLifecycle {
         return getSession(req).getScreen(clazz);
     }
 
-    public synchronized <T> T getScreen(String tabID, Class<T> clazz) {
-        return getSession(tabID)
-                .getScreen(clazz);
-    }
-
     public synchronized <T extends BaseScreen> ClientSession createSession(Class<T> screenType) {
         var tabID = UUID.randomUUID().toString();
 
@@ -66,11 +61,21 @@ public class SessionRegistry implements SmartLifecycle {
         sessions.entrySet().removeIf(entry -> {
             var abandoned = entry.getValue().isAbandoned();
             if (abandoned) {
-                entry.getValue().getClientChannel().complete();
-                logger.info("Cleaning session {}", entry.getValue().getTabId());
+                cleanupSession(entry.getValue());
             }
             return abandoned;
         });
+    }
+
+    private static void cleanupSession(ClientSession session) {
+        logger.info("Cleaning session {}", session.getTabId());
+        if(session.getClientChannel() != null) {
+            session.getClientChannel().complete();
+        }
+
+        if(session.getScreen(BaseScreen.class) != null) {
+            session.getScreen(BaseScreen.class).dispose();
+        }
     }
 
     @Override

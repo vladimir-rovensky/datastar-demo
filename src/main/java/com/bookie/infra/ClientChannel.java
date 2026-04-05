@@ -66,6 +66,10 @@ public class ClientChannel {
         return updateFragment(fragment, null, null);
     }
 
+    public ClientChannel appendFragment(String fragment, String selector) {
+        return updateFragment(fragment, selector, "append");
+    }
+
     public ClientChannel removeFragment(String selector) {
         return updateFragment("", selector, "remove");
     }

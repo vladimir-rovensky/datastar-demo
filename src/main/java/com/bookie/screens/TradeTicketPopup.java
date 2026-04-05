@@ -20,10 +20,12 @@ import static com.bookie.components.FormField.formField;
 import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
+import static com.bookie.infra.Response.removeFragment;
+import static com.bookie.infra.Response.sse;
 import static com.bookie.infra.TemplatingEngine.format;
 
 @Component
-public class TradeTicketPopup extends BaseScreen {
+public class TradeTicketPopup {
 
     private TradeDirection direction = TradeDirection.BUY;
     private boolean visible;
@@ -40,21 +42,14 @@ public class TradeTicketPopup extends BaseScreen {
         this.pricingService = pricingService;
         this.bondRepository = bondRepository;
         this.tradeRepository = tradeRepository;
+        this.visible = true;
     }
 
     public void setDirection(TradeDirection direction) {
         this.direction = direction;
     }
 
-    public void setVisible(boolean visible) {
-        this.visible = visible;
-    }
-
-    public ServerResponse onCancel(ServerRequest request)  {
-        return closePopup();
-    }
-
-    private ServerResponse closePopup() {
+    public ServerResponse close() {
         this.visible = false;
         return removeFragment("#popup");
     }
@@ -67,7 +62,7 @@ public class TradeTicketPopup extends BaseScreen {
     public ServerResponse onBookTrade(ServerRequest request) throws ServletException, IOException {
         var ticket = request.body(TradeTicket.class);
         bookTicket(ticket);
-        return closePopup();
+        return close();
     }
 
     private void handleInput(TradeTicket ticket, ClientChannel channel) {

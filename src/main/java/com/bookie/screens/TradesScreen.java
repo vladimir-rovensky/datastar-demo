@@ -1,16 +1,13 @@
 package com.bookie.screens;
 
-import com.bookie.domain.entity.Trade;
-import com.bookie.domain.entity.TradeDirection;
-import com.bookie.domain.entity.TradeRepository;
-import com.bookie.infra.ClientChannel;
+import com.bookie.domain.entity.*;
+import com.bookie.domain.service.PricingService;
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.infra.events.TradeBookedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
-import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.math.BigDecimal;
@@ -18,6 +15,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
+import static com.bookie.infra.Response.html;
 import static com.bookie.infra.TemplatingEngine.format;
 import static com.bookie.screens.Shell.shell;
 
@@ -25,39 +23,49 @@ import static com.bookie.screens.Shell.shell;
 public class TradesScreen extends BaseScreen {
 
     private final TradeRepository tradeRepository;
-    private final TradeTicketPopup tradeTicketPopup;
-    private final SessionRegistry sessionRegistry;
+    private final ReferenceDataRepository referenceDataRepository;
+    private final PricingService pricingService;
+    private final BondRepository bondRepository;
     private final MessageBus messageBus;
 
     private List<Trade> trades;
+    private TradeTicketPopup tradeTicketPopup;
 
-    public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
+    public TradesScreen(TradeRepository tradeRepository, ReferenceDataRepository referenceDataRepository,
+                        PricingService pricingService, BondRepository bondRepository,
                         SessionRegistry sessionRegistry, MessageBus messageBus) {
+        super(sessionRegistry);
 
         this.tradeRepository = tradeRepository;
-        this.tradeTicketPopup = tradeTicketPopup;
-        this.sessionRegistry = sessionRegistry;
+        this.referenceDataRepository = referenceDataRepository;
+        this.pricingService = pricingService;
+        this.bondRepository = bondRepository;
         this.messageBus = messageBus;
 
         messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
     }
 
+    @Override
+    public void dispose() {
+        messageBus.unsubscribe(TradeBookedEvent.class, this::onTradeBooked);
+    }
+
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
-                .GET("", req -> sessionRegistry
+                .GET("", _ -> sessionRegistry
                         .createSession(TradesScreen.class)
                         .getScreen(TradesScreen.class)
-                        .initialRender(req))
+                        .initialRender())
                 .POST("buy", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
-                        .openBuyTicket(req))
+                        .openBuyTicket())
                 .POST("sell", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
-                        .openSellTicket(req))
+                        .openSellTicket())
                 .POST("cancel", req -> sessionRegistry
                         .getScreen(req, TradesScreen.class)
                         .getTradeTicketPopup()
-                        .onCancel(req))
+                        .close())
                 .POST("input", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .getTradeTicketPopup()
@@ -69,34 +77,28 @@ public class TradesScreen extends BaseScreen {
                 .build();
     }
 
-    public ServerResponse initialRender(ServerRequest request) {
+    public ServerResponse initialRender() {
         this.trades = tradeRepository.getAllTrades();
 
         return html(render());
     }
 
-    public ServerResponse openBuyTicket(ServerRequest request) {
+    public ServerResponse openBuyTicket() {
+        tradeTicketPopup = new TradeTicketPopup(referenceDataRepository, pricingService, bondRepository, tradeRepository);
         tradeTicketPopup.setDirection(TradeDirection.BUY);
-        tradeTicketPopup.setVisible(true);
-        var channel = sessionRegistry.getSession(request).getClientChannel();
-        channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
+        showTradeTicket(tradeTicketPopup);
         return ServerResponse.ok().build();
     }
 
-    public ServerResponse openSellTicket(ServerRequest request) {
+    public ServerResponse openSellTicket() {
+        tradeTicketPopup = new TradeTicketPopup(referenceDataRepository, pricingService, bondRepository, tradeRepository);
         tradeTicketPopup.setDirection(TradeDirection.SELL);
-        tradeTicketPopup.setVisible(true);
-        var channel = sessionRegistry.getSession(request).getClientChannel();
-        channel.updateFragment(tradeTicketPopup.render(), "#trades-screen", "append");
+        showTradeTicket(tradeTicketPopup);
         return ServerResponse.ok().build();
-    }
-
-    public TradeTicketPopup getTradeTicketPopup() {
-        return tradeTicketPopup;
     }
 
     public String render() {
-        return shell(this.tabID)
+        return shell(this.getTabID())
                 .withTitle("Trades")
                 .withContent(getContent())
                 .render();
@@ -164,12 +166,15 @@ public class TradesScreen extends BaseScreen {
 
     private void onTradeBooked(TradeBookedEvent event) {
         this.trades.add(event.getTrade());
-        getClientChannel().updateFragment(this.render());
+        getUpdateChannel().updateFragment(this.render());
     }
 
-    private ClientChannel getClientChannel() {
-        return this.sessionRegistry.getSession(tabID)
-                .getClientChannel();
+    private void showTradeTicket(TradeTicketPopup ticket) {
+        getUpdateChannel().appendFragment(ticket.render(), "#trades-screen");
+    }
+
+    private TradeTicketPopup getTradeTicketPopup() {
+        return tradeTicketPopup;
     }
 
     private static String usd(BigDecimal amount) {

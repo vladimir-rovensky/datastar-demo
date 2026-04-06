@@ -34,7 +34,7 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized <T extends BaseScreen> ClientSession createSession(Class<T> screenType) {
-        var tabID = UUID.randomUUID().toString();
+        var tabID = screenType.getSimpleName() + " - " + UUID.randomUUID();
 
         var screen = beanFactory.createBean(screenType);
         screen.setTabID(tabID);

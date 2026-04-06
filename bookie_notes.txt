@@ -4,6 +4,7 @@ Open
 * Had to monkey patch fetch to auto-include header.
 * Clearing signals on popup hide - expected signals to auto-clear when their defining element is removed - not the case.
 * Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);
+* Update channel needs retry: always, otherwise doesn't work
 
 Solved
 * Live reload - both server restart and hot reload work.

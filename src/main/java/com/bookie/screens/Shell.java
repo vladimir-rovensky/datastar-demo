@@ -53,7 +53,7 @@ public class Shell {
                     <script type="module" src="/datastar.js"></script>
                 </head>
 
-                <body data-init="@post('/updates', {retry: 'error'})" data-tab-id='${tabId}'>
+                <body data-init="@get('/updates',  {openWhenHidden: true, retry: 'always'})" data-tab-id='${tabId}'>
 
                     <div class="toolbar">
                         ${toolbarContent}

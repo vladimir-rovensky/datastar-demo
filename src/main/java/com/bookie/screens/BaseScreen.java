@@ -2,19 +2,17 @@ package com.bookie.screens;
 
 import com.bookie.infra.ClientChannel;
 import com.bookie.infra.EscapedHtml;
-import com.bookie.infra.SessionRegistry;
 
 import static com.bookie.screens.Shell.shell;
 
 public abstract class BaseScreen {
 
     private String tabID;
+    private ClientChannel channel;
     private final String title;
-    private final SessionRegistry sessionRegistry;
 
-    public BaseScreen(String title, SessionRegistry sessionRegistry) {
+    public BaseScreen(String title) {
         this.title = title;
-        this.sessionRegistry = sessionRegistry;
     }
 
     public String getTabID() {
@@ -23,6 +21,11 @@ public abstract class BaseScreen {
 
     public void setTabID(String tabID) {
         this.tabID = tabID;
+        this.channel = new ClientChannel(title + " - " + tabID);
+    }
+
+    public ClientChannel getChannel() {
+        return channel;
     }
 
     public void dispose() {}
@@ -30,6 +33,7 @@ public abstract class BaseScreen {
     public EscapedHtml render() {
         return shell(this.getTabID())
                 .withTitle(title)
+                .withUpdateURL(getUpdateURL())
                 .withToolbar(getToolbarContent())
                 .withContent(getContent())
                 .render();
@@ -41,12 +45,12 @@ public abstract class BaseScreen {
         return TradeTicketPopup.getToolbarButtons();
     }
 
-    public void reRender() {
-        getUpdateChannel().updateFragment(this.render());
+    protected String getUpdateURL() {
+        return null;
     }
 
-    protected ClientChannel getUpdateChannel() {
-        return this.sessionRegistry.getSession(tabID)
-                .getClientChannel();
+    public void reRender() {
+        channel.updateFragment(this.render());
     }
+
 }

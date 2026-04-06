@@ -18,6 +18,7 @@ import java.util.List;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.infra.Format.usd;
+import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
 @Configuration
@@ -33,9 +34,11 @@ public class PositionsScreen extends BaseScreen {
     private final Runnable unsubscribeFromTradeModified;
     private final Runnable unsubscribeFromTradeDeleted;
 
+    public static final String RoutePrefix = "/positions";
+
     public PositionsScreen(TradeRepository tradeRepository, PositionService positionService,
-                           SessionRegistry sessionRegistry, MessageBus messageBus) {
-        super("Positions", sessionRegistry);
+                           MessageBus messageBus) {
+        super("Positions");
 
         this.tradeRepository = tradeRepository;
         this.positionService = positionService;
@@ -53,16 +56,22 @@ public class PositionsScreen extends BaseScreen {
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
-                .GET("", _ -> sessionRegistry
-                        .createSession(PositionsScreen.class)
+                .GET("", request -> sessionRegistry
+                        .getOrCreateSession(PositionsScreen.class, request)
                         .getScreen(PositionsScreen.class)
                         .initialRender())
+                .GET("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
                 .build();
     }
 
+    @Override
+    protected String getUpdateURL() {
+        return RoutePrefix + "/updates";
+    }
+
     public ServerResponse initialRender() {
-        this.trades = tradeRepository.getAllTrades();
-        this.positions = positionService.compute(this.trades);
+        this.trades = this.trades == null ? tradeRepository.getAllTrades() : this.trades;
+        this.positions = this.positions == null ? positionService.compute(this.trades) : this.positions;
         return Response.html(render());
     }
 

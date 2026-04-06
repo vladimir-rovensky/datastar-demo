@@ -18,14 +18,11 @@ public class EscapedHtml implements Renderable {
     public static EscapedHtml blank() { return new EscapedHtml(""); }
 
     public static <T> EscapedHtml concat(List<T> items, Function<T, EscapedHtml> formatter) {
-        return items.stream()
-                .map(formatter)
-                .reduce(EscapedHtml::concat)
-                .orElse(blank());
-    }
-
-    public EscapedHtml concat(EscapedHtml other) {
-        return rawHtml(rawHtml + other.rawHtml);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (T item : items) {
+            stringBuilder.append(formatter.apply(item).rawHtml);
+        }
+        return rawHtml(stringBuilder.toString());
     }
 
     @Override

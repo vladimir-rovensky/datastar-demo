@@ -1,12 +1,15 @@
 package com.bookie.screens;
 
 import com.bookie.infra.EscapedHtml;
+
+import static com.bookie.components.Link.link;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class Shell {
 
     private String tabId = "";
     private String title = "";
+    private String updateURL;
     private EscapedHtml content = EscapedHtml.blank();
     private EscapedHtml toolbarContent = EscapedHtml.blank();
 
@@ -31,6 +34,11 @@ public class Shell {
         return this;
     }
 
+    public Shell withUpdateURL(String updateURL) {
+        this.updateURL = updateURL;
+        return this;
+    }
+
     public EscapedHtml render() {
         return html("""
                 <!DOCTYPE html>
@@ -40,8 +48,9 @@ public class Shell {
                     <title>Bookie - ${title}</title>
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
+
                     <script>
-                    //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this.
+                        //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this.        \s
                         const _fetch = window.fetch;
                         window.fetch = (url, opts = {}) => {
                             if (opts.headers?.['Datastar-Request']) {
@@ -49,11 +58,15 @@ public class Shell {
                             }
                             return _fetch(url, opts);
                         };
+                        const _tabUrl = new URL(window.location);
+                        _tabUrl.searchParams.set('tabID', '${tabId}');
+                        history.replaceState(null, '', _tabUrl);
                     </script>
+
                     <script type="module" src="/datastar1.0.0.RC8.js"></script>
                 </head>
 
-                <body data-init="@get('/updates',  {openWhenHidden: true, retry: 'always'})" data-tab-id='${tabId}'>
+                <body ${updateRequest}>
 
                     <div class="toolbar">
                         ${toolbarContent}
@@ -74,26 +87,25 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
+                "updateRequest", getUpdateRequestAttribute(),
                 "nav", buildNav(),
                 "content", content,
                 "toolbarContent", toolbarContent);
     }
 
+    private EscapedHtml getUpdateRequestAttribute() {
+        if (this.updateURL == null) {
+            return EscapedHtml.blank();
+        }
+
+        return html("""
+                data-init="@get('${url}', {openWhenHidden: true, retry: 'always'})"
+        """, "url", this.updateURL);
+    }
+
     private EscapedHtml buildNav() {
-        var tradesLink = "Trades".equals(title)
-                ? html("""
-                        <a href="/trades" aria-current="page">Trades</a>
-                        """)
-                : html("""
-                        <a href="/trades">Trades</a>
-                        """);
-        var positionsLink = "Positions".equals(title)
-                ? html("""
-                        <a href="/positions" aria-current="page">Positions</a>
-                        """)
-                : html("""
-                        <a href="/positions">Positions</a>
-                        """);
+        var tradesLink = link("trades", tabId).withActive("Trades".equals(title));
+        var positionsLink = link("positions", tabId).withActive("Positions".equals(title));
         return html("""
                 <nav class="screen-nav">
                     ${tradesLink}

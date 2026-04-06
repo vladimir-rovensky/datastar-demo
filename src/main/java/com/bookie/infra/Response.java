@@ -1,6 +1,10 @@
 package com.bookie.infra;
 
+import com.bookie.screens.BaseScreen;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
@@ -8,6 +12,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class Response {
+
+    private static final Logger logger = LoggerFactory.getLogger(Response.class);
 
     public static ServerResponse patchSignals(Map<String, Object> signals) {
         return sse(channel -> channel.patchSignals(signals).complete());
@@ -37,7 +43,23 @@ public class Response {
                 .body(script);
     }
 
-    public static ServerResponse ok() {
-        return ServerResponse.ok().body(true);
+    public static <T extends BaseScreen> ServerResponse connectUpdates(SessionRegistry sessionRegistry, Class<T> screenType, ServerRequest request) {
+        var session = sessionRegistry.getSession(request);
+        if (session == null) {
+            logger.info("Session lost - possibly server restarted - reloading page.");
+            return Response.script("window.location.reload();");
+        }
+
+        var screen = session.getScreen(screenType);
+        var channel = screen.getChannel();
+
+        var channelBroken = !channel.isAlive() && channel.wasConnected();
+        return Response.sseCustom(builder -> {
+            channel.connect(builder);
+            if (channelBroken) {
+                logger.info("Channel lost - broken connection or incremental rebuild - re-rendering page.");
+                screen.reRender();
+            }
+        });
     }
 }

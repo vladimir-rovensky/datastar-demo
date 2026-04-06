@@ -18,6 +18,7 @@ import java.util.List;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.infra.Format.usd;
+import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
 @Configuration
@@ -31,9 +32,11 @@ public class TradesScreen extends BaseScreen {
     private final Runnable unsubscribeFromTradeModified;
     private final Runnable unsubscribeFromTradeDeleted;
 
+    public static final String RoutePrefix = "/trades";
+
     public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
-                        SessionRegistry sessionRegistry, MessageBus messageBus) {
-        super("Trades", sessionRegistry);
+                        MessageBus messageBus) {
+        super("Trades");
 
         this.tradeRepository = tradeRepository;
         this.tradeTicketPopup = tradeTicketPopup;
@@ -52,10 +55,11 @@ public class TradesScreen extends BaseScreen {
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
-                .GET("", _ -> sessionRegistry
-                        .createSession(TradesScreen.class)
+                .GET("", request -> sessionRegistry
+                        .getOrCreateSession(TradesScreen.class, request)
                         .getScreen(TradesScreen.class)
                         .initialRender())
+                .GET("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openModifyTicket(request))
@@ -68,8 +72,13 @@ public class TradesScreen extends BaseScreen {
                 .build();
     }
 
+    @Override
+    protected String getUpdateURL() {
+        return RoutePrefix + "/updates";
+    }
+
     public ServerResponse initialRender() {
-        this.trades = tradeRepository.getAllTrades();
+        this.trades = this.trades == null ? tradeRepository.getAllTrades() : this.trades;
 
         return Response.html(render());
     }
@@ -104,7 +113,7 @@ public class TradesScreen extends BaseScreen {
                 .render();
 
         return html("""
-                    <div id="trades-screen" class="trades-screen">
+                    <div id="trades-screen" class="trades-screen"">
                     ${styles}
                     ${grid}
                     </div>

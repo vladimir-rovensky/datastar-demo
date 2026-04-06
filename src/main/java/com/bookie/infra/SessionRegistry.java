@@ -33,16 +33,33 @@ public class SessionRegistry implements SmartLifecycle {
         return getSession(req).getScreen(clazz);
     }
 
+    public synchronized <T extends BaseScreen> ClientSession getOrCreateSession(Class<T> screenType, ServerRequest request) {
+        var tabId = request.param("tabID").orElse(null);
+        if (tabId != null) {
+            var existing = sessions.get(tabId);
+            if (existing != null) {
+                existing.touch();
+                if (existing.getScreen(screenType) == null) {
+                    addScreenToSession(existing, screenType);
+                }
+                return existing;
+            }
+        }
+        return createSession(screenType);
+    }
+
     public synchronized <T extends BaseScreen> ClientSession createSession(Class<T> screenType) {
-        var tabID = screenType.getSimpleName() + " - " + UUID.randomUUID();
-
-        var screen = beanFactory.createBean(screenType);
-        screen.setTabID(tabID);
-
-        var session = new ClientSession(tabID, screen, sessionTimeoutSeconds);
-        sessions.put(tabID, session);
-
+        var tabId = UUID.randomUUID().toString();
+        var session = new ClientSession(tabId, sessionTimeoutSeconds);
+        sessions.put(tabId, session);
+        addScreenToSession(session, screenType);
         return session;
+    }
+
+    private <T extends BaseScreen> void addScreenToSession(ClientSession session, Class<T> screenType) {
+        var screen = beanFactory.createBean(screenType);
+        screen.setTabID(session.getTabId());
+        session.addScreen(screen);
     }
 
     public synchronized ClientSession getSession(ServerRequest request) {
@@ -61,12 +78,12 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized void reloadStylesheets() {
-        sessions.values().forEach(ClientSession::reloadStylesheet);
+        sessions.values().forEach(ClientSession::reloadAllStylesheets);
     }
 
     @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
     public synchronized void cleanup() {
-        sessions.values().forEach(session -> session.getClientChannel().heartbeat());
+        sessions.values().forEach(ClientSession::heartbeatAllChannels);
         sessions.entrySet().removeIf(entry -> {
             var abandoned = entry.getValue().isAbandoned();
             if (abandoned) {
@@ -78,13 +95,7 @@ public class SessionRegistry implements SmartLifecycle {
 
     private static void cleanupSession(ClientSession session) {
         logger.info("Cleaning session {}", session.getTabId());
-        if(session.getClientChannel() != null) {
-            session.getClientChannel().complete();
-        }
-
-        if(session.getScreen(BaseScreen.class) != null) {
-            session.getScreen(BaseScreen.class).dispose();
-        }
+        session.dispose();
     }
 
     @Override
@@ -96,7 +107,7 @@ public class SessionRegistry implements SmartLifecycle {
     public void stop() {
         running = false;
         synchronized (this) {
-            sessions.values().forEach(session -> session.getClientChannel().fail());
+            sessions.values().forEach(ClientSession::failAllChannels);
             sessions.clear();
         }
         logger.info("Closed all client channels on shutdown");

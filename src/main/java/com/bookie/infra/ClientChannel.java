@@ -14,7 +14,7 @@ public class ClientChannel {
     private ServerResponse.SseBuilder sseBuilder;
     private final AtomicBoolean wasConnected = new AtomicBoolean(false);
     private final AtomicBoolean alive = new AtomicBoolean(false);
-    private final String tabId;
+    private final String name;
 
     private static final Logger logger = LoggerFactory.getLogger(ClientChannel.class);
 
@@ -22,8 +22,8 @@ public class ClientChannel {
         this("");
     }
 
-    public ClientChannel(String tabId) {
-        this.tabId = tabId;
+    public ClientChannel(String name) {
+        this.name = name;
     }
 
     public synchronized void connect(ServerResponse.SseBuilder builder) {
@@ -32,18 +32,18 @@ public class ClientChannel {
         wasConnected.set(true);
 
         builder.onTimeout(() -> {
-            logger.info("Timeout of channel {}", tabId);
+            logger.info("Timeout of channel {}", name);
             alive.set(false);
         });
 
         builder.onError(e -> {
-            logger.info("Error on channel {}", tabId, e);
+            logger.info("Error on channel {}", name, e);
             alive.set(false);
         });
 
         builder.onComplete(() -> {
-            if(!tabId.isEmpty()) {
-                logger.info("Completed channel {}", tabId);
+            if(!name.isEmpty()) {
+                logger.info("Completed channel {}", name);
             }
 
             alive.set(false);

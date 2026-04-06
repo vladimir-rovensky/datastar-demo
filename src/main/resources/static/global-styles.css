@@ -228,7 +228,7 @@ tbody tr:hover, tbody tr:nth-child(even):hover { background-color: var(--clr-sur
         justify-content: center;
         color: var(--clr-text-muted);
         border: 1px solid transparent;
-        font-size: var(--fs-sm);
+        font-size: var(--fs-md);
         &:hover { color: var(--clr-text); text-decoration: none; background-color: var(--clr-btn); }
         &[aria-current="page"] { color: var(--clr-text-bright); border-color: var(--clr-border-dim); background-color: var(--clr-btn); }
     }

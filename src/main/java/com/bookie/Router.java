@@ -1,13 +1,9 @@
 package com.bookie;
 
-import com.bookie.infra.ClientSession;
-import com.bookie.infra.Response;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.PositionsScreen;
 import com.bookie.screens.TradeTicketPopup;
 import com.bookie.screens.TradesScreen;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -34,8 +30,6 @@ public class Router {
     @Value("${bookie.version}")
     private String appVersion;
 
-    private static final Logger logger = LoggerFactory.getLogger(Router.class);
-
     public Router(SessionRegistry sessionRegistry, AutowireCapableBeanFactory beanFactory) {
         this.sessionRegistry = sessionRegistry;
         this.beanFactory = beanFactory;
@@ -44,11 +38,10 @@ public class Router {
     @Bean
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
-                .GET("/updates", this::handleUpdates)
                 .GET("/global-styles.css", this::serveGlobalStyles)
                 .GET("/", _ -> ServerResponse.temporaryRedirect(java.net.URI.create("/trades")).build())
-                .nest(path("/trades"), () -> TradesScreen.setupRoutes(sessionRegistry))
-                .nest(path("/positions"), () -> PositionsScreen.setupRoutes(sessionRegistry))
+                .nest(path(TradesScreen.RoutePrefix), () -> TradesScreen.setupRoutes(sessionRegistry))
+                .nest(path(PositionsScreen.RoutePrefix), () -> PositionsScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
                 .build();
     }
@@ -68,24 +61,5 @@ public class Router {
     private Resource globalStylesResource() {
         var fileResource = new FileSystemResource("src/main/resources/static/global-styles.css");
         return fileResource.exists() ? fileResource : new ClassPathResource("/static/global-styles.css");
-    }
-
-    private ServerResponse handleUpdates(ServerRequest request) {
-        ClientSession session = sessionRegistry.getSession(request);
-        if (session == null) {
-            logger.info("Session lost - possibly server restarted - reloading page.");
-            return Response.script("window.location.reload();");
-        }
-
-        var channel = session.getClientChannel();
-        var channelBroken = !channel.isAlive() && channel.wasConnected();
-
-        return Response.sseCustom(b -> {
-            channel.connect(b);
-            if (channelBroken) {
-                logger.info("Channel lost - broken connection or incremental rebuild - re-rendering page.");
-                session.reRenderScreen();
-            }
-        });
     }
 }

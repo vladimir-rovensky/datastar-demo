@@ -5,12 +5,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class ClientChannel {
+
+    private static final ExecutorService SSE_WRITER = Executors.newCachedThreadPool();
 
     private ServerResponse.SseBuilder sseBuilder;
     private final AtomicBoolean wasConnected = new AtomicBoolean(false);
@@ -31,7 +35,7 @@ public class ClientChannel {
     public void connect(ServerResponse.SseBuilder builder) {
         lock.lock();
         try {
-            if(this.sseBuilder != null && this.alive.get()) {
+            if (this.sseBuilder != null && this.alive.get()) {
                 this.sseBuilder.complete();
             }
 
@@ -67,40 +71,46 @@ public class ClientChannel {
     public boolean wasConnected() { return wasConnected.get(); }
 
     public void complete() {
-        lock.lock();
-        try {
-            if (alive.getAndSet(false) && sseBuilder != null) {
-                sseBuilder.complete();
+        SSE_WRITER.submit(() -> {
+            lock.lock();
+            try {
+                if (alive.getAndSet(false) && sseBuilder != null) {
+                    sseBuilder.complete();
+                }
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     public void fail() {
-        lock.lock();
-        try {
-            alive.set(false);
-            if (sseBuilder != null) {
-                sseBuilder.error(new Exception("Connection Aborted by Server"));
+        SSE_WRITER.submit(() -> {
+            lock.lock();
+            try {
+                alive.set(false);
+                if (sseBuilder != null) {
+                    sseBuilder.error(new Exception("Connection Aborted by Server"));
+                }
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     public void heartbeat() {
-        lock.lock();
-        try {
-            if (!alive.get() || sseBuilder == null) return;
+        SSE_WRITER.submit(() -> {
+            lock.lock();
             try {
-                sseBuilder.comment("heartbeat").send();
-            } catch (Exception e) {
-                alive.set(false);
+                if (!alive.get() || sseBuilder == null) return;
+                try {
+                    sseBuilder.comment("heartbeat").send();
+                } catch (Exception e) {
+                    alive.set(false);
+                }
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     public ClientChannel executeScript(String script) {
@@ -126,42 +136,49 @@ public class ClientChannel {
 
     public ClientChannel patchSignals(Map<String, Object> signals) {
         if (!alive.get()) return this;
-        lock.lock();
-        try {
-            sseBuilder.event("datastar-patch-signals");
-            sseBuilder.data("signals " + Util.toJson(signals));
-        } catch (Exception e) {
-            alive.set(false);
-        } finally {
-            lock.unlock();
-        }
+        SSE_WRITER.submit(() -> {
+            lock.lock();
+            try {
+                if (!alive.get()) return;
+                sseBuilder.event("datastar-patch-signals");
+                sseBuilder.data("signals " + Util.toJson(signals));
+            } catch (Exception e) {
+                alive.set(false);
+            } finally {
+                lock.unlock();
+            }
+        });
         return this;
     }
 
     private ClientChannel updateFragment(EscapedHtml fragment, String selector, String mode) {
         if (!alive.get()) return this;
 
-        lock.lock();
-        try {
-            sseBuilder.event("datastar-patch-elements");
+        SSE_WRITER.submit(() -> {
+            lock.lock();
+            try {
+                if (!alive.get()) return;
 
-            var data = new StringBuilder();
-            if (selector != null) {
-                data.append("selector ").append(selector).append("\n");
-            }
-            if (mode != null) {
-                data.append("mode ").append(mode).append("\n");
-            }
-            for (String line : fragment.toString().split("\n")) {
-                data.append("elements ").append(line).append("\n");
-            }
+                sseBuilder.event("datastar-patch-elements");
 
-            sseBuilder.data(data.toString());
-        } catch (Exception e) {
-            alive.set(false);
-        } finally {
-            lock.unlock();
-        }
+                var data = new StringBuilder();
+                if (selector != null) {
+                    data.append("selector ").append(selector).append("\n");
+                }
+                if (mode != null) {
+                    data.append("mode ").append(mode).append("\n");
+                }
+                for (String line : fragment.toString().split("\n")) {
+                    data.append("elements ").append(line).append("\n");
+                }
+
+                sseBuilder.data(data.toString());
+            } catch (Exception e) {
+                alive.set(false);
+            } finally {
+                lock.unlock();
+            }
+        });
 
         return this;
     }

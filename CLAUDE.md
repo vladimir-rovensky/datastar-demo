@@ -14,7 +14,7 @@ The focus is on simplicity and minimalism. Do not add any dependencies unless I 
 
 - Never construct `EscapedHtml` directly via `EscapedHtml.html()`; always use `TemplatingEngine.html()`.
 - Always statically import `TemplatingEngine.html` (`import static com.bookie.infra.TemplatingEngine.html`) and call it as `html(...)`.
-- Use `${x}` when the value needs HTML encoding, `@{x}` when it is already safe/rendered HTML.
+- Use `${x}` as placeholder for value x.
 
 ## Git
 

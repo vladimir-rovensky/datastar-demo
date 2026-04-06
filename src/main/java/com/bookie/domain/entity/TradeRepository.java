@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Collections;
@@ -142,6 +143,7 @@ public class TradeRepository {
             t.setDirection(dir);
             t.setTradeDate(tradeDate);
             t.setSettleDate(tradeDate.plusDays(2));
+            t.setExecutionTime(Date.from(tradeDate.atStartOfDay(ZoneOffset.UTC).plusSeconds(rng.nextInt(86400)).toInstant()));
             t.setQuantity(quantity);
             t.setAccruedInterest(accrued);
             t.setBook(books.get(rng.nextInt(books.size())));

@@ -6,6 +6,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -14,6 +15,7 @@ public class ClientChannel {
     private ServerResponse.SseBuilder sseBuilder;
     private final AtomicBoolean wasConnected = new AtomicBoolean(false);
     private final AtomicBoolean alive = new AtomicBoolean(false);
+    private final ReentrantLock lock = new ReentrantLock();
     private final String tabId;
 
     private static final Logger logger = LoggerFactory.getLogger(ClientChannel.class);
@@ -26,28 +28,36 @@ public class ClientChannel {
         this.tabId = tabId;
     }
 
-    public synchronized void connect(ServerResponse.SseBuilder builder) {
-        this.sseBuilder = builder;
-        alive.set(true);
-        wasConnected.set(true);
-
-        builder.onTimeout(() -> {
-            logger.info("Timeout of channel {}", tabId);
-            alive.set(false);
-        });
-
-        builder.onError(e -> {
-            logger.info("Error on channel {}", tabId, e);
-            alive.set(false);
-        });
-
-        builder.onComplete(() -> {
-            if(!tabId.isEmpty()) {
-                logger.info("Completed channel {}", tabId);
+    public void connect(ServerResponse.SseBuilder builder) {
+        lock.lock();
+        try {
+            if(this.sseBuilder != null && this.alive.get()) {
+                this.sseBuilder.complete();
             }
 
-            alive.set(false);
-        });
+            this.sseBuilder = builder;
+            alive.set(true);
+            wasConnected.set(true);
+
+            builder.onTimeout(() -> {
+                logger.info("Timeout of channel {}", tabId);
+                alive.set(false);
+            });
+
+            builder.onError(e -> {
+                logger.info("Error on channel {}", tabId, e);
+                alive.set(false);
+            });
+
+            builder.onComplete(() -> {
+                if (!tabId.isEmpty()) {
+                    logger.info("Completed channel {}", tabId);
+                }
+                alive.set(false);
+            });
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isAlive() {
@@ -56,25 +66,40 @@ public class ClientChannel {
 
     public boolean wasConnected() { return wasConnected.get(); }
 
-    public synchronized void complete() {
-        if (alive.getAndSet(false) && sseBuilder != null) {
-            sseBuilder.complete();
-        }
-    }
-
-    public synchronized void fail() {
-        alive.set(false);
-        if (sseBuilder != null) {
-            sseBuilder.error(new Exception("Connection Aborted by Server"));
-        }
-    }
-
-    public synchronized void heartbeat() {
-        if (!alive.get() || sseBuilder == null) return;
+    public void complete() {
+        lock.lock();
         try {
-             sseBuilder.comment("heartbeat").send();
-        } catch (Exception e) {
+            if (alive.getAndSet(false) && sseBuilder != null) {
+                sseBuilder.complete();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void fail() {
+        lock.lock();
+        try {
             alive.set(false);
+            if (sseBuilder != null) {
+                sseBuilder.error(new Exception("Connection Aborted by Server"));
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void heartbeat() {
+        lock.lock();
+        try {
+            if (!alive.get() || sseBuilder == null) return;
+            try {
+                sseBuilder.comment("heartbeat").send();
+            } catch (Exception e) {
+                alive.set(false);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -101,13 +126,14 @@ public class ClientChannel {
 
     public ClientChannel patchSignals(Map<String, Object> signals) {
         if (!alive.get()) return this;
-        synchronized (this) {
-            try {
-                sseBuilder.event("datastar-patch-signals");
-                sseBuilder.data("signals " + Util.toJson(signals));
-            } catch (Exception e) {
-                alive.set(false);
-            }
+        lock.lock();
+        try {
+            sseBuilder.event("datastar-patch-signals");
+            sseBuilder.data("signals " + Util.toJson(signals));
+        } catch (Exception e) {
+            alive.set(false);
+        } finally {
+            lock.unlock();
         }
         return this;
     }
@@ -115,25 +141,26 @@ public class ClientChannel {
     private ClientChannel updateFragment(EscapedHtml fragment, String selector, String mode) {
         if (!alive.get()) return this;
 
-        synchronized (this) {
-            try {
-                sseBuilder.event("datastar-patch-elements");
+        lock.lock();
+        try {
+            sseBuilder.event("datastar-patch-elements");
 
-                var data = new StringBuilder();
-                if (selector != null) {
-                    data.append("selector ").append(selector).append("\n");
-                }
-                if (mode != null) {
-                    data.append("mode ").append(mode).append("\n");
-                }
-                for (String line : fragment.toString().split("\n")) {
-                    data.append("elements ").append(line).append("\n");
-                }
-
-                sseBuilder.data(data.toString());
-            } catch (Exception e) {
-                alive.set(false);
+            var data = new StringBuilder();
+            if (selector != null) {
+                data.append("selector ").append(selector).append("\n");
             }
+            if (mode != null) {
+                data.append("mode ").append(mode).append("\n");
+            }
+            for (String line : fragment.toString().split("\n")) {
+                data.append("elements ").append(line).append("\n");
+            }
+
+            sseBuilder.data(data.toString());
+        } catch (Exception e) {
+            alive.set(false);
+        } finally {
+            lock.unlock();
         }
 
         return this;

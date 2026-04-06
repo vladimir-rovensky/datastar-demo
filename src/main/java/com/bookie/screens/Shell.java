@@ -52,18 +52,20 @@ public class Shell {
                     </script>
                     <script type="module" src="/datastar.js"></script>
                 </head>
-                
+
                 <body data-init="@post('/updates', {retry: 'error'})" data-tab-id='${tabId}'>
-                
+
                     <div class="toolbar">
                         ${toolbarContent}
+                        <div class="toolbar-separator"></div>
+                        ${nav}
                         <span class="toolbar-title">${title}</span>
                     </div>
                     ${content}
 
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}">
                 </div>
-                
+
                 <script id="script-runner">
                 </script>
 
@@ -72,7 +74,31 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
+                "nav", buildNav(),
                 "content", content,
                 "toolbarContent", toolbarContent);
+    }
+
+    private EscapedHtml buildNav() {
+        var tradesLink = "Trades".equals(title)
+                ? html("""
+                        <a href="/trades" aria-current="page">Trades</a>
+                        """)
+                : html("""
+                        <a href="/trades">Trades</a>
+                        """);
+        var positionsLink = "Positions".equals(title)
+                ? html("""
+                        <a href="/positions" aria-current="page">Positions</a>
+                        """)
+                : html("""
+                        <a href="/positions">Positions</a>
+                        """);
+        return html("""
+                <nav class="screen-nav">
+                    ${tradesLink}
+                    ${positionsLink}
+                </nav>
+                """, "tradesLink", tradesLink, "positionsLink", positionsLink);
     }
 }

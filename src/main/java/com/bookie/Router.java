@@ -3,6 +3,7 @@ package com.bookie;
 import com.bookie.infra.ClientSession;
 import com.bookie.infra.Response;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.screens.PositionsScreen;
 import com.bookie.screens.TradeTicketPopup;
 import com.bookie.screens.TradesScreen;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ public class Router {
                 .POST("/updates", this::handleUpdates)
                 .GET("/", _ -> ServerResponse.temporaryRedirect(java.net.URI.create("/trades")).build())
                 .nest(path("/trades"), () -> TradesScreen.setupRoutes(sessionRegistry))
+                .nest(path("/positions"), () -> PositionsScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
                 .build();
     }

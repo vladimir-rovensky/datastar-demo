@@ -28,7 +28,7 @@ public class Response {
     public static ServerResponse html(EscapedHtml content) {
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)
-                .body(content.rawHtml());
+                .body(content.toString());
     }
 
     public static ServerResponse script(String script) {

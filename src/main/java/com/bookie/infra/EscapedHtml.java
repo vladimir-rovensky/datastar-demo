@@ -3,7 +3,13 @@ package com.bookie.infra;
 import java.util.List;
 import java.util.function.Function;
 
-public record EscapedHtml(String rawHtml) implements Renderable {
+public class EscapedHtml implements Renderable {
+
+    private final String rawHtml;
+
+    private EscapedHtml(String rawHtml) {
+        this.rawHtml = rawHtml;
+    }
 
     static EscapedHtml rawHtml(String html) {
         return new EscapedHtml(html != null ? html : "");

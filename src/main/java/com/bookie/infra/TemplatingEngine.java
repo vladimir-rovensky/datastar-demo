@@ -17,7 +17,7 @@ public class TemplatingEngine {
             }
 
             var encoded = String.valueOf(value);
-            var raw = value instanceof Renderable r ? r.render().rawHtml() : "";
+            var raw = value instanceof Renderable r ? r.render().toString() : "";
 
             result = result
                     .replace("${" + key + "}", HtmlUtils.htmlEscape(encoded))

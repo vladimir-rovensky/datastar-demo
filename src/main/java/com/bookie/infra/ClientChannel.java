@@ -126,7 +126,7 @@ public class ClientChannel {
                 if (mode != null) {
                     data.append("mode ").append(mode).append("\n");
                 }
-                for (String line : fragment.rawHtml().split("\n")) {
+                for (String line : fragment.toString().split("\n")) {
                     data.append("elements ").append(line).append("\n");
                 }
 

@@ -60,11 +60,6 @@ public class Popup {
                 "actions", actions);
     }
 
-    @Override
-    public String toString() {
-        return render().rawHtml();
-    }
-
     public static ServerResponse open(EscapedHtml content) {
         return sse(ch -> ch
                 .updateFragment(content)

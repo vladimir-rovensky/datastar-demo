@@ -27,6 +27,4 @@ public abstract class BaseInput implements Renderable {
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }
     public BaseInput withLoadIndicator(String signal) { this.loadIndicator = signal; return this; }
 
-    @Override
-    public String toString() { return render().rawHtml(); }
 }

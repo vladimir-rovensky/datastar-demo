@@ -59,6 +59,9 @@ public class TradesScreen extends BaseScreen {
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openModifyTicket(request))
+                .GET("delete/{id}", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .openDeleteConfirmation(request))
                 .POST("delete/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .deleteTradeById(request))
@@ -71,10 +74,24 @@ public class TradesScreen extends BaseScreen {
         return Response.html(render());
     }
 
+    public ServerResponse openDeleteConfirmation(ServerRequest request) {
+        var tradeId = Long.parseLong(request.pathVariable("id"));
+        var content = Popup.popup()
+                .withStyle(Popup.Style.WARNING)
+                .withTitle("Cancel Trade")
+                .withContent(html("<p>Are you sure you want to cancel trade ${tradeId}?</p>", "tradeId", tradeId))
+                .withActions(html("""
+                        <button class="btn-primary" data-on:click="@post('/trades/delete/${tradeId}')">Confirm</button>
+                        <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
+                        """, "tradeId", tradeId))
+                .render();
+        return Popup.open(content);
+    }
+
     public ServerResponse deleteTradeById(ServerRequest request) {
         var tradeId = Long.parseLong(request.pathVariable("id"));
         tradeRepository.deleteTrade(tradeId);
-        return Response.ok();
+        return Popup.close();
     }
 
     public ServerResponse openModifyTicket(ServerRequest request) {
@@ -129,7 +146,7 @@ public class TradesScreen extends BaseScreen {
 
     private EscapedHtml getCancelTradeButton(Trade t) {
         return html("""
-                <button class="btn-no-bg" data-on:click="@post('/trades/delete/${tradeID}')" data-tooltip='Cancel Trade'>✕</button>
+                <button class="btn-no-bg" data-on:click="@get('/trades/delete/${tradeID}')" data-tooltip='Cancel Trade'>✕</button>
                 """, "tradeID", t.getId());
     }
 

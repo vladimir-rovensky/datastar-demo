@@ -74,20 +74,6 @@ public class TradesScreen extends BaseScreen {
         return Response.html(render());
     }
 
-    public ServerResponse openDeleteConfirmation(ServerRequest request) {
-        var tradeId = Long.parseLong(request.pathVariable("id"));
-        var content = Popup.popup()
-                .withStyle(Popup.Style.WARNING)
-                .withTitle("Cancel Trade")
-                .withContent(html("<p>Are you sure you want to cancel trade ${tradeId}?</p>", "tradeId", tradeId))
-                .withActions(html("""
-                        <button class="btn-primary" data-on:click="@post('/trades/delete/${tradeId}')">Confirm</button>
-                        <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
-                        """, "tradeId", tradeId))
-                .render();
-        return Popup.open(content);
-    }
-
     public ServerResponse deleteTradeById(ServerRequest request) {
         var tradeId = Long.parseLong(request.pathVariable("id"));
         tradeRepository.deleteTrade(tradeId);
@@ -146,9 +132,24 @@ public class TradesScreen extends BaseScreen {
 
     private EscapedHtml getCancelTradeButton(Trade t) {
         return html("""
-                <button class="btn-no-bg" data-on:click="@get('/trades/delete/${tradeID}')" data-tooltip='Cancel Trade'>✕</button>
+                <button class="btn-no-bg" data-on:click="@get('/trades/delete/${tradeID}', {filterSignals:{exclude:/.*/}})" data-tooltip='Cancel Trade'>✕</button>
                 """, "tradeID", t.getId());
     }
+
+    public ServerResponse openDeleteConfirmation(ServerRequest request) {
+        var tradeId = Long.parseLong(request.pathVariable("id"));
+        var content = Popup.popup()
+                .withStyle(Popup.Style.WARNING)
+                .withTitle("Cancel Trade")
+                .withContent(html("<p>Are you sure you want to cancel trade ${tradeId}?</p>", "tradeId", tradeId))
+                .withActions(html("""
+                        <button class="btn-primary" data-on:click="@post('/trades/delete/${tradeId}')">Confirm</button>
+                        <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
+                        """, "tradeId", tradeId))
+                .render();
+        return Popup.open(content);
+    }
+
 
     private void onTradeBooked(TradeBookedEvent event) {
         this.trades.add(event.getTrade());

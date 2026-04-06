@@ -86,8 +86,8 @@ public class TradeTicketPopup {
 
     public static EscapedHtml getToolbarButtons() {
         return html("""
-                <button class="btn-buy" data-on:click="@post('/tradeTicket/buy')" data-tooltip='Book a new BUY Trade'>B</button>
-                <button class="btn-sell" data-on:click="@post('/tradeTicket/sell')" data-tooltip='Book a new SELL Trade'>S</button>
+                <button class="btn-large btn-buy" data-on:click="@post('/tradeTicket/buy')" data-tooltip='Book a new BUY Trade'>B</button>
+                <button class="btn-large btn-sell" data-on:click="@post('/tradeTicket/sell')" data-tooltip='Book a new SELL Trade'>S</button>
                 """);
     }
 
@@ -145,7 +145,7 @@ public class TradeTicketPopup {
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
 
         var actions = html("""
-                <button class="${btnClass}" data-on:click="@post('/tradeTicket/book')" data-attr:disabled="$_fetching">${btnLabel}</button>
+                <button class="btn-large ${btnClass}" data-on:click="@post('/tradeTicket/book')" data-attr:disabled="$_fetching">${btnLabel}</button>
                 <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
                 """,
                 "btnClass", btnClass,

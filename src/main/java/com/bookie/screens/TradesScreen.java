@@ -86,7 +86,7 @@ public class TradesScreen extends BaseScreen {
     @Override
     protected EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
-                        column("", t -> html("<button class=\"btn-delete\" data-on:click=\"@post('/trades/delete/" + t.getId() + "')\" data-tooltip='Cancel Trade'>✕</button>")),
+                        column("", this::getCancelTradeButton),
                         column("ID", Trade::getId),
                         column("CUSIP", Trade::getCusip),
                         column("Book", Trade::getBook),
@@ -101,20 +101,36 @@ public class TradesScreen extends BaseScreen {
                 .render();
 
         return html("""
-                    <style>
-                        .trades-screen td:first-child,
-                        .trades-screen th:first-child {
-                            width: 1px;
-                            white-space: nowrap;
-                            padding-right: 8px;
-                            border-right: 1px solid #1e3d5c;
-                        }
-                    </style>
                     <div id="trades-screen" class="trades-screen">
+                    ${styles}
                     ${grid}
                     </div>
                 """,
+                "styles", getStyles(),
                 "grid", grid);
+    }
+
+    private EscapedHtml getStyles() {
+        return html("""
+                    <div id="trades-screen" class="trades-screen">
+                    <style>
+                        @scope {
+                            td:first-child,
+                            th:first-child {
+                                width: 1px;
+                                white-space: nowrap;
+                                padding-right: 8px;
+                                border-right: 1px solid #1e3d5c;
+                            }
+                        }
+                    </style>
+                """);
+    }
+
+    private EscapedHtml getCancelTradeButton(Trade t) {
+        return html("""
+                <button class="btn-no-bg" data-on:click="@post('/trades/delete/${tradeID}')" data-tooltip='Cancel Trade'>✕</button>
+                """, "tradeID", t.getId());
     }
 
     private void onTradeBooked(TradeBookedEvent event) {

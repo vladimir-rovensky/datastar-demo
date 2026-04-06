@@ -17,8 +17,8 @@ public class FormField implements Renderable {
         return html("""
             <label>
                 ${label}
-                <div class="input-wrapper" @{error}>
-                    @{input}
+                <div class="input-wrapper" ${error}>
+                    ${input}
                 </div>
             </label>
         """,

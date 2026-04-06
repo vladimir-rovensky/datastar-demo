@@ -100,14 +100,14 @@ public class TradeTicketPopup {
 
         var content = html("""
                 <div class="form-fields" data-indicator:_fetching data-signals="{id: ${tradeId}}" data-on:change="@post('/tradeTicket/input')">
-                    @{cusip}
-                    @{book}
-                    @{type}
-                    @{counterparty}
-                    @{quantity}
-                    @{accruedInterestField}
-                    @{tradeDate}
-                    @{settleDate}
+                    ${cusip}
+                    ${book}
+                    ${type}
+                    ${counterparty}
+                    ${quantity}
+                    ${accruedInterestField}
+                    ${tradeDate}
+                    ${settleDate}
                 </div>
                 """,
 

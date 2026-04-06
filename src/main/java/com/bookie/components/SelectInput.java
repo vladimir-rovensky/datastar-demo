@@ -26,7 +26,7 @@ public class SelectInput extends BaseInput {
                 "v", value));
 
         return html("""
-                        <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" @{attrs}>@{options}</select>
+                        <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" ${attrs}>${options}</select>
             """,
                 "name", name,
                 "selected", selected != null ? selected : "",

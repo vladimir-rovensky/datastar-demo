@@ -48,9 +48,9 @@ public class Popup {
                              data-on:pointerup="$_dragging = false">
                             ${title}
                         </div>
-                        @{content}
+                        ${content}
                         <div class="popup-actions">
-                            @{actions}
+                            ${actions}
                         </div>
                     </div>
                 </div>

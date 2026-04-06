@@ -16,7 +16,7 @@ public class NumberInput extends BaseInput {
     @Override
     public EscapedHtml render() {
         return html("""
-            <input type="number" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" @{attrs}>
+            <input type="number" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" ${attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value.toString() : "",

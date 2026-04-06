@@ -80,7 +80,7 @@ public class ClientChannel {
 
     public ClientChannel executeScript(String script) {
         EscapedHtml scriptFragment = html("""
-                <script id="script-runner">@{script}</script>
+                <script id="script-runner">${script}</script>
                 """, "script", EscapedHtml.rawHtml(script));
 
         return removeFragment("#script-runner")

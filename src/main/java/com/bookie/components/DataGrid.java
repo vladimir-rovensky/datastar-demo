@@ -44,8 +44,8 @@ public class DataGrid<T> {
 
         return html("""
                 <table>
-                    <thead><tr>@{headers}</tr></thead>
-                    <tbody>@{rows}</tbody>
+                    <thead><tr>${headers}</tr></thead>
+                    <tbody>${rows}</tbody>
                 </table>
                 """,
                 "headers", headers,
@@ -59,6 +59,6 @@ public class DataGrid<T> {
                 ? " data-on:dblclick=\"" + onRowDoubleClick.apply(row) + "\""
                 : "";
 
-        return html("<tr" + dblClick + ">@{cells}</tr>", "cells", cells);
+        return html("<tr" + dblClick + ">${cells}</tr>", "cells", cells);
     }
 }

@@ -56,10 +56,10 @@ public class Shell {
                 <body data-init="@post('/updates', {retry: 'error'})" data-tab-id='${tabId}'>
                 
                     <div class="toolbar">
-                        @{toolbarContent}
+                        ${toolbarContent}
                         <span class="toolbar-title">${title}</span>
                     </div>
-                    @{content}
+                    ${content}
 
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}">
                 </div>

@@ -18,7 +18,7 @@ public class DateInput extends BaseInput {
     @Override
     public EscapedHtml render() {
         return html("""
-            <input type="date" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" @{attrs}>
+            <input type="date" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" ${attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value.toString() : "",

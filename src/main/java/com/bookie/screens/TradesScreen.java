@@ -88,7 +88,7 @@ public class TradesScreen extends BaseScreen {
 
         return html("""
                     <div id="trades-screen" class="trades-screen">
-                    @{grid}
+                    ${grid}
                     </div>
                 """,
                 "grid", grid);

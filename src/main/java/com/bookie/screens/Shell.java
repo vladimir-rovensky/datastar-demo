@@ -50,7 +50,7 @@ public class Shell {
                             return _fetch(url, opts);
                         };
                     </script>
-                    <script type="module" src="/datastar.js"></script>
+                    <script type="module" src="/datastar1.0.0.RC8.js"></script>
                 </head>
 
                 <body data-init="@get('/updates',  {openWhenHidden: true, retry: 'always'})" data-tab-id='${tabId}'>

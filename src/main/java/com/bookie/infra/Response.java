@@ -36,4 +36,8 @@ public class Response {
                 .contentType(new MediaType("text", "JavaScript"))
                 .body(script);
     }
+
+    public static ServerResponse ok() {
+        return ServerResponse.ok().body(true);
+    }
 }

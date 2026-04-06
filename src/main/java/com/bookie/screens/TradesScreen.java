@@ -6,6 +6,7 @@ import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.infra.*;
 import com.bookie.infra.events.TradeBookedEvent;
+import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -28,6 +29,7 @@ public class TradesScreen extends BaseScreen {
     private List<Trade> trades;
     private final Runnable unsubscribeFromTradeBooked;
     private final Runnable unsubscribeFromTradeModified;
+    private final Runnable unsubscribeFromTradeDeleted;
 
     public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
                         SessionRegistry sessionRegistry, MessageBus messageBus) {
@@ -38,12 +40,14 @@ public class TradesScreen extends BaseScreen {
 
         this.unsubscribeFromTradeBooked = messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
         this.unsubscribeFromTradeModified = messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified);
+        this.unsubscribeFromTradeDeleted = messageBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted);
     }
 
     @Override
     public void dispose() {
         this.unsubscribeFromTradeBooked.run();
         this.unsubscribeFromTradeModified.run();
+        this.unsubscribeFromTradeDeleted.run();
     }
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
@@ -55,6 +59,9 @@ public class TradesScreen extends BaseScreen {
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openModifyTicket(request))
+                .POST("delete/{id}", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .deleteTradeById(request))
                 .build();
     }
 
@@ -62,6 +69,12 @@ public class TradesScreen extends BaseScreen {
         this.trades = tradeRepository.getAllTrades();
 
         return Response.html(render());
+    }
+
+    public ServerResponse deleteTradeById(ServerRequest request) {
+        var tradeId = Long.parseLong(request.pathVariable("id"));
+        tradeRepository.deleteTrade(tradeId);
+        return Response.ok();
     }
 
     public ServerResponse openModifyTicket(ServerRequest request) {
@@ -73,6 +86,7 @@ public class TradesScreen extends BaseScreen {
     @Override
     protected EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
+                        column("", t -> html("<button class=\"btn-delete\" data-on:click=\"@post('/trades/delete/" + t.getId() + "')\" data-tooltip='Cancel Trade'>✕</button>")),
                         column("ID", Trade::getId),
                         column("CUSIP", Trade::getCusip),
                         column("Book", Trade::getBook),
@@ -87,6 +101,15 @@ public class TradesScreen extends BaseScreen {
                 .render();
 
         return html("""
+                    <style>
+                        .trades-screen td:first-child,
+                        .trades-screen th:first-child {
+                            width: 1px;
+                            white-space: nowrap;
+                            padding-right: 8px;
+                            border-right: 1px solid #1e3d5c;
+                        }
+                    </style>
                     <div id="trades-screen" class="trades-screen">
                     ${grid}
                     </div>
@@ -101,6 +124,11 @@ public class TradesScreen extends BaseScreen {
 
     private void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
+        reRender();
+    }
+
+    private void onTradeDeleted(TradeDeletedEvent event) {
+        this.trades.removeIf(t -> t.getId().equals(event.getTradeId()));
         reRender();
     }
 

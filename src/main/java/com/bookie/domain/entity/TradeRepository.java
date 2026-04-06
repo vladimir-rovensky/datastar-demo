@@ -2,6 +2,7 @@ package com.bookie.domain.entity;
 
 import com.bookie.infra.MessageBus;
 import com.bookie.infra.events.TradeBookedEvent;
+import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import org.springframework.stereotype.Repository;
 
@@ -88,6 +89,11 @@ public class TradeRepository {
             return "Quantity has to be > 0";
         }
         return null;
+    }
+
+    public void deleteTrade(Long id) {
+        trades.removeIf(t -> t.getId().equals(id));
+        messageBus.publish(new TradeDeletedEvent(id));
     }
 
     public Trade modifyTrade(Trade trade) {

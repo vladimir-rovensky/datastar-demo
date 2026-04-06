@@ -52,14 +52,21 @@ public class Shell {
                     </script>
                     <script type="module" src="/datastar.js"></script>
                 </head>
+                
                 <body data-init="@post('/updates', {retry: 'error'})" data-tab-id='${tabId}'>
-                <div class="toolbar">
-                    @{toolbarContent}
-                    <span class="toolbar-title">${title}</span>
+                
+                    <div class="toolbar">
+                        @{toolbarContent}
+                        <span class="toolbar-title">${title}</span>
+                    </div>
+                    @{content}
+
+                <div id="popup" data-signals__ifmissing="{popupVisible: false}">
                 </div>
-                @{content}
-                <div id="popup" data-signals__ifmissing="{popupVisible: false}"/>
-                <script id="script-runner" />
+                
+                <script id="script-runner">
+                </script>
+
                 </body>
                 </html>
                 """,

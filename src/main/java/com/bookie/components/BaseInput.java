@@ -15,8 +15,10 @@ public abstract class BaseInput implements Renderable {
     protected EscapedHtml getAttrs() {
         if (loadIndicator != null) {
             return html("""
-                    data-class="{loading: $" + loadIndicator + "}" data-attr:disabled="$" + loadIndicator + " || " + disabled + ""
-                    """);
+                    data-class="{loading: $${indicator}}" data-attr:disabled="$${indicator} || ${disabled}"\
+                    """,
+                    "indicator", loadIndicator,
+                    "disabled", disabled);
         }
 
         return html(disabled ? "disabled" : "");

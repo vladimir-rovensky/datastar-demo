@@ -99,7 +99,7 @@ public class TradeTicketPopup {
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
 
         var content = html("""
-                <div class="form-fields" data-indicator:_fetching data-on:change="@post('/tradeTicket/input')">
+                <div class="form-fields" data-indicator:_fetching data-signals="{id: ${tradeId}}" data-on:change="@post('/tradeTicket/input')">
                     @{cusip}
                     @{book}
                     @{type}
@@ -110,6 +110,8 @@ public class TradeTicketPopup {
                     @{settleDate}
                 </div>
                 """,
+
+                "tradeId", ticket.getId(),
 
                 "cusip", formField("CUSIP")
                         .withInput(textInput("cusip", ticket.getCusip()))

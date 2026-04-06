@@ -16,7 +16,7 @@ public class TemplatingEngine {
                 throw new IllegalArgumentException("@{" + key + "} requires Renderable but got " + value.getClass().getSimpleName());
             }
 
-            var encoded = value != null ? value.toString() : "";
+            var encoded = String.valueOf(value);
             var raw = value instanceof Renderable r ? r.render().rawHtml() : "";
 
             result = result

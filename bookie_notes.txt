@@ -8,6 +8,7 @@ Open
 * Including all signals when fetching feels wierd, every get gets all of them serialized
 
 Solved
+* Code reuse - everything is on the server (e.g. validation)
 * Live reload - both server restart and hot reload work.
 * Editor support - language injections
 * XSS protection

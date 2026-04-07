@@ -50,6 +50,7 @@ public class SessionRegistry implements SmartLifecycle {
 
     public synchronized <T extends BaseScreen> ClientSession createSession(Class<T> screenType) {
         var tabId = UUID.randomUUID().toString();
+        logger.info("Creating session: {}, {}", screenType.getSimpleName(), tabId);
         var session = new ClientSession(tabId, sessionTimeoutSeconds);
         sessions.put(tabId, session);
         addScreenToSession(session, screenType);
@@ -57,6 +58,7 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     private <T extends BaseScreen> void addScreenToSession(ClientSession session, Class<T> screenType) {
+        logger.info("Adding screen to session: {}, {}", screenType.getSimpleName(), session.getTabId());
         var screen = beanFactory.createBean(screenType);
         screen.setTabID(session.getTabId());
         session.addScreen(screen);
@@ -86,11 +88,23 @@ public class SessionRegistry implements SmartLifecycle {
         sessions.values().forEach(ClientSession::heartbeatAllChannels);
         sessions.entrySet().removeIf(entry -> {
             var abandoned = entry.getValue().isAbandoned();
+
             if (abandoned) {
                 cleanupSession(entry.getValue());
             }
+
             return abandoned;
         });
+
+        logSessions(sessions);
+    }
+
+    private void logSessions(HashMap<String, ClientSession> sessions) {
+        logger.info("Sessions: {}", sessions.size());
+
+        for (ClientSession session : sessions.values()) {
+            logger.info("  {} - {} live channel(s)", session.getTabId(), session.getLiveChannelCount());
+        }
     }
 
     private static void cleanupSession(ClientSession session) {

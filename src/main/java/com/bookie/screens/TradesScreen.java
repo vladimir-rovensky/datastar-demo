@@ -58,7 +58,7 @@ public class TradesScreen extends BaseScreen {
                         .getOrCreateSession(TradesScreen.class, request)
                         .getScreen(TradesScreen.class)
                         .initialRender(request))
-                .GET("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
+                .POST("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openModifyTicket(request))

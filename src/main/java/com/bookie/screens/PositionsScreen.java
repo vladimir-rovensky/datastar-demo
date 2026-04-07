@@ -60,7 +60,7 @@ public class PositionsScreen extends BaseScreen {
                         .getOrCreateSession(PositionsScreen.class, request)
                         .getScreen(PositionsScreen.class)
                         .initialRender(request))
-                .GET("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
+                .POST("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
                 .build();
     }
 

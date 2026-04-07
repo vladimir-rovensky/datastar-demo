@@ -82,6 +82,7 @@ public class Shell {
                         ${nav}
                         <span class="toolbar-title">${title}</span>
                     </div>
+
                     ${content}
 
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}">
@@ -107,7 +108,7 @@ public class Shell {
         }
 
         return html("""
-                data-init="@get('${url}', {openWhenHidden: true, retry: 'always'})"
+                data-init="@post('${url}', {openWhenHidden: true, retry: 'always'})"
         """, "url", this.updateURL);
     }
 

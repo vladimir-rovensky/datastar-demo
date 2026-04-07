@@ -77,7 +77,7 @@ public abstract class BaseScreen {
 
     public void triggerUpdate() {
         this.stateVersion++;
-        this.reRender();;
+        this.reRender();
     }
 
     public void reRender() {

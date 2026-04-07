@@ -53,11 +53,13 @@ public class Response {
         var screen = session.getScreen(screenType);
         var channel = screen.getChannel();
 
-        var channelBroken = !channel.isAlive() && channel.wasConnected();
+        var isReconnectAttempt = !request.headers().header("Last-Event-ID").isEmpty();
+
         return Response.sseCustom(builder -> {
             channel.connect(builder);
-            if (channelBroken) {
-                logger.info("Channel lost - broken connection or incremental rebuild - re-rendering page.");
+
+            if (isReconnectAttempt) {
+                logger.info("Channel lost - broken connection - re-rendering page.");
                 screen.reRender();
             }
         });

@@ -4,16 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class ClientChannel {
 
-    private ServerResponse.SseBuilder sseBuilder;
-    private final AtomicBoolean wasConnected = new AtomicBoolean(false);
-    private final AtomicBoolean alive = new AtomicBoolean(false);
+    private final List<ServerResponse.SseBuilder> streams = new ArrayList<>();
     private final String name;
 
     private static final Logger logger = LoggerFactory.getLogger(ClientChannel.class);
@@ -27,58 +26,42 @@ public class ClientChannel {
     }
 
     public synchronized void connect(ServerResponse.SseBuilder builder) {
-        this.sseBuilder = builder;
-        alive.set(true);
-        wasConnected.set(true);
+        logger.info("Connecting channel {}", name);
 
         builder.onTimeout(() -> {
             logger.info("Timeout of channel {}", name);
-            alive.set(false);
-        });
-
-        builder.onError(e -> {
+            removeStream(builder);
+        }).onError(e -> {
             logger.info("Error on channel {}", name, e);
-            alive.set(false);
-        });
-
-        builder.onComplete(() -> {
-            if(!name.isEmpty()) {
+            removeStream(builder);
+        }).onComplete(() -> {
+            if (!name.isEmpty()) {
                 logger.info("Completed channel {}", name);
             }
-
-            alive.set(false);
+            removeStream(builder);
         });
+
+        addStream(builder);
     }
 
-    public boolean isAlive() {
-        return alive.get();
+    public synchronized boolean isAlive() {
+        return !streams.isEmpty();
     }
-
-    public boolean wasConnected() { return wasConnected.get(); }
 
     public synchronized void complete() {
-        if (alive.getAndSet(false) && sseBuilder != null) {
-            sseBuilder.complete();
-        }
+        kill();
     }
 
     public synchronized void fail() {
-        alive.set(false);
-        if (sseBuilder != null) {
-            sseBuilder.error(new Exception("Connection Aborted by Server"));
-        }
+        drainStreams(stream -> stream.error(new Exception("Connection Aborted by Server")));
     }
 
     public synchronized void heartbeat() {
-        if (!alive.get() || sseBuilder == null) return;
-        try {
-             sseBuilder.comment("heartbeat").send();
-        } catch (Exception e) {
-            alive.set(false);
-        }
+        forAllStreams(stream -> stream.comment("heartbeat").send());
     }
 
     public ClientChannel executeScript(String script) {
+        @SuppressWarnings("BadExpressionStatementJS")
         EscapedHtml scriptFragment = html("""
                 <script id="script-runner">${script}</script>
                 """, "script", EscapedHtml.rawHtml(script));
@@ -99,43 +82,89 @@ public class ClientChannel {
         return updateFragment(EscapedHtml.blank(), selector, "remove");
     }
 
-    public ClientChannel patchSignals(Map<String, Object> signals) {
-        if (!alive.get()) return this;
-        synchronized (this) {
-            try {
-                sseBuilder.event("datastar-patch-signals");
-                sseBuilder.data("signals " + Util.toJson(signals));
-            } catch (Exception e) {
-                alive.set(false);
-            }
-        }
+    public synchronized ClientChannel patchSignals(Map<String, Object> signals) {
+        forAllStreams(stream -> {
+            stream.event("datastar-patch-signals");
+            stream.data("signals " + Util.toJson(signals));
+        });
+
         return this;
     }
 
     private ClientChannel updateFragment(EscapedHtml fragment, String selector, String mode) {
-        if (!alive.get()) return this;
-
         synchronized (this) {
-            try {
-                sseBuilder.event("datastar-patch-elements");
 
-                var data = new StringBuilder();
-                if (selector != null) {
-                    data.append("selector ").append(selector).append("\n");
-                }
-                if (mode != null) {
-                    data.append("mode ").append(mode).append("\n");
-                }
-                for (String line : fragment.toString().split("\n")) {
-                    data.append("elements ").append(line).append("\n");
-                }
-
-                sseBuilder.data(data.toString());
-            } catch (Exception e) {
-                alive.set(false);
+            var data = new StringBuilder();
+            if (selector != null) {
+                data.append("selector ").append(selector).append("\n");
             }
+
+            if (mode != null) {
+                data.append("mode ").append(mode).append("\n");
+            }
+
+            for (String line : fragment.toString().split("\n")) {
+                data.append("elements ").append(line).append("\n");
+            }
+
+            forAllStreams(s -> {
+                s.event("datastar-patch-elements");
+                s.data(data.toString());
+            });
         }
 
         return this;
     }
+
+    @FunctionalInterface
+    private interface StreamAction {
+        void accept(ServerResponse.SseBuilder stream) throws Exception;
+    }
+
+    private void forAllStreams(StreamAction action) {
+        List<ServerResponse.SseBuilder> failed = new ArrayList<>();
+
+        for (ServerResponse.SseBuilder stream : streams) {
+            try {
+                action.accept(stream);
+            } catch (Exception e) {
+                failed.add(stream);
+            }
+        }
+
+        failed.forEach(this::removeStream);
+    }
+
+    private void drainStreams(StreamAction action) {
+        List<ServerResponse.SseBuilder> snapshot = List.copyOf(streams);
+        clearStreams();
+
+        for (ServerResponse.SseBuilder stream : snapshot) {
+            try {
+                action.accept(stream);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private synchronized void kill() {
+        if (!name.isBlank()) {
+            logger.info("Killing channel {}", name);
+        }
+
+        drainStreams(ServerResponse.SseBuilder::complete);
+    }
+
+    private synchronized void addStream(ServerResponse.SseBuilder builder) {
+        streams.add(builder);
+    }
+
+    private synchronized void removeStream(ServerResponse.SseBuilder builder) {
+        streams.remove(builder);
+    }
+
+    private synchronized void clearStreams() {
+        streams.clear();
+    }
+
 }

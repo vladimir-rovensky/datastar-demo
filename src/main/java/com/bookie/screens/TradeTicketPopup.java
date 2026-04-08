@@ -78,12 +78,10 @@ public class TradeTicketPopup {
     private void handleInput(Trade ticket, ClientChannel channel) {
         channel.updateFragment(this.render(ticket));
 
-        pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity())
-                .thenAccept(accrued -> {
-                    ticket.setAccruedInterest(accrued);
-                    channel.updateFragment(this.render(ticket));
-                    channel.complete();
-                });
+        var accrued = pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity());
+        ticket.setAccruedInterest(accrued);
+        channel.updateFragment(this.render(ticket));
+        channel.complete();
     }
 
     public static EscapedHtml getToolbarButtons() {

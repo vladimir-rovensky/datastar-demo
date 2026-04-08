@@ -60,7 +60,7 @@ public class ClientChannel {
         forAllStreams(stream -> stream.comment("heartbeat").send());
     }
 
-    public ClientChannel executeScript(String script) {
+    public synchronized ClientChannel executeScript(String script) {
         @SuppressWarnings("BadExpressionStatementJS")
         EscapedHtml scriptFragment = html("""
                 <script id="script-runner">${script}</script>
@@ -70,15 +70,15 @@ public class ClientChannel {
                 .appendFragment(scriptFragment, "body");
     }
 
-    public ClientChannel updateFragment(EscapedHtml fragment) {
+    public synchronized ClientChannel updateFragment(EscapedHtml fragment) {
         return updateFragment(fragment, null, null);
     }
 
-    public ClientChannel appendFragment(EscapedHtml fragment, String selector) {
+    public synchronized ClientChannel appendFragment(EscapedHtml fragment, String selector) {
         return updateFragment(fragment, selector, "append");
     }
 
-    public ClientChannel removeFragment(String selector) {
+    public synchronized ClientChannel removeFragment(String selector) {
         return updateFragment(EscapedHtml.blank(), selector, "remove");
     }
 
@@ -92,26 +92,23 @@ public class ClientChannel {
     }
 
     private ClientChannel updateFragment(EscapedHtml fragment, String selector, String mode) {
-        synchronized (this) {
-
-            var data = new StringBuilder();
-            if (selector != null) {
-                data.append("selector ").append(selector).append("\n");
-            }
-
-            if (mode != null) {
-                data.append("mode ").append(mode).append("\n");
-            }
-
-            for (String line : fragment.toString().split("\n")) {
-                data.append("elements ").append(line).append("\n");
-            }
-
-            forAllStreams(s -> {
-                s.event("datastar-patch-elements");
-                s.data(data.toString());
-            });
+        var data = new StringBuilder();
+        if (selector != null) {
+            data.append("selector ").append(selector).append("\n");
         }
+
+        if (mode != null) {
+            data.append("mode ").append(mode).append("\n");
+        }
+
+        for (String line : fragment.toString().split("\n")) {
+            data.append("elements ").append(line).append("\n");
+        }
+
+        forAllStreams(s -> {
+            s.event("datastar-patch-elements");
+            s.data(data.toString());
+        });
 
         return this;
     }
@@ -124,7 +121,7 @@ public class ClientChannel {
     private void forAllStreams(StreamAction action) {
         List<ServerResponse.SseBuilder> failed = new ArrayList<>();
 
-        for (ServerResponse.SseBuilder stream : streams) {
+        for (ServerResponse.SseBuilder stream : List.copyOf(streams)) {
             try {
                 action.accept(stream);
             } catch (Exception e) {

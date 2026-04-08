@@ -1,13 +1,4 @@
 
-@view-transition {
-    navigation: auto;
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-    animation: none;
-}
-
 :root {
     --clr-bg:           #0d1b2a;
     --clr-bg-alt:       #0f2030;

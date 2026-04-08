@@ -56,7 +56,7 @@ public abstract class BaseScreen {
     }
 
     protected ServerResponse handleInitialRender(ServerRequest request, Supplier<EscapedHtml> render) {
-        var currentETag = this.getETag();
+        var currentETag = "\"" + this.getETag() + "\"";
         var ifNoneMatch = request.headers().firstHeader("If-None-Match");
         if (currentETag.equals(ifNoneMatch)) {
             return ServerResponse.status(304).build();
@@ -65,7 +65,7 @@ public abstract class BaseScreen {
         String body = render.get().toString();
 
         return ServerResponse.ok()
-                .header(HttpHeaders.ETAG, "\"" + currentETag + "\"")
+                .header(HttpHeaders.ETAG, currentETag)
                 .header(HttpHeaders.CACHE_CONTROL, "max-age=0, must-revalidate")
                 .contentType(org.springframework.http.MediaType.TEXT_HTML)
                 .body(body);

@@ -15,3 +15,12 @@ Solved
 * Encapsulation
     - scripts - IIFE + document.currentScript
     - styles - CSS scopes
+
+TODO
+* Securities screen
+* Boost links
+* screen synchronization
+* commands / ordering
+* extract routes
+* optimize Positions
+* remove loadning from trade repo - move to security repo

@@ -8,12 +8,14 @@ import com.bookie.infra.*;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
+import com.bookie.infra.events.TradesLoadedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.bookie.components.DataGrid.column;
@@ -28,9 +30,7 @@ public class TradesScreen extends BaseScreen {
     private final TradeTicketPopup tradeTicketPopup;
 
     private List<Trade> trades;
-    private final Runnable unsubscribeFromTradeBooked;
-    private final Runnable unsubscribeFromTradeModified;
-    private final Runnable unsubscribeFromTradeDeleted;
+    private final List<Runnable> eventSubscriptions = new ArrayList<>();
 
     public static final String RoutePrefix = "/trades";
 
@@ -41,16 +41,15 @@ public class TradesScreen extends BaseScreen {
         this.tradeRepository = tradeRepository;
         this.tradeTicketPopup = tradeTicketPopup;
 
-        this.unsubscribeFromTradeBooked = messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked);
-        this.unsubscribeFromTradeModified = messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified);
-        this.unsubscribeFromTradeDeleted = messageBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted);
+        this.eventSubscriptions.add(messageBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
+        this.eventSubscriptions.add(messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked)) ;
+        this.eventSubscriptions.add(messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified)) ;
+        this.eventSubscriptions.add(messageBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted)) ;
     }
 
     @Override
     public void dispose() {
-        this.unsubscribeFromTradeBooked.run();
-        this.unsubscribeFromTradeModified.run();
-        this.unsubscribeFromTradeDeleted.run();
+        this.eventSubscriptions.reversed().forEach(Runnable::run);
     }
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
@@ -58,7 +57,7 @@ public class TradesScreen extends BaseScreen {
                 .GET("", request -> sessionRegistry
                         .getOrCreateSession(TradesScreen.class, request)
                         .getScreen(TradesScreen.class)
-                        .initialRender())
+                        .initialRender(request))
                 .GET("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
@@ -77,10 +76,11 @@ public class TradesScreen extends BaseScreen {
         return RoutePrefix + "/updates";
     }
 
-    public ServerResponse initialRender() {
-        this.trades = this.trades == null ? tradeRepository.getAllTrades() : this.trades;
-
-        return Response.html(render());
+    public ServerResponse initialRender(ServerRequest request) {
+        return handleInitialRender(request, () -> {
+            this.trades = this.trades == null ? tradeRepository.getAllTrades() : this.trades;
+            return render();
+        });
     }
 
     public ServerResponse deleteTradeById(ServerRequest request) {
@@ -108,7 +108,8 @@ public class TradesScreen extends BaseScreen {
                         column("Accrued Interest", t -> usd(t.getAccruedInterest())),
                         column("Trade Date", Trade::getTradeDate),
                         column("Settle Date", Trade::getSettleDate))
-                .onRowDoubleClick(t -> "@post('/trades/modify/" + t.getId() + "')")
+                .withRowID(r -> "trade-" + r.getId())
+                .onRowDoubleClick(t -> html("@post('/trades/modify/${id}')", "id", t.getId()))
                 .withRows(this.trades.reversed())
                 .render();
 
@@ -160,19 +161,24 @@ public class TradesScreen extends BaseScreen {
     }
 
 
+    private void onTradesLoaded(TradesLoadedEvent event) {
+        this.trades = new ArrayList<>(event.getTrades());
+        triggerUpdate();
+    }
+
     private void onTradeBooked(TradeBookedEvent event) {
         this.trades.add(event.getTrade());
-        reRender();
+        triggerUpdate();
     }
 
     private void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
-        reRender();
+        triggerUpdate();
     }
 
     private void onTradeDeleted(TradeDeletedEvent event) {
         this.trades.removeIf(t -> t.getId().equals(event.getTradeId()));
-        reRender();
+        triggerUpdate();
     }
 
 }

@@ -9,5 +9,8 @@ out/
 .kotlin
 /.idea/inspectionProfiles/Project_Default.xml
 
+### Keystore ###
+src/main/resources/keystore.p12
+
 ### Claude Code ###
 .claude/settings.local.json

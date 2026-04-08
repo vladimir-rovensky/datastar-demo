@@ -4,6 +4,7 @@ import com.bookie.infra.MessageBus;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
+import com.bookie.infra.events.TradesLoadedEvent;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -23,21 +24,24 @@ public class TradeRepository {
 
     private static final int TRADE_COUNT = 1000;
 
-    private final List<Trade> trades;
+    private List<Trade> trades;
     private long nextId = 1001;
     private final MessageBus messageBus;
     private final BondRepository bondRepository;
     private final ReferenceDataRepository referenceDataRepository;
 
     public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, MessageBus messageBus) {
-        this.trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
         this.messageBus = messageBus;
         this.bondRepository = bondRepository;
         this.referenceDataRepository = referenceDataRepository;
     }
 
     public List<Trade> getAllTrades() {
-        sleep(1000); //This is a slow DB load
+        if(trades == null) {
+            Thread.startVirtualThread(this::loadTradesFromDB);
+            return Collections.emptyList();
+        }
+
         return new ArrayList<>(trades);
     }
 
@@ -151,5 +155,12 @@ public class TradeRepository {
             list.add(t);
         }
         return list;
+    }
+
+    private void loadTradesFromDB() {
+        //Slow DB here.
+        sleep(1000L);
+        this.trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
+        messageBus.publish(new TradesLoadedEvent(this.trades));
     }
 }

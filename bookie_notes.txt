@@ -19,7 +19,6 @@ Solved
 TODO
 * Securities screen
 * Boost links
-* screen synchronization
 * commands / ordering
 * extract routes
 * optimize Positions

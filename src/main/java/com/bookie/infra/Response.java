@@ -9,7 +9,6 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class Response {
@@ -29,7 +28,7 @@ public class Response {
             var channel = new ClientChannel();
             channel.connect(b);
 
-            CompletableFuture.runAsync(() -> {
+            Util.startAsync(() -> {
                 try {
                     handler.accept(channel);
                 } catch (Exception ex) {

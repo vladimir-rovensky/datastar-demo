@@ -35,16 +35,18 @@ public class TradesScreen extends BaseScreen {
     public static final String RoutePrefix = "/trades";
 
     public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
-                        MessageBus messageBus) {
+                        EventBus eventBus) {
         super("Trades");
 
         this.tradeRepository = tradeRepository;
         this.tradeTicketPopup = tradeTicketPopup;
 
-        this.eventSubscriptions.add(messageBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
-        this.eventSubscriptions.add(messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked)) ;
-        this.eventSubscriptions.add(messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified)) ;
-        this.eventSubscriptions.add(messageBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted)) ;
+        this.trades = tradeRepository.getAllTrades();
+
+        this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
+        this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked)) ;
+        this.eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified)) ;
+        this.eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted)) ;
     }
 
     @Override
@@ -76,11 +78,8 @@ public class TradesScreen extends BaseScreen {
         return RoutePrefix + "/updates";
     }
 
-    public ServerResponse initialRender(ServerRequest request) {
-        return handleInitialRender(request, () -> {
-            this.trades = this.trades == null ? tradeRepository.getAllTrades() : this.trades;
-            return render();
-        });
+    public synchronized ServerResponse initialRender(ServerRequest request) {
+        return handleInitialRender(request, this::render);
     }
 
     public ServerResponse deleteTradeById(ServerRequest request) {
@@ -96,7 +95,7 @@ public class TradesScreen extends BaseScreen {
     }
 
     @Override
-    protected EscapedHtml getContent() {
+    protected synchronized EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
                         column("", this::getCancelTradeButton),
                         column("ID", Trade::getId),
@@ -161,22 +160,22 @@ public class TradesScreen extends BaseScreen {
     }
 
 
-    private void onTradesLoaded(TradesLoadedEvent event) {
+    private synchronized void onTradesLoaded(TradesLoadedEvent event) {
         this.trades = new ArrayList<>(event.getTrades());
         triggerUpdate();
     }
 
-    private void onTradeBooked(TradeBookedEvent event) {
+    private synchronized void onTradeBooked(TradeBookedEvent event) {
         this.trades.add(event.getTrade());
         triggerUpdate();
     }
 
-    private void onTradeModified(TradeModifiedEvent event) {
+    private synchronized void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
         triggerUpdate();
     }
 
-    private void onTradeDeleted(TradeDeletedEvent event) {
+    private synchronized void onTradeDeleted(TradeDeletedEvent event) {
         this.trades.removeIf(t -> t.getId().equals(event.getTradeId()));
         triggerUpdate();
     }

@@ -1,6 +1,6 @@
 package com.bookie.domain.entity;
 
-import com.bookie.infra.MessageBus;
+import com.bookie.infra.EventBus;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
@@ -26,17 +26,17 @@ public class TradeRepository {
 
     private List<Trade> trades;
     private long nextId = 1001;
-    private final MessageBus messageBus;
+    private final EventBus eventBus;
     private final BondRepository bondRepository;
     private final ReferenceDataRepository referenceDataRepository;
 
-    public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, MessageBus messageBus) {
-        this.messageBus = messageBus;
+    public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, EventBus eventBus) {
+        this.eventBus = eventBus;
         this.bondRepository = bondRepository;
         this.referenceDataRepository = referenceDataRepository;
     }
 
-    public List<Trade> getAllTrades() {
+    public synchronized List<Trade> getAllTrades() {
         if(trades == null) {
             Thread.startVirtualThread(this::loadTradesFromDB);
             return Collections.emptyList();
@@ -45,8 +45,35 @@ public class TradeRepository {
         return new ArrayList<>(trades);
     }
 
-    public Trade findById(Long id) {
+    public synchronized Trade findById(Long id) {
         return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    public synchronized void deleteTrade(Long id) {
+        trades.removeIf(t -> t.getId().equals(id));
+        eventBus.publish(new TradeDeletedEvent(id));
+    }
+
+    public synchronized Trade modifyTrade(Trade trade) {
+        trades.removeIf(t -> t.getId().equals(trade.getId()));
+        trade.setExecutionTime(new Date());
+        trades.add(trade);
+        eventBus.publish(new TradeModifiedEvent(trade));
+        return trade;
+    }
+
+    public synchronized Trade bookTrade(Trade trade) {
+        if (trade.getId() == null) {
+            trade.setId(nextId++);
+        }
+
+        trade.setExecutionTime(new Date());
+
+        trades.add(trade);
+
+        eventBus.publish(new TradeBookedEvent(trade));
+
+        return trade;
     }
 
     public boolean isValid(Trade trade) {
@@ -96,33 +123,6 @@ public class TradeRepository {
         return null;
     }
 
-    public void deleteTrade(Long id) {
-        trades.removeIf(t -> t.getId().equals(id));
-        messageBus.publish(new TradeDeletedEvent(id));
-    }
-
-    public Trade modifyTrade(Trade trade) {
-        trades.removeIf(t -> t.getId().equals(trade.getId()));
-        trade.setExecutionTime(new Date());
-        trades.add(trade);
-        messageBus.publish(new TradeModifiedEvent(trade));
-        return trade;
-    }
-
-    public Trade bookTrade(Trade trade) {
-        if (trade.getId() == null) {
-            trade.setId(nextId++);
-        }
-
-        trade.setExecutionTime(new Date());
-
-        trades.add(trade);
-
-        messageBus.publish(new TradeBookedEvent(trade));
-
-        return trade;
-    }
-
     private static List<Trade> generate(BondRepository bondRepo, ReferenceDataRepository refData) {
         List<Bond> bonds = bondRepo.getAllBonds();
         List<String> books = refData.getAllBooks();
@@ -161,6 +161,6 @@ public class TradeRepository {
         //Slow DB here.
         sleep(1000L);
         this.trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
-        messageBus.publish(new TradesLoadedEvent(this.trades));
+        eventBus.publish(new TradesLoadedEvent(this.trades));
     }
 }

@@ -27,7 +27,6 @@ import static com.bookie.infra.TemplatingEngine.html;
 @Configuration
 public class PositionsScreen extends BaseScreen {
 
-    private final TradeRepository tradeRepository;
     private final PositionService positionService;
 
     private List<Trade> trades;
@@ -38,15 +37,17 @@ public class PositionsScreen extends BaseScreen {
     public static final String RoutePrefix = "/positions";
 
     public PositionsScreen(TradeRepository tradeRepository, PositionService positionService,
-                           MessageBus messageBus) {
+                           EventBus eventBus) {
         super("Positions");
 
-        this.tradeRepository = tradeRepository;
         this.positionService = positionService;
-        this.eventSubscriptions.add(messageBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
-        this.eventSubscriptions.add(messageBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
-        this.eventSubscriptions.add(messageBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
-        this.eventSubscriptions.add(messageBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+        this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
+        this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
+        this.eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
+        this.eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+
+        this.trades = tradeRepository.getAllTrades();
+        this.positions = positionService.compute(this.trades);
     }
 
     @Override
@@ -69,16 +70,12 @@ public class PositionsScreen extends BaseScreen {
         return RoutePrefix + "/updates";
     }
 
-    public ServerResponse initialRender(ServerRequest request) {
-        return handleInitialRender(request, () -> {
-            this.trades = this.trades == null ? tradeRepository.getAllTrades() : this.trades;
-            this.positions = this.positions == null ? positionService.compute(this.trades) : this.positions;
-            return render();
-        });
+    public synchronized ServerResponse initialRender(ServerRequest request) {
+        return handleInitialRender(request, this::render);
     }
 
     @Override
-    protected EscapedHtml getContent() {
+    protected synchronized EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
                         column("CUSIP", Position::getCusip),
                         column("Book", Position::getBook),
@@ -96,25 +93,25 @@ public class PositionsScreen extends BaseScreen {
                 "grid", grid);
     }
 
-    private void onTradesLoaded(TradesLoadedEvent event) {
+    private synchronized void onTradesLoaded(TradesLoadedEvent event) {
         this.trades = new ArrayList<>(event.getTrades());
         this.positions = positionService.compute(this.trades);
         this.triggerUpdate();
     }
 
-    private void onTradeBooked(TradeBookedEvent event) {
+    private synchronized void onTradeBooked(TradeBookedEvent event) {
         this.trades.add(event.getTrade());
         this.positions = positionService.compute(this.trades);
         this.triggerUpdate();
     }
 
-    private void onTradeModified(TradeModifiedEvent event) {
+    private synchronized void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
         this.positions = positionService.compute(this.trades);
         this.triggerUpdate();
     }
 
-    private void onTradeDeleted(TradeDeletedEvent event) {
+    private synchronized void onTradeDeleted(TradeDeletedEvent event) {
         this.trades.removeIf(t -> t.getId().equals(event.getTradeId()));
         this.positions = positionService.compute(this.trades);
         this.triggerUpdate();

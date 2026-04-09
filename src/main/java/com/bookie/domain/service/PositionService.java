@@ -17,6 +17,7 @@ public class PositionService {
 
     public List<Position> compute(List<Trade> trades) {
         var today = LocalDate.now();
+
         return trades.stream()
                 .collect(Collectors.groupingBy(t -> new PositionKey(t.getCusip(), t.getBook())))
                 .entrySet().stream()
@@ -29,6 +30,7 @@ public class PositionService {
                             .map(Trade::getExecutionTime)
                             .max(Comparator.naturalOrder())
                             .orElse(null);
+
                     var position = new Position();
                     position.setCusip(key.cusip());
                     position.setBook(key.book());

@@ -17,6 +17,10 @@ public class Util {
         }
     }
 
+    public static Thread startAsync(Runnable task) {
+        return Thread.ofVirtual().start(task);
+    }
+
     public static void sleep(long ms) {
         try {
             Thread.sleep(ms);

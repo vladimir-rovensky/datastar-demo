@@ -9,6 +9,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class Response {
@@ -16,7 +17,7 @@ public class Response {
     private static final Logger logger = LoggerFactory.getLogger(Response.class);
 
     public static ServerResponse patchSignals(Map<String, Object> signals) {
-        return sse(channel -> channel.patchSignals(signals).complete());
+        return sse(channel -> channel.patchSignals(signals));
     }
 
     public static ServerResponse sseCustom(Consumer<ServerResponse.SseBuilder> configure) {
@@ -27,7 +28,17 @@ public class Response {
         return ServerResponse.sse(b -> {
             var channel = new ClientChannel();
             channel.connect(b);
-            handler.accept(channel);
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    handler.accept(channel);
+                } catch (Exception ex) {
+                    logger.debug("Error in SSE response stream", ex);
+                    channel.comment("Error when producing response" + ex);
+                } finally {
+                    channel.complete();
+                }
+            });
         }, Duration.ZERO);
     }
 

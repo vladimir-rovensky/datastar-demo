@@ -73,8 +73,7 @@ public class Popup {
     public static ServerResponse open(EscapedHtml content) {
         return sse(ch -> ch
                 .updateFragment(content)
-                .patchSignals(Map.of("popupVisible", true))
-                .complete());
+                .patchSignals(Map.of("popupVisible", true)));
     }
 
     public static ServerResponse close() {

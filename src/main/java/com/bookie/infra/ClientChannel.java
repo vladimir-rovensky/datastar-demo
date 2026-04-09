@@ -26,18 +26,16 @@ public class ClientChannel {
     }
 
     public synchronized void connect(ServerResponse.SseBuilder builder) {
-        logger.info("Connecting channel {}", name);
+        logger.debug("Connecting channel {}", name);
 
         builder.onTimeout(() -> {
-            logger.info("Timeout of channel {}", name);
+            logger.debug("Timeout of channel {}", name);
             removeStream(builder);
         }).onError(e -> {
-            logger.info("Error on channel {}", name, e);
+            logger.debug("Error on channel {}", name, e);
             removeStream(builder);
         }).onComplete(() -> {
-            if (!name.isEmpty()) {
-                logger.info("Completed channel {}", name);
-            }
+            logger.debug("Completed channel {}", name);
             removeStream(builder);
         });
 
@@ -49,7 +47,8 @@ public class ClientChannel {
     }
 
     public synchronized void complete() {
-        kill();
+        logger.debug("Completing channel {}", name);
+        drainStreams(ServerResponse.SseBuilder::complete);
     }
 
     public synchronized void fail() {
@@ -57,7 +56,11 @@ public class ClientChannel {
     }
 
     public synchronized void heartbeat() {
-        forAllStreams(stream -> stream.comment("heartbeat").send());
+        comment("heartbeat");
+    }
+
+    public synchronized void comment(String comment) {
+        forAllStreams(stream -> stream.comment(comment).send());
     }
 
     public synchronized ClientChannel executeScript(String script) {
@@ -119,17 +122,13 @@ public class ClientChannel {
     }
 
     private void forAllStreams(StreamAction action) {
-        List<ServerResponse.SseBuilder> failed = new ArrayList<>();
-
         for (ServerResponse.SseBuilder stream : List.copyOf(streams)) {
             try {
                 action.accept(stream);
             } catch (Exception e) {
-                failed.add(stream);
+                logger.debug("Exception on channel {}", this.name, e);
             }
         }
-
-        failed.forEach(this::removeStream);
     }
 
     private void drainStreams(StreamAction action) {
@@ -142,14 +141,6 @@ public class ClientChannel {
             } catch (Exception ignored) {
             }
         }
-    }
-
-    private synchronized void kill() {
-        if (!name.isBlank()) {
-            logger.info("Killing channel {}", name);
-        }
-
-        drainStreams(ServerResponse.SseBuilder::complete);
     }
 
     private synchronized void addStream(ServerResponse.SseBuilder builder) {

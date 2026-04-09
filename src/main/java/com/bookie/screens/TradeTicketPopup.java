@@ -81,7 +81,6 @@ public class TradeTicketPopup {
         var accrued = pricingService.calculateAccruedInterest(ticket.getCusip(), ticket.getQuantity());
         ticket.setAccruedInterest(accrued);
         channel.updateFragment(this.render(ticket));
-        channel.complete();
     }
 
     public static EscapedHtml getToolbarButtons() {

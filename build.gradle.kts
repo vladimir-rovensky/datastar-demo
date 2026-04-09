@@ -17,10 +17,6 @@ repositories {
     mavenCentral()
 }
 
-configurations.all {
-    resolutionStrategy.force("org.jboss.threads:jboss-threads:3.9.2")
-}
-
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")

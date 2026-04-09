@@ -108,7 +108,7 @@ public class Shell {
         }
 
         return html("""
-                data-init="@post('${url}', {openWhenHidden: true, retry: 'always'})"
+                data-init="@post('${url}', {openWhenHidden: false, retry: 'always'})"
         """, "url", this.updateURL);
     }
 

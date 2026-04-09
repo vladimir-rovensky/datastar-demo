@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ public class ClientChannel {
 
     private final List<ServerResponse.SseBuilder> streams = new ArrayList<>();
     private final String name;
+    private long eventIdCounter = 0;
 
     private static final Logger logger = LoggerFactory.getLogger(ClientChannel.class);
 
@@ -90,10 +92,7 @@ public class ClientChannel {
     }
 
     public synchronized ClientChannel patchSignals(Map<String, Object> signals) {
-        forAllStreams(stream -> {
-            stream.event("datastar-patch-signals");
-            stream.data("signals " + Util.toJson(signals));
-        });
+        forAllStreams(s -> sendEvent(s, "datastar-patch-signals", "signals " + Util.toJson(signals)));
 
         return this;
     }
@@ -112,12 +111,14 @@ public class ClientChannel {
             data.append("elements ").append(line).append("\n");
         }
 
-        forAllStreams(s -> {
-            s.event("datastar-patch-elements");
-            s.data(data.toString());
-        });
+        forAllStreams(s -> sendEvent(s, "datastar-patch-elements", data.toString()));
 
         return this;
+    }
+
+    private void sendEvent(ServerResponse.SseBuilder s, String eventName, String data) throws IOException {
+        s.event(eventName).id(String.valueOf(this.eventIdCounter++));
+        s.data(data);
     }
 
     @FunctionalInterface

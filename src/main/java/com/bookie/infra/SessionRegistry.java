@@ -104,7 +104,6 @@ public class SessionRegistry implements SmartLifecycle {
 
         for (ClientSession session : sessions.values()) {
             session.logStatus();
-            logger.info("\n");
         }
     }
 

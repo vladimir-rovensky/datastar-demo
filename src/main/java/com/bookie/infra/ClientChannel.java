@@ -46,6 +46,10 @@ public class ClientChannel {
         return !streams.isEmpty();
     }
 
+    public synchronized int getStreamCount() {
+        return this.streams.size();
+    }
+
     public synchronized void complete() {
         logger.debug("Completing channel {}", name);
         drainStreams(ServerResponse.SseBuilder::complete);

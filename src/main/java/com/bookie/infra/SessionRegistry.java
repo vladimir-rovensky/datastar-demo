@@ -103,7 +103,8 @@ public class SessionRegistry implements SmartLifecycle {
         logger.info("Sessions: {}", sessions.size());
 
         for (ClientSession session : sessions.values()) {
-            logger.info("  {} - {} live channel(s)", session.getTabId(), session.getLiveChannelCount());
+            session.logStatus();
+            logger.info("\n");
         }
     }
 

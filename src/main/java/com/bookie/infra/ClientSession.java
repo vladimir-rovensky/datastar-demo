@@ -1,12 +1,16 @@
 package com.bookie.infra;
 
 import com.bookie.screens.BaseScreen;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClientSession {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientSession.class);
 
     private final String tabId;
     private final Map<Class<? extends BaseScreen>, BaseScreen> screens = new HashMap<>();
@@ -48,12 +52,15 @@ public class ClientSession {
         screens.values().forEach(BaseScreen::dispose);
     }
 
-    public synchronized long getLiveChannelCount() {
-        return screens.values().stream().filter(screen -> screen.getChannel().isAlive()).count();
-    }
-
     public synchronized void heartbeatAllChannels() {
         screens.values().forEach(screen -> screen.getChannel().heartbeat());
+    }
+
+    public synchronized void logStatus() {
+        screens.forEach((screenClass, screen) -> {
+            var streamCount = screen.getChannel().getStreamCount();
+            logger.info("  Session {} - {} - {} live streams", tabId, screenClass.getSimpleName(), streamCount);
+        });
     }
 
     public synchronized void failAllChannels() {

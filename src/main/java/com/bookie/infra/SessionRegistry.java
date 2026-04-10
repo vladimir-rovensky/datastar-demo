@@ -101,7 +101,11 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     private void logSessions(Collection<ClientSession> sessions) {
-        logger.info("Sessions: {}", sessions.size());
+        var streamCount = sessions.stream()
+                .map(ClientSession::getStreamCount)
+                .reduce(0, Integer::sum);
+
+        logger.info("Sessions: {}, Streams: {}", sessions.size(), streamCount);
 
         for (ClientSession session : sessions) {
             session.logStatus();

@@ -64,6 +64,12 @@ public class ClientSession {
         logger.info("");
     }
 
+    public synchronized int getStreamCount() {
+        return screens.values().stream()
+                .map(s -> s.getChannel().getStreamCount())
+                .reduce(0, Integer::sum);
+    }
+
     public synchronized void failAllChannels() {
         screens.values().forEach(screen -> screen.getChannel().fail());
     }

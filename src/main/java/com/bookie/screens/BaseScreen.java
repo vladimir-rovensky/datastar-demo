@@ -2,6 +2,7 @@ package com.bookie.screens;
 
 import com.bookie.infra.ClientChannel;
 import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.TabID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -12,7 +13,7 @@ import static com.bookie.screens.Shell.shell;
 
 public abstract class BaseScreen {
 
-    private String tabID;
+    private TabID tabID;
     private ClientChannel channel;
     private final String title;
     private long stateVersion = 0;
@@ -21,11 +22,11 @@ public abstract class BaseScreen {
         this.title = title;
     }
 
-    public String getTabID() {
+    public TabID getTabID() {
         return tabID;
     }
 
-    public void setTabID(String tabID) {
+    public void setTabID(TabID tabID) {
         this.tabID = tabID;
         this.channel = new ClientChannel(title + " - " + tabID);
     }
@@ -37,7 +38,7 @@ public abstract class BaseScreen {
     public void dispose() {}
 
     public EscapedHtml render() {
-        return shell(this.getTabID())
+        return shell(this.getTabID().localID())
                 .withTitle(title)
                 .withUpdateURL(getUpdateURL())
                 .withToolbar(getToolbarContent())
@@ -72,7 +73,7 @@ public abstract class BaseScreen {
     }
 
     protected String getETag() {
-        return this.tabID + "-" + this.stateVersion;
+        return this.tabID.localID() + "-" + this.stateVersion;
     }
 
     public void triggerUpdate() {

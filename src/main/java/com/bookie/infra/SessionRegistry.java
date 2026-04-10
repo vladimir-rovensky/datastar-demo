@@ -10,14 +10,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Component
 public class SessionRegistry implements SmartLifecycle {
 
-    private final HashMap<String, ClientSession> sessions = new HashMap<>();
+    private final HashMap<TabID, ClientSession> sessions = new HashMap<>();
     private final AutowireCapableBeanFactory beanFactory;
     private final long sessionTimeoutSeconds;
     private volatile boolean running = false;
@@ -34,9 +34,9 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized <T extends BaseScreen> ClientSession getOrCreateSession(Class<T> screenType, ServerRequest request) {
-        var tabId = request.param("tabID").orElse(null);
-        if (tabId != null) {
-            var existing = sessions.get(tabId);
+        if (request.param("tabID").isPresent()) {
+            var tabID = TabID.forExisting(request);
+            var existing = sessions.get(tabID);
             if (existing != null) {
                 existing.touch();
                 if (existing.getScreen(screenType) == null) {
@@ -45,11 +45,12 @@ public class SessionRegistry implements SmartLifecycle {
                 return existing;
             }
         }
-        return createSession(screenType);
+
+        return createSession(request, screenType);
     }
 
-    public synchronized <T extends BaseScreen> ClientSession createSession(Class<T> screenType) {
-        var tabId = UUID.randomUUID().toString();
+    public synchronized <T extends BaseScreen> ClientSession createSession(ServerRequest request, Class<T> screenType) {
+        var tabId = TabID.forNew(request);
         logger.info("Creating session: {}, {}", screenType.getSimpleName(), tabId);
         var session = new ClientSession(tabId, sessionTimeoutSeconds);
         sessions.put(tabId, session);
@@ -65,13 +66,13 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized ClientSession getSession(ServerRequest request) {
-        var tabId = request.headers().header("X-tabID").getFirst();
-        return getSession(tabId);
-    }
-
-    public synchronized ClientSession getSession(String tabId) {
+        var tabId = TabID.forExisting(request);
         var session = sessions.get(tabId);
-        if (session != null) session.touch();
+
+        if (session != null) {
+            session.touch();
+        }
+
         return session;
     }
 
@@ -96,13 +97,13 @@ public class SessionRegistry implements SmartLifecycle {
             return abandoned;
         });
 
-        logSessions(sessions);
+        logSessions(sessions.values());
     }
 
-    private void logSessions(HashMap<String, ClientSession> sessions) {
+    private void logSessions(Collection<ClientSession> sessions) {
         logger.info("Sessions: {}", sessions.size());
 
-        for (ClientSession session : sessions.values()) {
+        for (ClientSession session : sessions) {
             session.logStatus();
         }
     }

@@ -12,12 +12,12 @@ public class ClientSession {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientSession.class);
 
-    private final String tabId;
+    private final TabID tabId;
     private final Map<Class<? extends BaseScreen>, BaseScreen> screens = new HashMap<>();
     private final long timeoutSeconds;
     private Instant lastActive = Instant.now();
 
-    public ClientSession(String tabId, long timeoutSeconds) {
+    public ClientSession(TabID tabId, long timeoutSeconds) {
         this.tabId = tabId;
         this.timeoutSeconds = timeoutSeconds;
         this.touch();
@@ -32,7 +32,7 @@ public class ClientSession {
         return !anyChannelAlive && lastActive.isBefore(Instant.now().minusSeconds(timeoutSeconds));
     }
 
-    public String getTabId() {
+    public TabID getTabId() {
         return tabId;
     }
 
@@ -61,6 +61,7 @@ public class ClientSession {
             var streamCount = screen.getChannel().getStreamCount();
             logger.info("  Session {} - {} - {} live streams", tabId, screenClass.getSimpleName(), streamCount);
         });
+        logger.info("");
     }
 
     public synchronized void failAllChannels() {

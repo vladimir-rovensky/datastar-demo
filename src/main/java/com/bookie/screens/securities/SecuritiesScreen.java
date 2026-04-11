@@ -28,7 +28,7 @@ public class SecuritiesScreen extends BaseScreen {
     private Bond currentBond;
     private Bond editingBond;
     private String currentCusip;
-    private String currentSection;
+    private BondSection currentSection;
 
     private boolean isEditing() { return editingBond != null; }
 
@@ -37,13 +37,13 @@ public class SecuritiesScreen extends BaseScreen {
     public SecuritiesScreen(BondRepository bondRepository) {
         super("Securities");
         this.bondRepository = bondRepository;
-        this.currentSection = "general";
+        this.currentSection = BondSection.GENERAL;
     }
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
                 .GET("", _ -> ServerResponse.temporaryRedirect(
-                        URI.create(RoutePrefix + "/" + NO_CUSIP + "/general")).build())
+                        URI.create(RoutePrefix + "/" + NO_CUSIP + "/" + BondSection.GENERAL.getPath())).build())
                 .GET("/{cusip}/{section}", request -> sessionRegistry
                         .getOrCreateSession(SecuritiesScreen.class, request)
                         .getScreen(SecuritiesScreen.class)
@@ -58,17 +58,11 @@ public class SecuritiesScreen extends BaseScreen {
     public synchronized ServerResponse initialRender(ServerRequest request) {
         var cusip = request.pathVariable("cusip");
         var section = request.pathVariable("section");
+        var bond = bondRepository.findBondByCusip(cusip);
 
-        currentSection = section.isBlank() ? "general" : section;
-
-        if (NO_CUSIP.equals(cusip)) {
-            currentCusip = NO_CUSIP;
-            currentBond = null;
-        } else {
-            var bond = bondRepository.findBondByCusip(cusip);
-            currentCusip = bond != null ? cusip : NO_CUSIP;
-            currentBond = bond;
-        }
+        currentSection = BondSection.fromPath(section);
+        currentCusip = bond != null ? cusip : NO_CUSIP;
+        currentBond = bond;
 
         return handleInitialRender(request, this::render);
     }
@@ -99,20 +93,19 @@ public class SecuritiesScreen extends BaseScreen {
 
     private EscapedHtml renderSection() {
         return switch (currentSection) {
-            case "general" -> GeneralSection.render(getActiveBond(), isEditing());
-            case "income" -> IncomeSection.render(getActiveBond(), isEditing());
-            case "redemption" -> RedemptionSection.render(getActiveBond());
-            default -> EscapedHtml.blank();
+            case GENERAL -> GeneralSection.render(getActiveBond(), isEditing());
+            case INCOME -> IncomeSection.render(getActiveBond(), isEditing());
+            case REDEMPTION -> RedemptionSection.render(getActiveBond());
         };
     }
 
     private EscapedHtml renderSecondaryToolbar() {
         var tabId = getTabID().localID();
         var cusipValue = NO_CUSIP.equals(currentCusip) ? "" : currentCusip;
-        var generalLink = link("securities/" + currentCusip + "/general", "General", tabId).withActive("general".equals(currentSection));
-        var incomeLink = link("securities/" + currentCusip + "/income", "Income", tabId).withActive("income".equals(currentSection));
-        var redemptionLink = link("securities/" + currentCusip + "/redemption", "Redemption", tabId).withActive("redemption".equals(currentSection));
-        var navigateToCusip = "if($cusipLookup.trim()) window.location.href='/securities/'+$cusipLookup.trim()+'/" + currentSection + "?tabID=" + tabId + "'";
+        var generalLink = link("securities/" + currentCusip + "/" + BondSection.GENERAL.getPath(), BondSection.GENERAL.getLabel(), tabId).withActive(currentSection == BondSection.GENERAL);
+        var incomeLink = link("securities/" + currentCusip + "/" + BondSection.INCOME.getPath(), BondSection.INCOME.getLabel(), tabId).withActive(currentSection == BondSection.INCOME);
+        var redemptionLink = link("securities/" + currentCusip + "/" + BondSection.REDEMPTION.getPath(), BondSection.REDEMPTION.getLabel(), tabId).withActive(currentSection == BondSection.REDEMPTION);
+        var navigateToCusip = "if($cusipLookup.trim()) window.location.href='/securities/'+$cusipLookup.trim()+'/" + currentSection.getPath() + "?tabID=" + tabId + "'";
         var editActions = renderEditActions();
 
         return html("""

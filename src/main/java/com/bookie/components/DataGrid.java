@@ -16,7 +16,8 @@ public class DataGrid<TRow> {
 
     private final List<DataGridColumn<TRow>> columns;
     private Function<TRow, EscapedHtml> onRowDoubleClick;
-    Function<TRow, Object> getRowID = _ -> null;
+    private Function<TRow, Object> getRowID = _ -> null;
+    private Function<TRow, EscapedHtml> getRowAttrs = _ -> EscapedHtml.blank();
     private List<TRow> rows;
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
@@ -30,6 +31,11 @@ public class DataGrid<TRow> {
 
     public DataGrid<TRow> onRowDoubleClick(Function<TRow, EscapedHtml> action) {
         this.onRowDoubleClick = action;
+        return this;
+    }
+
+    public DataGrid<TRow> withRowAttrs(Function<TRow, EscapedHtml> getRowAttrs) {
+        this.getRowAttrs = getRowAttrs;
         return this;
     }
 
@@ -64,16 +70,23 @@ public class DataGrid<TRow> {
                 ? " data-on:dblclick=" + onRowDoubleClick.apply(row)
                 : "";
 
+        var attrs = getRowAttrs.apply(row);
+
         var id = getRowID.apply(row);
 
-        return html("<tr id='${rowID}' ${dblClick}>${cells}</tr>",
+        return html("<tr id='${rowID}' ${dblClick} ${attrs}>${cells}</tr>",
                 "rowID", id != null ? id : "",
                 "dblClick", dblClick,
+                "attrs", attrs,
                 "cells", cells);
     }
 
     private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {
-        return html("<td>${value}</td>", "value", column.getValue.apply(row));
+        return html("<td>${value}</td>",
+                "value",
+                column.renderer != null
+                        ? column.renderer.apply(row)
+                        : column.getValue.apply(row));
     }
 
 }

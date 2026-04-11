@@ -48,11 +48,10 @@ public class SelectInput extends BaseInput {
         });
 
         return html("""
-                        <select name="${name}" data-signals='{nonce: "${nonce}", ${name}: "${selected}"}' data-bind="${name}" ${attrs}>${options}</select>
+                        <select name="${name}" ${binding} ${attrs}>${options}</select>
             """,
                 "name", name,
                 "selected", selected != null ? selected : "",
-                "nonce", Util.nonce(),
                 "attrs", getAttrs(),
                 "options", renderedOptions);
     }

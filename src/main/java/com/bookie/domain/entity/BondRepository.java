@@ -191,10 +191,28 @@ public class BondRepository {
         b.setIssueSize(randomIssueSize(cusip, 500_000_000, 5_000_000_000L));
         b.setFaceValue(new BigDecimal("1000"));
         b.setIssuePrice(new BigDecimal("99.875"));
-        b.setCouponType(CouponType.FIXED);
-        b.setCoupon(BigDecimal.valueOf(couponVal));
-        b.setCouponFrequency(2);
-        b.setDayCount(DayCountConvention.THIRTY_360);
+        if (isFloatingCorporate(cusip)) {
+            BigDecimal floatSpread = deriveSpread(cusip);
+            List<Bond.ResetEntry> resets = buildResetSchedule(cusip, issueDate, maturityDate, floatSpread);
+            BigDecimal currentCoupon = resets.stream()
+                    .filter(resetEntry -> !resetEntry.getResetDate().isAfter(today))
+                    .reduce((first, second) -> second)
+                    .map(Bond.ResetEntry::getNewRate)
+                    .orElse(floatSpread);
+            b.setCouponType(CouponType.FLOATING);
+            b.setFloatingIndex("SOFR");
+            b.setSpread(floatSpread);
+            b.setCoupon(currentCoupon);
+            b.setCouponFrequency(4);
+            b.setDayCount(DayCountConvention.ACT_360);
+            b.setResetSchedule(resets);
+            b.setDescription(ticker + " SOFR+" + floatSpread + " " + matYear);
+        } else {
+            b.setCouponType(CouponType.FIXED);
+            b.setCoupon(BigDecimal.valueOf(couponVal));
+            b.setCouponFrequency(2);
+            b.setDayCount(DayCountConvention.THIRTY_360);
+        }
         b.setMoodysRating(moodys);
         b.setSpRating(sp);
         b.setFitchRating(fitch);
@@ -226,6 +244,33 @@ public class BondRepository {
         }
 
         return b;
+    }
+
+    private static boolean isFloatingCorporate(String cusip) {
+        return Math.abs(cusip.hashCode()) % 3 == 0;
+    }
+
+    private static BigDecimal deriveSpread(String cusip) {
+        long hash = Math.abs(cusip.hashCode());
+        double spreadBps = 50 + (hash % 101);
+        return BigDecimal.valueOf(Math.round(spreadBps) / 100.0).setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private static List<Bond.ResetEntry> buildResetSchedule(String cusip, LocalDate issueDate, LocalDate maturityDate, BigDecimal spread) {
+        List<Bond.ResetEntry> resets = new ArrayList<>();
+        long hash = Math.abs(cusip.hashCode());
+        double baseSofr = 4.00 + (hash % 150) / 100.0;
+        LocalDate resetDate = issueDate;
+        int step = 0;
+        while (!resetDate.isAfter(maturityDate)) {
+            double oscillation = Math.sin(step * 0.4) * 0.30;
+            double sofr = Math.max(0.01, baseSofr + oscillation);
+            double allIn = sofr + spread.doubleValue();
+            resets.add(new Bond.ResetEntry(String.valueOf(step), resetDate, BigDecimal.valueOf(Math.round(allIn * 100), 2)));
+            resetDate = resetDate.plusMonths(3);
+            step++;
+        }
+        return resets;
     }
 
     private static Bond buildMuni(Object[] row, LocalDate today) {

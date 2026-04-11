@@ -52,6 +52,7 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("edit", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).startEdit())
                 .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
+                .POST("resetSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
                 .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
     }
@@ -245,6 +246,24 @@ public class SecuritiesScreen extends BaseScreen {
         var bondField = Bond.class.getDeclaredField(field);
         bondField.setAccessible(true);
         bondField.set(editingBond, bondField.get(bond));
+
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse handleResetScheduleUpdate(ServerRequest request) throws Exception {
+        var rowID = request.pathVariable("rowID");
+        var field = request.pathVariable("field");
+        var incomingEntry = request.body(Bond.ResetEntry.class);
+
+        var matchingEntry = editingBond.getResetSchedule().stream()
+                .filter(e -> Objects.equals(e.getId(), rowID))
+                .findFirst();
+
+        if (matchingEntry.isPresent()) {
+            var entryField = Bond.ResetEntry.class.getDeclaredField(field);
+            entryField.setAccessible(true);
+            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
+        }
 
         return ServerResponse.ok().build();
     }

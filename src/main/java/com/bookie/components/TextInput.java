@@ -18,11 +18,11 @@ public class TextInput extends BaseInput {
     @Override
     public EscapedHtml render() {
         return html("""
-            <input type="text" name="${name}" data-signals='{nonce: "${nonce}", ${name}: "${value}"}' data-bind="${name}" value="${value}" autocomplete="off" ${attrs}>
+            <input type="text" name="${name}" ${binding} value="${value}" autocomplete="off" ${attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value : "",
-                "nonce", Util.nonce(),
+                "binding", this.getBindingAttr(value),
                 "attrs", getAttrs());
     }
 }

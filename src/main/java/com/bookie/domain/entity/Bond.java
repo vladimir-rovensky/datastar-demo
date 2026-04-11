@@ -55,7 +55,26 @@ public class Bond implements Cloneable {
         }
     }
 
-    public record ResetEntry(LocalDate resetDate, BigDecimal newRate) {}
+    public static class ResetEntry {
+        private String id;
+        private LocalDate resetDate;
+        private BigDecimal newRate;
+
+        public ResetEntry(String id, LocalDate resetDate, BigDecimal newRate) {
+            this.id = id;
+            this.resetDate = resetDate;
+            this.newRate = newRate;
+        }
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public LocalDate getResetDate() { return resetDate; }
+        public void setResetDate(LocalDate resetDate) { this.resetDate = resetDate; }
+
+        public BigDecimal getNewRate() { return newRate; }
+        public void setNewRate(BigDecimal newRate) { this.newRate = newRate; }
+    }
 
     public record CallEntry(LocalDate callDate, BigDecimal callPrice) {}
 

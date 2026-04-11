@@ -7,7 +7,10 @@ import com.bookie.domain.entity.DayCountConvention;
 import com.bookie.infra.EscapedHtml;
 
 
+import java.util.List;
+
 import static com.bookie.components.DataGrid.column;
+import static com.bookie.components.DateInput.dateInput;
 import static com.bookie.components.FormField.formField;
 import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
@@ -24,11 +27,7 @@ public class IncomeSection {
                 ? html("""
                         <p class="schedule-empty">No reset schedule.</p>
                         """)
-                : DataGrid.withColumns(
-                        column("Reset Date", Bond.ResetEntry::resetDate),
-                        column("New Rate", Bond.ResetEntry::newRate))
-                        .withRows(resetSchedule)
-                        .render();
+                : getResetScheduleGrid(resetSchedule, disabled);
 
         return html("""
                 <div class="bond-income">
@@ -40,7 +39,9 @@ public class IncomeSection {
                         ${dayCount}
                         ${floatingIndex}
                     </div>
+                    <div>
                     ${resetTable}
+                    </div>
                 </div>
                 """,
                 "couponType", formField("Coupon Type").withInput(selectInput("couponType", CouponType.class, bond.getCouponType()).withDisabled(disabled)),
@@ -50,5 +51,24 @@ public class IncomeSection {
                 "dayCount", formField("Day Count").withInput(selectInput("dayCount", DayCountConvention.class, bond.getDayCount()).withDisabled(disabled)),
                 "floatingIndex", formField("Floating Index").withInput(textInput("floatingIndex", bond.getFloatingIndex()).withDisabled(disabled)),
                 "resetTable", resetTable);
+    }
+
+    private static EscapedHtml getResetScheduleGrid(List<Bond.ResetEntry> resetSchedule, boolean disabled) {
+        return DataGrid
+                .withColumns(
+                        column("Reset Date", Bond.ResetEntry::getResetDate)
+                                .withRenderer(r -> dateInput("resetDate", r.getResetDate())
+                                        .withDisabled(disabled)
+                                        .noBind()),
+                        column("New Rate", Bond.ResetEntry::getNewRate)
+                                .withRenderer(r -> numberInput("newRate", r.getNewRate())
+                                        .withDisabled(disabled)
+                                        .noBind()))
+                .withRows(resetSchedule)
+                .withRowID(Bond.ResetEntry::getId)
+                .withRowAttrs(r -> html("""
+                        data-on:change="@post('/securities/resetSchedule/${rowID}/' + evt.target.name, {payload: {[evt.target.name]: evt.target.value}})"
+                """, "rowID", r.getId()))
+                .render();
     }
 }

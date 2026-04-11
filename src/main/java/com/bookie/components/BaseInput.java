@@ -2,6 +2,8 @@ package com.bookie.components;
 
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Renderable;
+import com.bookie.infra.Util;
+import org.jetbrains.annotations.NotNull;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -9,6 +11,7 @@ public abstract class BaseInput implements Renderable {
     protected String name;
     protected String loadIndicator;
     protected boolean disabled;
+    protected boolean bind = true;
 
     public abstract EscapedHtml render();
 
@@ -24,7 +27,20 @@ public abstract class BaseInput implements Renderable {
         return html(disabled ? "disabled" : "");
     }
 
+    protected EscapedHtml getBindingAttr(Object value) {
+        if(!this.bind) {
+            return EscapedHtml.blank();
+        }
+
+        return html("""
+                    data-signals='{nonce: "${nonce}", ${name}: "${value}"}' data-bind="${name}"
+                """,
+                "nonce", Util.nonce(),
+                "name", this.name,
+                "value", value);
+    }
+
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }
     public BaseInput withLoadIndicator(String signal) { this.loadIndicator = signal; return this; }
-
+    public BaseInput noBind() {  this.bind = false; return this; }
 }

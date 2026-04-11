@@ -2,6 +2,7 @@ package com.bookie.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Bond implements Cloneable {
@@ -49,7 +50,28 @@ public class Bond implements Cloneable {
     @Override
     public Bond clone() {
         try {
-            return (Bond) super.clone();
+            Bond copy = (Bond) super.clone();
+            if (resetSchedule != null) {
+                copy.resetSchedule = new ArrayList<>(resetSchedule.stream()
+                        .map(e -> new ResetEntry(e.getId(), e.getResetDate(), e.getNewRate()))
+                        .toList());
+            }
+            if (callSchedule != null) {
+                copy.callSchedule = new ArrayList<>(callSchedule.stream()
+                        .map(e -> new CallEntry(e.getId(), e.getCallDate(), e.getCallPrice()))
+                        .toList());
+            }
+            if (putSchedule != null) {
+                copy.putSchedule = new ArrayList<>(putSchedule.stream()
+                        .map(e -> new PutEntry(e.getId(), e.getPutDate(), e.getPutPrice()))
+                        .toList());
+            }
+            if (sinkingFundSchedule != null) {
+                copy.sinkingFundSchedule = new ArrayList<>(sinkingFundSchedule.stream()
+                        .map(e -> new SinkingFundEntry(e.getId(), e.getSinkDate(), e.getAmount()))
+                        .toList());
+            }
+            return copy;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
         }

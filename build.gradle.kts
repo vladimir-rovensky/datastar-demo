@@ -18,6 +18,11 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-web") {
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
+    }
+    implementation("org.springframework.boot:spring-boot-starter-jetty")
+    implementation("org.eclipse.jetty.http2:jetty-http2-server")
+    implementation("org.eclipse.jetty:jetty-alpn-java-server")
     compileOnly("org.jetbrains:annotations:26.0.2")
 }

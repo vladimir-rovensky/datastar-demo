@@ -6,7 +6,6 @@ import com.bookie.domain.entity.CouponType;
 import com.bookie.domain.entity.DayCountConvention;
 import com.bookie.infra.EscapedHtml;
 
-import java.util.Arrays;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.FormField.formField;
@@ -19,10 +18,6 @@ public class IncomeSection {
 
     public static EscapedHtml render(Bond bond, boolean editing) {
         var disabled = !editing;
-        var couponTypeOptions = Arrays.stream(CouponType.values()).map(CouponType::name).toList();
-        var dayCountOptions = Arrays.stream(DayCountConvention.values()).map(DayCountConvention::name).toList();
-        var couponTypeName = bond.getCouponType() != null ? bond.getCouponType().name() : null;
-        var dayCountName = bond.getDayCount() != null ? bond.getDayCount().name() : null;
         var resetSchedule = bond.getResetSchedule();
 
         var resetTable = (resetSchedule == null || resetSchedule.isEmpty())
@@ -48,11 +43,11 @@ public class IncomeSection {
                     ${resetTable}
                 </div>
                 """,
-                "couponType", formField("Coupon Type").withInput(selectInput("couponType", couponTypeOptions, couponTypeName).withDisabled(disabled)),
+                "couponType", formField("Coupon Type").withInput(selectInput("couponType", CouponType.class, bond.getCouponType()).withDisabled(disabled)),
                 "coupon", formField("Coupon").withInput(numberInput("coupon", bond.getCoupon()).withDisabled(disabled)),
                 "spread", formField("Spread").withInput(numberInput("spread", bond.getSpread()).withDisabled(disabled)),
                 "couponFrequency", formField("Coupon Frequency").withInput(numberInput("couponFrequency", bond.getCouponFrequency()).withDisabled(disabled)),
-                "dayCount", formField("Day Count").withInput(selectInput("dayCount", dayCountOptions, dayCountName).withDisabled(disabled)),
+                "dayCount", formField("Day Count").withInput(selectInput("dayCount", DayCountConvention.class, bond.getDayCount()).withDisabled(disabled)),
                 "floatingIndex", formField("Floating Index").withInput(textInput("floatingIndex", bond.getFloatingIndex()).withDisabled(disabled)),
                 "resetTable", resetTable);
     }

@@ -4,8 +4,6 @@ import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondType;
 import com.bookie.infra.EscapedHtml;
 
-import java.util.Arrays;
-import java.util.List;
 
 import static com.bookie.components.DateInput.dateInput;
 import static com.bookie.components.FormField.formField;
@@ -18,8 +16,6 @@ public class GeneralSection {
 
     public static EscapedHtml render(Bond bond, boolean editing) {
         var disabled = !editing;
-        var bondTypeOptions = Arrays.stream(BondType.values()).map(BondType::name).toList();
-        var bondTypeName = bond.getBondType() != null ? bond.getBondType().name() : null;
 
         return html("""
                 <div class="form-fields bond-general">
@@ -51,7 +47,7 @@ public class GeneralSection {
                 "ticker", formField("Ticker").withInput(textInput("ticker", bond.getTicker()).withDisabled(disabled)),
                 "issuerName", formField("Issuer Name").withInput(textInput("issuerName", bond.getIssuerName()).withDisabled(disabled)),
                 "description", formField("Description").withInput(textInput("description", bond.getDescription()).withDisabled(disabled)),
-                "bondType", formField("Bond Type").withInput(selectInput("bondType", bondTypeOptions, bondTypeName).withDisabled(disabled)),
+                "bondType", formField("Bond Type").withInput(selectInput("bondType", BondType.class, bond.getBondType()).withDisabled(disabled)),
                 "sector", formField("Sector").withInput(textInput("sector", bond.getSector()).withDisabled(disabled)),
                 "currency", formField("Currency").withInput(textInput("currency", bond.getCurrency()).withDisabled(disabled)),
                 "country", formField("Country").withInput(textInput("country", bond.getCountry()).withDisabled(disabled)),
@@ -66,6 +62,6 @@ public class GeneralSection {
                 "moodysRating", formField("Moody's Rating").withInput(textInput("moodysRating", bond.getMoodysRating()).withDisabled(disabled)),
                 "spRating", formField("S&P Rating").withInput(textInput("spRating", bond.getSpRating()).withDisabled(disabled)),
                 "fitchRating", formField("Fitch Rating").withInput(textInput("fitchRating", bond.getFitchRating()).withDisabled(disabled)),
-                "secured", formField("Secured").withInput(selectInput("secured", List.of("true", "false"), String.valueOf(bond.isSecured())).withDisabled(disabled)));
+                "secured", formField("Secured").withInput(selectInput("secured", Boolean.class, bond.isSecured()).withDisabled(disabled)));
     }
 }

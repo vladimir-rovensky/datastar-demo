@@ -32,7 +32,7 @@ public class IncomeSection {
 
         return html("""
                 <div class="bond-income">
-                    <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name)">
+                    <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
                         ${couponType}
                         ${coupon}
                         ${spread}

@@ -12,6 +12,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.net.URI;
+import java.util.Objects;
 
 import static com.bookie.components.Link.link;
 import static com.bookie.infra.Response.connectUpdates;
@@ -27,7 +28,6 @@ public class SecuritiesScreen extends BaseScreen {
 
     private Bond currentBond;
     private Bond editingBond;
-    private String currentCusip;
     private BondSection currentSection;
 
     private boolean isEditing() { return editingBond != null; }
@@ -58,13 +58,19 @@ public class SecuritiesScreen extends BaseScreen {
     public synchronized ServerResponse initialRender(ServerRequest request) {
         var cusip = request.pathVariable("cusip");
         var section = request.pathVariable("section");
-        var bond = bondRepository.findBondByCusip(cusip);
+
+        if(!Objects.equals(cusip, getCurrentCusip())) {
+            currentBond = bondRepository.findBondByCusip(cusip);
+            editingBond = null;
+        }
 
         currentSection = BondSection.fromPath(section);
-        currentCusip = bond != null ? cusip : NO_CUSIP;
-        currentBond = bond;
 
         return handleInitialRender(request, this::render);
+    }
+
+    private String getCurrentCusip() {
+        return currentBond != null ? currentBond.getCusip() : NO_CUSIP;
     }
 
     @Override
@@ -101,6 +107,7 @@ public class SecuritiesScreen extends BaseScreen {
 
     private EscapedHtml renderSecondaryToolbar() {
         var tabId = getTabID().localID();
+        var currentCusip = getCurrentCusip();
         var cusipValue = NO_CUSIP.equals(currentCusip) ? "" : currentCusip;
         var generalLink = link("securities/" + currentCusip + "/" + BondSection.GENERAL.getPath(), BondSection.GENERAL.getLabel(), tabId).withActive(currentSection == BondSection.GENERAL);
         var incomeLink = link("securities/" + currentCusip + "/" + BondSection.INCOME.getPath(), BondSection.INCOME.getLabel(), tabId).withActive(currentSection == BondSection.INCOME);

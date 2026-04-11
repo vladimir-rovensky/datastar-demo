@@ -113,6 +113,7 @@ input, select {
     outline: none;
     &:focus    { border-color: var(--clr-accent); }
     &:disabled { background-color: var(--clr-bg); color: var(--clr-text-faint); border-color: var(--clr-border-dim); }
+    &::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
 }
 
 input[type=number]::-webkit-inner-spin-button,
@@ -170,7 +171,11 @@ input.loading { opacity: 0; }
 }
 
 /* Tables */
-table { border-collapse: collapse; width: 100%; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid var(--clr-border-dim);
+}
 
 thead {
     background-color: var(--clr-surface);

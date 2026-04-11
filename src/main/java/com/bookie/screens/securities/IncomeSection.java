@@ -42,6 +42,12 @@ public class IncomeSection {
                     <div>
                     ${resetTable}
                     </div>
+                    <style>
+                    @scope {
+                        table {width: 500px;}
+                        table input { width: 100%; }
+                    }
+                    </style>
                 </div>
                 """,
                 "couponType", formField("Coupon Type").withInput(selectInput("couponType", CouponType.class, bond.getCouponType()).withDisabled(disabled)),

@@ -90,7 +90,7 @@ public class SecuritiesScreen extends BaseScreen {
         var secondaryToolbar = renderSecondaryToolbar();
         var body = currentBond == null
                 ? html("""
-                        <p class="securities-empty">Please load a CUSIP in the top-left.</p>
+                        <p class="centered-message">Please load a CUSIP in the top-left.</p>
                         """)
                 : renderSection();
 
@@ -216,18 +216,6 @@ public class SecuritiesScreen extends BaseScreen {
                             gap: var(--sp-sm);
                         }
 
-                        .schedule-empty {
-                            color: var(--clr-text-muted);
-                            font-style: italic;
-                            padding: var(--sp-sm) 0;
-                        }
-
-                        .securities-empty {
-                            padding: var(--sp-xl);
-                            color: var(--clr-text-muted);
-                            text-align: center;
-                            font-size: var(--fs-lg);
-                        }
                     }
                 </style>
                 """);

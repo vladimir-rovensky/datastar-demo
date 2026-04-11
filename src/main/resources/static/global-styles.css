@@ -407,6 +407,13 @@ button.btn-primary {
     &:hover { background-color: var(--clr-danger-hi); }
 }
 
+.centered-message {
+    padding: var(--sp-xl);
+    color: var(--clr-text-muted);
+    text-align: center;
+    font-size: var(--fs-lg);
+}
+
 /* Screens */
 .trades-screen,
 .positions-screen,

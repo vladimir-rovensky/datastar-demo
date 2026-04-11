@@ -25,7 +25,7 @@ public class IncomeSection {
 
         var resetTable = (resetSchedule == null || resetSchedule.isEmpty())
                 ? html("""
-                        <p class="schedule-empty">No reset schedule.</p>
+                        <p class="centered-message">No reset schedule.</p>
                         """)
                 : getResetScheduleGrid(resetSchedule, disabled);
 

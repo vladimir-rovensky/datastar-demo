@@ -17,7 +17,7 @@ public class RedemptionSection {
         var callSchedule = bond.getCallSchedule();
         var callTable = (callSchedule == null || callSchedule.isEmpty())
                 ? html("""
-                        <p class="schedule-empty">No call schedule.</p>
+                        <p class="centered-message">No call schedule.</p>
                         """)
                 : DataGrid.withColumns(
                         column("Call Date", Bond.CallEntry::getCallDate)
@@ -38,7 +38,7 @@ public class RedemptionSection {
         var putSchedule = bond.getPutSchedule();
         var putTable = (putSchedule == null || putSchedule.isEmpty())
                 ? html("""
-                        <p class="schedule-empty">No put schedule.</p>
+                        <p class="centered-message">No put schedule.</p>
                         """)
                 : DataGrid.withColumns(
                         column("Put Date", Bond.PutEntry::getPutDate)
@@ -59,7 +59,7 @@ public class RedemptionSection {
         var sinkingFundSchedule = bond.getSinkingFundSchedule();
         var sinkingFundTable = (sinkingFundSchedule == null || sinkingFundSchedule.isEmpty())
                 ? html("""
-                        <p class="schedule-empty">No sinking fund schedule.</p>
+                        <p class="centered-message">No sinking fund schedule.</p>
                         """)
                 : DataGrid.withColumns(
                         column("Sink Date", Bond.SinkingFundEntry::getSinkDate)

@@ -1,12 +1,10 @@
-package com.bookie.screens;
+package com.bookie.screens.securities;
 
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondRepository;
-import com.bookie.domain.entity.BondType;
-import com.bookie.domain.entity.CouponType;
-import com.bookie.domain.entity.DayCountConvention;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.screens.BaseScreen;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -14,17 +12,8 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 
-import com.bookie.components.DataGrid;
-import static com.bookie.components.DataGrid.column;
-import static com.bookie.components.DateInput.dateInput;
-import static com.bookie.components.FormField.formField;
 import static com.bookie.components.Link.link;
-import static com.bookie.components.NumberInput.numberInput;
-import static com.bookie.components.SelectInput.selectInput;
-import static com.bookie.components.TextInput.textInput;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -110,157 +99,11 @@ public class SecuritiesScreen extends BaseScreen {
 
     private EscapedHtml renderSection() {
         return switch (currentSection) {
-            case "general" -> renderGeneral();
-            case "income" -> renderIncome();
-            case "redemption" -> renderRedemption();
+            case "general" -> GeneralSection.render(getActiveBond(), isEditing());
+            case "income" -> IncomeSection.render(getActiveBond(), isEditing());
+            case "redemption" -> RedemptionSection.render(getActiveBond());
             default -> EscapedHtml.blank();
         };
-    }
-
-    private EscapedHtml renderGeneral() {
-        var bond = getActiveBond();
-        var disabled = !isEditing();
-        var bondTypeOptions = Arrays.stream(BondType.values()).map(BondType::name).toList();
-        var bondTypeName = bond.getBondType() != null ? bond.getBondType().name() : null;
-
-        return html("""
-                <div class="form-fields bond-general">
-                    <label>CUSIP<span class="cusip-display">${cusip}</span></label>
-                    ${isin}
-                    ${ticker}
-                    ${issuerName}
-                    ${description}
-                    ${bondType}
-                    ${sector}
-                    ${currency}
-                    ${country}
-                    ${seniorityLevel}
-                    ${issueDate}
-                    ${datedDate}
-                    ${maturityDate}
-                    ${firstCouponDate}
-                    ${issueSize}
-                    ${faceValue}
-                    ${issuePrice}
-                    ${moodysRating}
-                    ${spRating}
-                    ${fitchRating}
-                    ${secured}
-                </div>
-                """,
-                "cusip", bond.getCusip(),
-                "isin", formField("ISIN").withInput(textInput("isin", bond.getIsin()).withDisabled(disabled)),
-                "ticker", formField("Ticker").withInput(textInput("ticker", bond.getTicker()).withDisabled(disabled)),
-                "issuerName", formField("Issuer Name").withInput(textInput("issuerName", bond.getIssuerName()).withDisabled(disabled)),
-                "description", formField("Description").withInput(textInput("description", bond.getDescription()).withDisabled(disabled)),
-                "bondType", formField("Bond Type").withInput(selectInput("bondType", bondTypeOptions, bondTypeName).withDisabled(disabled)),
-                "sector", formField("Sector").withInput(textInput("sector", bond.getSector()).withDisabled(disabled)),
-                "currency", formField("Currency").withInput(textInput("currency", bond.getCurrency()).withDisabled(disabled)),
-                "country", formField("Country").withInput(textInput("country", bond.getCountry()).withDisabled(disabled)),
-                "seniorityLevel", formField("Seniority Level").withInput(textInput("seniorityLevel", bond.getSeniorityLevel()).withDisabled(disabled)),
-                "issueDate", formField("Issue Date").withInput(dateInput("issueDate", bond.getIssueDate()).withDisabled(disabled)),
-                "datedDate", formField("Dated Date").withInput(dateInput("datedDate", bond.getDatedDate()).withDisabled(disabled)),
-                "maturityDate", formField("Maturity Date").withInput(dateInput("maturityDate", bond.getMaturityDate()).withDisabled(disabled)),
-                "firstCouponDate", formField("First Coupon Date").withInput(dateInput("firstCouponDate", bond.getFirstCouponDate()).withDisabled(disabled)),
-                "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withDisabled(disabled)),
-                "faceValue", formField("Face Value").withInput(numberInput("faceValue", bond.getFaceValue()).withDisabled(disabled)),
-                "issuePrice", formField("Issue Price").withInput(numberInput("issuePrice", bond.getIssuePrice()).withDisabled(disabled)),
-                "moodysRating", formField("Moody's Rating").withInput(textInput("moodysRating", bond.getMoodysRating()).withDisabled(disabled)),
-                "spRating", formField("S&P Rating").withInput(textInput("spRating", bond.getSpRating()).withDisabled(disabled)),
-                "fitchRating", formField("Fitch Rating").withInput(textInput("fitchRating", bond.getFitchRating()).withDisabled(disabled)),
-                "secured", formField("Secured").withInput(selectInput("secured", List.of("true", "false"), String.valueOf(bond.isSecured())).withDisabled(disabled)));
-    }
-
-    private EscapedHtml renderIncome() {
-        var bond = getActiveBond();
-        var disabled = !isEditing();
-        var couponTypeOptions = Arrays.stream(CouponType.values()).map(CouponType::name).toList();
-        var dayCountOptions = Arrays.stream(DayCountConvention.values()).map(DayCountConvention::name).toList();
-        var couponTypeName = bond.getCouponType() != null ? bond.getCouponType().name() : null;
-        var dayCountName = bond.getDayCount() != null ? bond.getDayCount().name() : null;
-        var resetSchedule = bond.getResetSchedule();
-
-        var resetTable = (resetSchedule == null || resetSchedule.isEmpty())
-                ? html("""
-                        <p class="schedule-empty">No reset schedule.</p>
-                        """)
-                : DataGrid.withColumns(
-                        column("Reset Date", Bond.ResetEntry::resetDate),
-                        column("New Rate", Bond.ResetEntry::newRate))
-                        .withRows(resetSchedule)
-                        .render();
-
-        return html("""
-                <div class="bond-income">
-                    <div class="form-fields">
-                        ${couponType}
-                        ${coupon}
-                        ${spread}
-                        ${couponFrequency}
-                        ${dayCount}
-                        ${floatingIndex}
-                    </div>
-                    ${resetTable}
-                </div>
-                """,
-                "couponType", formField("Coupon Type").withInput(selectInput("couponType", couponTypeOptions, couponTypeName).withDisabled(disabled)),
-                "coupon", formField("Coupon").withInput(numberInput("coupon", bond.getCoupon()).withDisabled(disabled)),
-                "spread", formField("Spread").withInput(numberInput("spread", bond.getSpread()).withDisabled(disabled)),
-                "couponFrequency", formField("Coupon Frequency").withInput(numberInput("couponFrequency", bond.getCouponFrequency()).withDisabled(disabled)),
-                "dayCount", formField("Day Count").withInput(selectInput("dayCount", dayCountOptions, dayCountName).withDisabled(disabled)),
-                "floatingIndex", formField("Floating Index").withInput(textInput("floatingIndex", bond.getFloatingIndex()).withDisabled(disabled)),
-                "resetTable", resetTable);
-    }
-
-    private EscapedHtml renderRedemption() {
-        var bond = getActiveBond();
-
-        var callSchedule = bond.getCallSchedule();
-        var callTable = (callSchedule == null || callSchedule.isEmpty())
-                ? html("""
-                        <p class="schedule-empty">No call schedule.</p>
-                        """)
-                : DataGrid.withColumns(
-                        column("Call Date", Bond.CallEntry::callDate),
-                        column("Call Price", Bond.CallEntry::callPrice))
-                        .withRows(callSchedule)
-                        .render();
-
-        var putSchedule = bond.getPutSchedule();
-        var putTable = (putSchedule == null || putSchedule.isEmpty())
-                ? html("""
-                        <p class="schedule-empty">No put schedule.</p>
-                        """)
-                : DataGrid.withColumns(
-                        column("Put Date", Bond.PutEntry::putDate),
-                        column("Put Price", Bond.PutEntry::putPrice))
-                        .withRows(putSchedule)
-                        .render();
-
-        var sinkingFundSchedule = bond.getSinkingFundSchedule();
-        var sinkingFundTable = (sinkingFundSchedule == null || sinkingFundSchedule.isEmpty())
-                ? html("""
-                        <p class="schedule-empty">No sinking fund schedule.</p>
-                        """)
-                : DataGrid.withColumns(
-                        column("Sink Date", Bond.SinkingFundEntry::sinkDate),
-                        column("Amount", Bond.SinkingFundEntry::amount))
-                        .withRows(sinkingFundSchedule)
-                        .render();
-
-        return html("""
-                <div class="bond-redemption">
-                    <h3>Call Schedule</h3>
-                    ${callTable}
-                    <h3>Put Schedule</h3>
-                    ${putTable}
-                    <h3>Sinking Fund</h3>
-                    ${sinkingFundTable}
-                </div>
-                """,
-                "callTable", callTable,
-                "putTable", putTable,
-                "sinkingFundTable", sinkingFundTable);
     }
 
     private EscapedHtml renderSecondaryToolbar() {

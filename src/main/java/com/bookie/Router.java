@@ -2,7 +2,7 @@ package com.bookie;
 
 import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.PositionsScreen;
-import com.bookie.screens.SecuritiesScreen;
+import com.bookie.screens.securities.SecuritiesScreen;
 import com.bookie.screens.TradeTicketPopup;
 import com.bookie.screens.TradesScreen;
 import org.springframework.beans.factory.annotation.Value;

@@ -2,6 +2,7 @@ package com.bookie;
 
 import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.PositionsScreen;
+import com.bookie.screens.SecuritiesScreen;
 import com.bookie.screens.TradeTicketPopup;
 import com.bookie.screens.TradesScreen;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,9 @@ public class Router {
     @Value("${bookie.version}")
     private String appVersion;
 
+    @Value("${bookie.cache.enabled:true}")
+    private boolean cacheEnabled;
+
     public Router(SessionRegistry sessionRegistry, AutowireCapableBeanFactory beanFactory) {
         this.sessionRegistry = sessionRegistry;
         this.beanFactory = beanFactory;
@@ -42,11 +46,18 @@ public class Router {
                 .GET("/", _ -> ServerResponse.temporaryRedirect(java.net.URI.create("/trades")).build())
                 .nest(path(TradesScreen.RoutePrefix), () -> TradesScreen.setupRoutes(sessionRegistry))
                 .nest(path(PositionsScreen.RoutePrefix), () -> PositionsScreen.setupRoutes(sessionRegistry))
+                .nest(path(SecuritiesScreen.RoutePrefix), () -> SecuritiesScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
                 .build();
     }
 
     private ServerResponse serveGlobalStyles(ServerRequest request) {
+        if (!cacheEnabled) {
+            return ServerResponse.ok()
+                    .contentType(MediaType.parseMediaType("text/css"))
+                    .body(globalStylesResource());
+        }
+
         var etag = "\"" + appVersion + "\"";
         if (etag.equals(request.headers().firstHeader(HttpHeaders.IF_NONE_MATCH))) {
             return ServerResponse.status(HttpStatus.NOT_MODIFIED).build();

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public class Bond {
+public class Bond implements Cloneable {
 
     private String cusip;
     private String isin;
@@ -45,6 +45,15 @@ public class Bond {
     private String seniorityLevel;
 
     public Bond() {}
+
+    @Override
+    public Bond clone() {
+        try {
+            return (Bond) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
 
     public record ResetEntry(LocalDate resetDate, BigDecimal newRate) {}
 

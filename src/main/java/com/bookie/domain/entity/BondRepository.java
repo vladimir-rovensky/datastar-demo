@@ -5,7 +5,6 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,7 +14,11 @@ public class BondRepository {
     private final List<Bond> bonds;
 
     public BondRepository() {
-        bonds = Collections.unmodifiableList(generateData());
+        bonds = new ArrayList<>(generateData());
+    }
+
+    public void saveBond(Bond bond) {
+        bonds.replaceAll(existing -> Objects.equals(existing.getCusip(), bond.getCusip()) ? bond : existing);
     }
 
     public List<Bond> getAllBonds() {
@@ -197,6 +200,31 @@ public class BondRepository {
         b.setFitchRating(fitch);
         b.setSecured(false);
         b.setSeniorityLevel("SENIOR_UNSECURED");
+
+        if (matYear > 2031) {
+            b.setCallSchedule(List.of(
+                new Bond.CallEntry(maturityDate.minusYears(5), new BigDecimal("101.00")),
+                new Bond.CallEntry(maturityDate.minusYears(2), new BigDecimal("100.50"))
+            ));
+        } else if (matYear >= 2028) {
+            b.setCallSchedule(List.of(
+                new Bond.CallEntry(maturityDate.minusYears(1), new BigDecimal("100.00"))
+            ));
+        }
+
+        if (cusip.hashCode() % 2 == 0) {
+            b.setPutSchedule(List.of(
+                new Bond.PutEntry(issueDate.plusYears(3), new BigDecimal("100.00"))
+            ));
+        }
+
+        if ("Industrials".equals(sector)) {
+            b.setSinkingFundSchedule(List.of(
+                new Bond.SinkingFundEntry(maturityDate.minusYears(3), b.getIssueSize().multiply(new BigDecimal("0.25"))),
+                new Bond.SinkingFundEntry(maturityDate.minusYears(1), b.getIssueSize().multiply(new BigDecimal("0.25")))
+            ));
+        }
+
         return b;
     }
 

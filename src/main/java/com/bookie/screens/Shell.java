@@ -108,18 +108,20 @@ public class Shell {
         }
 
         return html("""
-                data-init="@post('${url}', {openWhenHidden: false, retry: 'always'})"
+                data-init="@post('${url}', {openWhenHidden: true, retry: 'always'})"
         """, "url", this.updateURL);
     }
 
     private EscapedHtml buildNav() {
-        var tradesLink = link("trades", tabId).withActive("Trades".equals(title));
-        var positionsLink = link("positions", tabId).withActive("Positions".equals(title));
+        var tradesLink = link("trades", "Trades", tabId).withActive("Trades".equals(title));
+        var positionsLink = link("positions", "Positions", tabId).withActive("Positions".equals(title));
+        var securitiesLink = link("securities/nocusip/general", "Securities", tabId).withActive("Securities".equals(title));
         return html("""
                 <nav class="screen-nav">
                     ${tradesLink}
                     ${positionsLink}
+                    ${securitiesLink}
                 </nav>
-                """, "tradesLink", tradesLink, "positionsLink", positionsLink);
+                """, "tradesLink", tradesLink, "positionsLink", positionsLink, "securitiesLink", securitiesLink);
     }
 }

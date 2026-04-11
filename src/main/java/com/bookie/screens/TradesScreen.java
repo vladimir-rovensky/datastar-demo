@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bookie.components.DataGrid.column;
+import static com.bookie.components.Link.link;
 import static com.bookie.infra.Format.usd;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
@@ -99,7 +100,7 @@ public class TradesScreen extends BaseScreen {
         var grid = DataGrid.withColumns(
                         column("", this::getCancelTradeButton),
                         column("ID", Trade::getId),
-                        column("CUSIP", Trade::getCusip),
+                        column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getTabID().localID()).render()),
                         column("Book", Trade::getBook),
                         column("Type", Trade::getDirection),
                         column("Counterparty", Trade::getCounterparty),

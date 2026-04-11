@@ -3,7 +3,9 @@ package com.bookie.screens;
 import com.bookie.infra.ClientChannel;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.TabID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -12,6 +14,9 @@ import java.util.function.Supplier;
 import static com.bookie.screens.Shell.shell;
 
 public abstract class BaseScreen {
+
+    @Value("${bookie.cache.enabled:true}")
+    private boolean cacheEnabled;
 
     private TabID tabID;
     private ClientChannel channel;
@@ -57,6 +62,12 @@ public abstract class BaseScreen {
     }
 
     protected ServerResponse handleInitialRender(ServerRequest request, Supplier<EscapedHtml> render) {
+        if (!cacheEnabled) {
+            return ServerResponse.ok()
+                    .contentType(MediaType.TEXT_HTML)
+                    .body(render.get().toString());
+        }
+
         var currentETag = "\"" + this.getETag() + "\"";
         var ifNoneMatch = request.headers().firstHeader("If-None-Match");
         if (currentETag.equals(ifNoneMatch)) {
@@ -68,7 +79,7 @@ public abstract class BaseScreen {
         return ServerResponse.ok()
                 .header(HttpHeaders.ETAG, currentETag)
                 .header(HttpHeaders.CACHE_CONTROL, "max-age=0, must-revalidate")
-                .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                .contentType(MediaType.TEXT_HTML)
                 .body(body);
     }
 

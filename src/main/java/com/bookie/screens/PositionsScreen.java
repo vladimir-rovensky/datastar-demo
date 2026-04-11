@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bookie.components.DataGrid.column;
+import static com.bookie.components.Link.link;
 import static com.bookie.infra.Format.usd;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
@@ -77,7 +78,7 @@ public class PositionsScreen extends BaseScreen {
     @Override
     protected synchronized EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
-                        column("CUSIP", Position::getCusip),
+                        column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getTabID().localID()).render()),
                         column("Book", Position::getBook),
                         column("Current Position", p -> usd(p.getCurrentPosition())),
                         column("Settled Position", p -> usd(p.getSettledPosition())),

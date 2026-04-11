@@ -189,7 +189,8 @@ tbody tr:hover, tbody tr:nth-child(even):hover { background-color: var(--clr-sur
 /* Toolbar */
 .toolbar {
     display: flex;
-    align-items: center;
+    align-items: stretch;
+    height: 60px;
     gap: var(--sp-md);
     padding: var(--sp-sm) var(--sp-md);
     background-color: var(--clr-surface);
@@ -199,7 +200,7 @@ tbody tr:hover, tbody tr:nth-child(even):hover { background-color: var(--clr-sur
     z-index: var(--z-toolbar);
 }
 
-.toolbar-title { font-size: var(--fs-xl); font-weight: var(--fw-semibold); color: var(--clr-text-bright); margin-left: auto; }
+.toolbar-title { font-size: var(--fs-xl); font-weight: var(--fw-semibold); color: var(--clr-text-bright); margin-left: auto; align-self: center; }
 
 .toolbar-separator {
     width: 1px;
@@ -223,6 +224,25 @@ tbody tr:hover, tbody tr:nth-child(even):hover { background-color: var(--clr-sur
         &:hover { color: var(--clr-text); text-decoration: none; background-color: var(--clr-btn); }
         &[aria-current="page"] { color: var(--clr-text-bright); border-color: var(--clr-border-dim); background-color: var(--clr-btn); }
     }
+}
+
+/* Secondary toolbar */
+.toolbar.secondary {
+    position: static;
+    height: auto;
+    padding: var(--sp-sm) var(--sp-md);
+    background-color: var(--clr-bg-alt);
+    align-items: center;
+}
+
+.toolbar.secondary .screen-nav {
+    align-self: auto;
+}
+
+.toolbar.secondary .screen-nav a {
+    width: auto;
+    padding: var(--sp-xs) var(--sp-md);
+    font-size: var(--fs-sm);
 }
 
 /* Popup */

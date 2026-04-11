@@ -7,17 +7,19 @@ import static com.bookie.infra.TemplatingEngine.html;
 
 public class Link implements Renderable {
 
-    private final String screen;
+    private final String url;
+    private final String label;
     private final String tabId;
     private boolean active = false;
 
-    private Link(String screen, String tabId) {
-        this.screen = screen;
+    private Link(String url, String label, String tabId) {
+        this.url = url;
+        this.label = label;
         this.tabId = tabId;
     }
 
-    public static Link link(String screen, String tabId) {
-        return new Link(screen, tabId);
+    public static Link link(String url, String label, String tabId) {
+        return new Link(url, label, tabId);
     }
 
     public Link withActive(boolean active) {
@@ -27,14 +29,13 @@ public class Link implements Renderable {
 
     @Override
     public EscapedHtml render() {
-        var label = Character.toUpperCase(screen.charAt(0)) + screen.substring(1);
-        if (active) {
-            return html("""
-                    <a href="/${screen}?tabID=${tabId}" aria-current="page">${label}</a>
-                    """, "screen", screen, "tabId", tabId, "label", label);
-        }
+        var href = "/" + url + "?tabID=" + tabId;
+        var ariaCurrent = active ? html(" aria-current=\"page\"") : EscapedHtml.blank();
         return html("""
-                <a href="/${screen}?tabID=${tabId}">${label}</a>
-                """, "screen", screen, "tabId", tabId, "label", label);
+                <a href="${href}"${ariaCurrent}>${label}</a>
+                """,
+                "href", href,
+                "ariaCurrent", ariaCurrent,
+                "label", label);
     }
 }

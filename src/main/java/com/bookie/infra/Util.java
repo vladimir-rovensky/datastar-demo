@@ -9,6 +9,8 @@ public class Util {
             .findAndRegisterModules()
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
+    private static long nonce = 0L;
+
     public static String toJson(Object value) {
         try {
             return objectMapper.writeValueAsString(value);
@@ -27,5 +29,9 @@ public class Util {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static long nonce() {
+        return nonce++;
     }
 }

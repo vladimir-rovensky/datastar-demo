@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.Util;
+
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class SelectInput extends BaseInput {
@@ -46,10 +48,11 @@ public class SelectInput extends BaseInput {
         });
 
         return html("""
-                        <select name="${name}" data-signals='{${name}: "${selected}"}' data-bind="${name}" ${attrs}>${options}</select>
+                        <select name="${name}" data-signals='{nonce: "${nonce}", ${name}: "${selected}"}' data-bind="${name}" ${attrs}>${options}</select>
             """,
                 "name", name,
                 "selected", selected != null ? selected : "",
+                "nonce", Util.nonce(),
                 "attrs", getAttrs(),
                 "options", renderedOptions);
     }

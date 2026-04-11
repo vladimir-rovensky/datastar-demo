@@ -3,6 +3,8 @@ package com.bookie.components;
 import java.time.LocalDate;
 
 import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.Util;
+
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class DateInput extends BaseInput {
@@ -18,10 +20,11 @@ public class DateInput extends BaseInput {
     @Override
     public EscapedHtml render() {
         return html("""
-            <input type="date" name="${name}" data-signals='{${name}: "${value}"}' data-bind="${name}" value="${value}" ${attrs}>
+            <input type="date" name="${name}" data-signals='{nonce: "${nonce}", ${name}: "${value}"}' data-bind="${name}" value="${value}" ${attrs}>
         """,
                 "name", this.name,
                 "value", this.value != null ? this.value.toString() : "",
+                "nonce", Util.nonce(),
                 "attrs", getAttrs());
     }
 }

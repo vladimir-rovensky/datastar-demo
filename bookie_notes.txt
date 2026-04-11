@@ -6,6 +6,7 @@ Open
 * Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);
 * Update channel needs retry: always, otherwise doesn't work
 * Including all signals when fetching feels wierd, every get gets all of them serialized
+* Had to add nonce to input signals to force signal reset on reRender
 
 Solved
 * Code reuse - everything is on the server (e.g. validation)

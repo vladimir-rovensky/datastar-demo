@@ -50,8 +50,9 @@ public class SecuritiesScreen extends BaseScreen {
                         .initialRender(request))
                 .POST("updates", request -> connectUpdates(sessionRegistry, SecuritiesScreen.class, request))
                 .POST("edit", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).startEdit())
-                .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit(request))
+                .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
+                .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
     }
 
@@ -120,8 +121,7 @@ public class SecuritiesScreen extends BaseScreen {
         return html("""
                 <div class="toolbar secondary" data-signals="{cusipLookup: '${cusipValue}'}">
                     <div class="cusip-lookup">
-                        <input type="text" data-bind="cusipLookup" placeholder="CUSIP"
-                               data-on:keydown.enter="${navigateToCusip}">
+                        <input type="text" data-bind="cusipLookup" placeholder="CUSIP" data-on:keydown.enter="${navigateToCusip}">
                         <button data-on:click="${navigateToCusip}">Load</button>
                     </div>
                     <div class="toolbar-separator"></div>
@@ -224,16 +224,9 @@ public class SecuritiesScreen extends BaseScreen {
         return ServerResponse.ok().build();
     }
 
-    public synchronized ServerResponse saveEdit(ServerRequest request) throws Exception {
-        var bond = request.body(Bond.class);
-        bond.setCusip(editingBond.getCusip());
-        bond.setLastCouponDate(editingBond.getLastCouponDate());
-        bond.setResetSchedule(editingBond.getResetSchedule());
-        bond.setCallSchedule(editingBond.getCallSchedule());
-        bond.setPutSchedule(editingBond.getPutSchedule());
-        bond.setSinkingFundSchedule(editingBond.getSinkingFundSchedule());
-        bondRepository.saveBond(bond);
-        currentBond = bond;
+    public synchronized ServerResponse saveEdit() {
+        bondRepository.saveBond(editingBond);
+        currentBond = editingBond;
         editingBond = null;
         triggerUpdate();
         return ServerResponse.ok().build();
@@ -242,6 +235,17 @@ public class SecuritiesScreen extends BaseScreen {
     public synchronized ServerResponse cancelEdit() {
         editingBond = null;
         triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse handleInput(ServerRequest request) throws Exception {
+        var field = request.pathVariable("field");
+        var bond = request.body(Bond.class);
+
+        var bondField = Bond.class.getDeclaredField(field);
+        bondField.setAccessible(true);
+        bondField.set(editingBond, bondField.get(bond));
+
         return ServerResponse.ok().build();
     }
 }

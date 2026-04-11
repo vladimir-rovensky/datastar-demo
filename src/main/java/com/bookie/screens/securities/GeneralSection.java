@@ -18,7 +18,7 @@ public class GeneralSection {
         var disabled = !editing;
 
         return html("""
-                <div class="form-fields bond-general">
+                <div class="form-fields bond-general" data-on:change="@post('/securities/input/' + evt.target.name)">
                     <label>CUSIP<span class="cusip-display">${cusip}</span></label>
                     ${isin}
                     ${ticker}

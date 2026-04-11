@@ -111,7 +111,10 @@ public class ClientChannel {
         }
 
         for (String line : fragment.toString().split("\n")) {
-            data.append("elements ").append(line).append("\n");
+            String trimmed = line.trim();
+            if(!trimmed.isBlank()) {
+                data.append("elements ").append(trimmed).append("\n");
+            }
         }
 
         forAllStreams(s -> sendEvent(s, "datastar-patch-elements", data.toString()));

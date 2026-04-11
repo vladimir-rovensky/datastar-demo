@@ -136,10 +136,11 @@ public class TradeRepository {
             TradeDirection dir = rng.nextInt(10) < 7 ? TradeDirection.BUY : TradeDirection.SELL;
             LocalDate tradeDate = today.minusDays(rng.nextInt(730));
             BigDecimal quantity = BigDecimal.valueOf((rng.nextInt(200) + 1) * 100_000L);
-            BigDecimal accrued  = bond.getCoupon()
-                    .divide(BigDecimal.valueOf(200), 6, RoundingMode.HALF_UP)
-                    .multiply(quantity)
-                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal accrued = bond.getCoupon() != null ? bond.getCoupon()
+                                                            .divide(BigDecimal.valueOf(200), 6, RoundingMode.HALF_UP)
+                                                            .multiply(quantity)
+                                                            .setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
             Trade t = new Trade();
             t.setId((long) (i + 1));

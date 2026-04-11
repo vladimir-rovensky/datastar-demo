@@ -196,24 +196,24 @@ public class BondRepository {
         b.setResetSchedule(buildResetSchedule(TEST_CUSIP, issueDate, maturityDate, new BigDecimal("1.00")));
 
         b.setCallSchedule(List.of(
-            new Bond.CallEntry(LocalDate.of(2027, 1, 15), new BigDecimal("102.00")),
-            new Bond.CallEntry(LocalDate.of(2028, 1, 15), new BigDecimal("101.50")),
-            new Bond.CallEntry(LocalDate.of(2029, 1, 15), new BigDecimal("101.00")),
-            new Bond.CallEntry(LocalDate.of(2030, 1, 15), new BigDecimal("100.50")),
-            new Bond.CallEntry(LocalDate.of(2031, 1, 15), new BigDecimal("100.00"))
+            new Bond.CallEntry("0", LocalDate.of(2027, 1, 15), new BigDecimal("102.00")),
+            new Bond.CallEntry("1", LocalDate.of(2028, 1, 15), new BigDecimal("101.50")),
+            new Bond.CallEntry("2", LocalDate.of(2029, 1, 15), new BigDecimal("101.00")),
+            new Bond.CallEntry("3", LocalDate.of(2030, 1, 15), new BigDecimal("100.50")),
+            new Bond.CallEntry("4", LocalDate.of(2031, 1, 15), new BigDecimal("100.00"))
         ));
 
         b.setPutSchedule(List.of(
-            new Bond.PutEntry(LocalDate.of(2025, 1, 15), new BigDecimal("100.00")),
-            new Bond.PutEntry(LocalDate.of(2027, 1, 15), new BigDecimal("100.00")),
-            new Bond.PutEntry(LocalDate.of(2029, 1, 15), new BigDecimal("100.00"))
+            new Bond.PutEntry("0", LocalDate.of(2025, 1, 15), new BigDecimal("100.00")),
+            new Bond.PutEntry("1", LocalDate.of(2027, 1, 15), new BigDecimal("100.00")),
+            new Bond.PutEntry("2", LocalDate.of(2029, 1, 15), new BigDecimal("100.00"))
         ));
 
         b.setSinkingFundSchedule(List.of(
-            new Bond.SinkingFundEntry(LocalDate.of(2028, 1, 15), new BigDecimal("200000000")),
-            new Bond.SinkingFundEntry(LocalDate.of(2029, 1, 15), new BigDecimal("200000000")),
-            new Bond.SinkingFundEntry(LocalDate.of(2030, 1, 15), new BigDecimal("200000000")),
-            new Bond.SinkingFundEntry(LocalDate.of(2031, 1, 15), new BigDecimal("200000000"))
+            new Bond.SinkingFundEntry("0", LocalDate.of(2028, 1, 15), new BigDecimal("200000000")),
+            new Bond.SinkingFundEntry("1", LocalDate.of(2029, 1, 15), new BigDecimal("200000000")),
+            new Bond.SinkingFundEntry("2", LocalDate.of(2030, 1, 15), new BigDecimal("200000000")),
+            new Bond.SinkingFundEntry("3", LocalDate.of(2031, 1, 15), new BigDecimal("200000000"))
         ));
 
         return b;
@@ -284,25 +284,25 @@ public class BondRepository {
 
         if (matYear > 2031) {
             b.setCallSchedule(List.of(
-                new Bond.CallEntry(maturityDate.minusYears(5), new BigDecimal("101.00")),
-                new Bond.CallEntry(maturityDate.minusYears(2), new BigDecimal("100.50"))
+                new Bond.CallEntry("0", maturityDate.minusYears(5), new BigDecimal("101.00")),
+                new Bond.CallEntry("1", maturityDate.minusYears(2), new BigDecimal("100.50"))
             ));
         } else if (matYear >= 2028) {
             b.setCallSchedule(List.of(
-                new Bond.CallEntry(maturityDate.minusYears(1), new BigDecimal("100.00"))
+                new Bond.CallEntry("0", maturityDate.minusYears(1), new BigDecimal("100.00"))
             ));
         }
 
         if (cusip.hashCode() % 2 == 0) {
             b.setPutSchedule(List.of(
-                new Bond.PutEntry(issueDate.plusYears(3), new BigDecimal("100.00"))
+                new Bond.PutEntry("0", issueDate.plusYears(3), new BigDecimal("100.00"))
             ));
         }
 
         if ("Industrials".equals(sector)) {
             b.setSinkingFundSchedule(List.of(
-                new Bond.SinkingFundEntry(maturityDate.minusYears(3), b.getIssueSize().multiply(new BigDecimal("0.25"))),
-                new Bond.SinkingFundEntry(maturityDate.minusYears(1), b.getIssueSize().multiply(new BigDecimal("0.25")))
+                new Bond.SinkingFundEntry("0", maturityDate.minusYears(3), b.getIssueSize().multiply(new BigDecimal("0.25"))),
+                new Bond.SinkingFundEntry("1", maturityDate.minusYears(1), b.getIssueSize().multiply(new BigDecimal("0.25")))
             ));
         }
 

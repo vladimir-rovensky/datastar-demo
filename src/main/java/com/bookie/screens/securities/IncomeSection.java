@@ -45,7 +45,6 @@ public class IncomeSection {
                     <style>
                     @scope {
                         .data-grid { width: 500px; }
-                        .data-grid-cell input { width: 100%; }
                     }
                     </style>
                 </div>

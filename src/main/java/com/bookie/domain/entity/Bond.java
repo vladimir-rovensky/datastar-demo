@@ -76,11 +76,68 @@ public class Bond implements Cloneable {
         public void setNewRate(BigDecimal newRate) { this.newRate = newRate; }
     }
 
-    public record CallEntry(LocalDate callDate, BigDecimal callPrice) {}
+    public static class CallEntry {
+        private String id;
+        private LocalDate callDate;
+        private BigDecimal callPrice;
 
-    public record PutEntry(LocalDate putDate, BigDecimal putPrice) {}
+        public CallEntry(String id, LocalDate callDate, BigDecimal callPrice) {
+            this.id = id;
+            this.callDate = callDate;
+            this.callPrice = callPrice;
+        }
 
-    public record SinkingFundEntry(LocalDate sinkDate, BigDecimal amount) {}
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public LocalDate getCallDate() { return callDate; }
+        public void setCallDate(LocalDate callDate) { this.callDate = callDate; }
+
+        public BigDecimal getCallPrice() { return callPrice; }
+        public void setCallPrice(BigDecimal callPrice) { this.callPrice = callPrice; }
+    }
+
+    public static class PutEntry {
+        private String id;
+        private LocalDate putDate;
+        private BigDecimal putPrice;
+
+        public PutEntry(String id, LocalDate putDate, BigDecimal putPrice) {
+            this.id = id;
+            this.putDate = putDate;
+            this.putPrice = putPrice;
+        }
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public LocalDate getPutDate() { return putDate; }
+        public void setPutDate(LocalDate putDate) { this.putDate = putDate; }
+
+        public BigDecimal getPutPrice() { return putPrice; }
+        public void setPutPrice(BigDecimal putPrice) { this.putPrice = putPrice; }
+    }
+
+    public static class SinkingFundEntry {
+        private String id;
+        private LocalDate sinkDate;
+        private BigDecimal amount;
+
+        public SinkingFundEntry(String id, LocalDate sinkDate, BigDecimal amount) {
+            this.id = id;
+            this.sinkDate = sinkDate;
+            this.amount = amount;
+        }
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public LocalDate getSinkDate() { return sinkDate; }
+        public void setSinkDate(LocalDate sinkDate) { this.sinkDate = sinkDate; }
+
+        public BigDecimal getAmount() { return amount; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
+    }
 
     public String getCusip() { return cusip; }
     public void setCusip(String cusip) { this.cusip = cusip; }

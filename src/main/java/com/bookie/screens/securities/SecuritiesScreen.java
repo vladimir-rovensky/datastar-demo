@@ -53,6 +53,9 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
                 .POST("resetSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
+                .POST("callSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleCallScheduleUpdate(request))
+                .POST("putSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handlePutScheduleUpdate(request))
+                .POST("sinkingFundSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleSinkingFundScheduleUpdate(request))
                 .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
     }
@@ -107,7 +110,7 @@ public class SecuritiesScreen extends BaseScreen {
         return switch (currentSection) {
             case GENERAL -> GeneralSection.render(getActiveBond(), isEditing());
             case INCOME -> IncomeSection.render(getActiveBond(), isEditing());
-            case REDEMPTION -> RedemptionSection.render(getActiveBond());
+            case REDEMPTION -> RedemptionSection.render(getActiveBond(), isEditing());
         };
     }
 
@@ -173,6 +176,11 @@ public class SecuritiesScreen extends BaseScreen {
                         .cusip-lookup input { width: 120px; }
 
                         .edit-actions { margin-left: auto; }
+
+                        .form-fields {
+                            width: 800px;
+                            column-gap: var(--sp-lg);
+                        }
 
                         .bond-general {
                             padding: var(--sp-lg);
@@ -267,6 +275,60 @@ public class SecuritiesScreen extends BaseScreen {
 
         if (matchingEntry.isPresent()) {
             var entryField = Bond.ResetEntry.class.getDeclaredField(field);
+            entryField.setAccessible(true);
+            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
+        }
+
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse handleCallScheduleUpdate(ServerRequest request) throws Exception {
+        var rowID = request.pathVariable("rowID");
+        var field = request.pathVariable("field");
+        var incomingEntry = request.body(Bond.CallEntry.class);
+
+        var matchingEntry = editingBond.getCallSchedule().stream()
+                .filter(e -> Objects.equals(e.getId(), rowID))
+                .findFirst();
+
+        if (matchingEntry.isPresent()) {
+            var entryField = Bond.CallEntry.class.getDeclaredField(field);
+            entryField.setAccessible(true);
+            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
+        }
+
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse handlePutScheduleUpdate(ServerRequest request) throws Exception {
+        var rowID = request.pathVariable("rowID");
+        var field = request.pathVariable("field");
+        var incomingEntry = request.body(Bond.PutEntry.class);
+
+        var matchingEntry = editingBond.getPutSchedule().stream()
+                .filter(e -> Objects.equals(e.getId(), rowID))
+                .findFirst();
+
+        if (matchingEntry.isPresent()) {
+            var entryField = Bond.PutEntry.class.getDeclaredField(field);
+            entryField.setAccessible(true);
+            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
+        }
+
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse handleSinkingFundScheduleUpdate(ServerRequest request) throws Exception {
+        var rowID = request.pathVariable("rowID");
+        var field = request.pathVariable("field");
+        var incomingEntry = request.body(Bond.SinkingFundEntry.class);
+
+        var matchingEntry = editingBond.getSinkingFundSchedule().stream()
+                .filter(e -> Objects.equals(e.getId(), rowID))
+                .findFirst();
+
+        if (matchingEntry.isPresent()) {
+            var entryField = Bond.SinkingFundEntry.class.getDeclaredField(field);
             entryField.setAccessible(true);
             entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
         }

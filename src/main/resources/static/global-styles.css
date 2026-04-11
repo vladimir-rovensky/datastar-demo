@@ -49,6 +49,8 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    scrollbar-color: var(--clr-btn) var(--clr-surface);
+    scrollbar-width: auto;
 }
 
 body {
@@ -57,6 +59,10 @@ body {
     font-family: system-ui, sans-serif;
     font-size: var(--fs-sm);
     line-height: 1.4;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 h1 { font-size: var(--fs-xl);  font-weight: var(--fw-semibold); color: var(--clr-text-bright); margin-bottom: var(--sp-lg); }
@@ -170,14 +176,22 @@ input.loading { opacity: 0; }
     to { transform: rotate(360deg); }
 }
 
-/* Tables */
-table {
-    border-collapse: collapse;
+/* Data grid */
+.fill-height {
+    flex: 1;
+    min-height: 0;
+}
+
+.data-grid {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     border: 1px solid var(--clr-border-dim);
 }
 
-thead {
+.data-grid-header {
+    display: grid;
+    grid-template-columns: var(--cols);
     background-color: var(--clr-surface);
     color: var(--clr-text-muted);
     text-transform: uppercase;
@@ -185,11 +199,24 @@ thead {
     letter-spacing: 0.05em;
 }
 
-th { padding: var(--sp-sm) var(--sp-md); text-align: left; border-bottom: 1px solid var(--clr-border-dim); font-weight: var(--fw-semibold); }
-td { padding: var(--sp-xs) var(--sp-md); border-bottom: 1px solid var(--clr-surface-hi); }
+.data-grid-th {
+    padding: var(--sp-sm) var(--sp-md);
+    border-bottom: 1px solid var(--clr-border-dim);
+    font-weight: var(--fw-semibold);
+}
 
-tbody tr:nth-child(even)                       { background-color: var(--clr-bg-alt); }
-tbody tr:hover, tbody tr:nth-child(even):hover { background-color: var(--clr-surface-hi); }
+.data-grid-body {
+    overflow-y: auto;
+}
+
+.data-grid-row {
+    display: grid;
+    grid-template-columns: var(--cols);
+    &:nth-child(even) { background-color: var(--clr-bg-alt); }
+    &:hover { background-color: var(--clr-surface-hi); }
+}
+
+.data-grid-cell { padding: var(--sp-xs) var(--sp-md); border-bottom: 1px solid var(--clr-surface-hi); }
 
 /* Toolbar */
 .toolbar {
@@ -373,4 +400,13 @@ button.btn-primary {
     background-color: var(--clr-danger);
     border-color: var(--clr-danger-border);
     &:hover { background-color: var(--clr-danger-hi); }
+}
+
+/* Screens */
+.trades-screen,
+.positions-screen,
+#securities-screen {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }

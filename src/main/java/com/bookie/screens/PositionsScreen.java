@@ -87,7 +87,7 @@ public class PositionsScreen extends BaseScreen {
                 .render();
 
         return html("""
-                    <div id="positions-screen" class="positions-screen">
+                    <div id="positions-screen" class="positions-screen fill-height">
                     ${grid}
                     </div>
                 """,

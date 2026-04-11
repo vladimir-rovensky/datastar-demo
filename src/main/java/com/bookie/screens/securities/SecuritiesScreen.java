@@ -92,11 +92,13 @@ public class SecuritiesScreen extends BaseScreen {
                 : renderSection();
 
         return html("""
-                <div id="securities-screen">
+                <div id="securities-screen" class="fill-height">
+                    ${styles}
                     ${secondaryToolbar}
                     ${body}
                 </div>
                 """,
+                "styles", getStyles(),
                 "secondaryToolbar", secondaryToolbar,
                 "body", body);
     }
@@ -127,7 +129,6 @@ public class SecuritiesScreen extends BaseScreen {
                     </div>
                     <div class="toolbar-separator"></div>
                     <nav class="screen-nav">
-                        ${styles}
                         ${generalLink}
                         ${incomeLink}
                         ${redemptionLink}
@@ -137,7 +138,6 @@ public class SecuritiesScreen extends BaseScreen {
                 """,
                 "cusipValue", cusipValue,
                 "navigateToCusip", navigateToCusip,
-                "styles", getStyles(),
                 "generalLink", generalLink,
                 "incomeLink", incomeLink,
                 "redemptionLink", redemptionLink,
@@ -164,7 +164,7 @@ public class SecuritiesScreen extends BaseScreen {
     private EscapedHtml getStyles() {
         return html("""
                 <style>
-                    @scope (#securities-screen) {
+                    @scope {
                         .cusip-lookup {
                             display: flex;
                             gap: var(--sp-xs);
@@ -200,6 +200,12 @@ public class SecuritiesScreen extends BaseScreen {
                             display: flex;
                             flex-direction: column;
                             gap: var(--sp-lg);
+                        }
+
+                        .redemption-panel {
+                            display: flex;
+                            flex-direction: column;
+                            gap: var(--sp-sm);
                         }
 
                         .schedule-empty {

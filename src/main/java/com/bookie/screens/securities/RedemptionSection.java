@@ -44,13 +44,26 @@ public class RedemptionSection {
                         .render();
 
         return html("""
-                <div class="bond-redemption">
-                    <h3>Call Schedule</h3>
-                    ${callTable}
-                    <h3>Put Schedule</h3>
-                    ${putTable}
-                    <h3>Sinking Fund</h3>
-                    ${sinkingFundTable}
+                <div class="bond-redemption fill-height">
+                    <div class="redemption-panel fill-height">
+                        <h3>Call Schedule</h3>
+                        ${callTable}
+                    </div>
+                    <div class="redemption-panel fill-height">
+                        <h3>Put Schedule</h3>
+                        ${putTable}
+                    </div>
+                    <div class="redemption-panel fill-height">
+                        <h3>Sinking Fund</h3>
+                        ${sinkingFundTable}
+                    </div>
+
+                    <style>
+                    @scope {
+                        .data-grid { width: 500px; }
+                        .data-grid-cell input { width: 100%; }
+                    }
+                    </style>
                 </div>
                 """,
                 "callTable", callTable,

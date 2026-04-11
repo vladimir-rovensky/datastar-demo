@@ -114,7 +114,7 @@ public class TradesScreen extends BaseScreen {
                 .render();
 
         return html("""
-                    <div id="trades-screen" class="trades-screen"">
+                    <div id="trades-screen" class="trades-screen fill-height">
                     ${styles}
                     ${grid}
                     </div>
@@ -128,11 +128,11 @@ public class TradesScreen extends BaseScreen {
                     <div id="trades-screen" class="trades-screen">
                     <style>
                         @scope {
-                            td:first-child,
-                            th:first-child {
+                            .data-grid-cell:first-child,
+                            .data-grid-th:first-child {
                                 width: 1px;
                                 white-space: nowrap;
-                                padding-right: 8px;
+                                padding-right: 30px;
                                 border-right: 1px solid #1e3d5c;
                             }
                         }

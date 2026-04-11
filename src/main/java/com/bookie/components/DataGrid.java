@@ -50,16 +50,18 @@ public class DataGrid<TRow> {
     }
 
     public EscapedHtml render() {
-        var headers = EscapedHtml.concat(columns, c -> html("<th>${h}</th>", "h", c.header));
+        var headerCells = EscapedHtml.concat(columns, c -> html("""
+                <div class="data-grid-th">${h}</div>""", "h", c.header));
         var bodyRows = EscapedHtml.concat(rows, this::renderRow);
 
         return html("""
-                <table>
-                    <thead><tr>${headers}</tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
+                <div class="data-grid fill-height" style="--cols: repeat(${columnCount}, 1fr)">
+                    <div class="data-grid-header">${headers}</div>
+                    <div class="data-grid-body fill-height">${rows}</div>
+                </div>
                 """,
-                "headers", headers,
+                "columnCount", columns.size(),
+                "headers", headerCells,
                 "rows", bodyRows);
     }
 
@@ -74,7 +76,8 @@ public class DataGrid<TRow> {
 
         var id = getRowID.apply(row);
 
-        return html("<tr id='${rowID}' ${dblClick} ${attrs}>${cells}</tr>",
+        return html("""
+                <div class="data-grid-row" id="${rowID}" ${dblClick} ${attrs}>${cells}</div>""",
                 "rowID", id != null ? id : "",
                 "dblClick", dblClick,
                 "attrs", attrs,
@@ -82,7 +85,8 @@ public class DataGrid<TRow> {
     }
 
     private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {
-        return html("<td>${value}</td>",
+        return html("""
+                <div class="data-grid-cell">${value}</div>""",
                 "value",
                 column.renderer != null
                         ? column.renderer.apply(row)

@@ -30,7 +30,7 @@ public class IncomeSection {
                 : getResetScheduleGrid(resetSchedule, disabled);
 
         return html("""
-                <div class="bond-income">
+                <div class="bond-income fill-height">
                     <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
                         ${couponType}
                         ${coupon}
@@ -39,13 +39,13 @@ public class IncomeSection {
                         ${dayCount}
                         ${floatingIndex}
                     </div>
-                    <div>
+                    <div class="fill-height" style="display: flex; flex-direction: column;">
                     ${resetTable}
                     </div>
                     <style>
                     @scope {
-                        table {width: 500px;}
-                        table input { width: 100%; }
+                        .data-grid { width: 500px; }
+                        .data-grid-cell input { width: 100%; }
                     }
                     </style>
                 </div>

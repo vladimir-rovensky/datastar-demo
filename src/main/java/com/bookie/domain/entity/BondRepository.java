@@ -146,6 +146,7 @@ public class BondRepository {
 
         LocalDate today = LocalDate.of(2026, 4, 3);
 
+        list.add(buildTestBond(today));
         for (Object[] row : corporates) {
             list.add(buildCorporate(row, today));
         }
@@ -154,6 +155,68 @@ public class BondRepository {
         }
 
         return list;
+    }
+
+    public static final String TEST_CUSIP = "000000AA0";
+
+    private static Bond buildTestBond(LocalDate today) {
+        LocalDate issueDate    = LocalDate.of(2022, 1, 15);
+        LocalDate maturityDate = LocalDate.of(2032, 1, 15);
+
+        Bond b = new Bond();
+        b.setCusip(TEST_CUSIP);
+        b.setIsin("US000000AA09");
+        b.setTicker("TEST");
+        b.setIssuerName("Test Issuer Corp.");
+        b.setDescription("TEST SOFR+1.00 2032");
+        b.setBondType(BondType.CORPORATE);
+        b.setSector("Financials");
+        b.setCurrency("USD");
+        b.setCountry("US");
+        b.setIssueDate(issueDate);
+        b.setDatedDate(issueDate);
+        b.setMaturityDate(maturityDate);
+        b.setFirstCouponDate(issueDate.plusMonths(6));
+        b.setLastCouponDate(maturityDate.minusMonths(6));
+        b.setIssueSize(new BigDecimal("1000000000"));
+        b.setFaceValue(new BigDecimal("1000"));
+        b.setIssuePrice(new BigDecimal("99.500"));
+        b.setCouponType(CouponType.FLOATING);
+        b.setFloatingIndex("SOFR");
+        b.setSpread(new BigDecimal("1.00"));
+        b.setCoupon(new BigDecimal("6.35"));
+        b.setCouponFrequency(4);
+        b.setDayCount(DayCountConvention.ACT_360);
+        b.setMoodysRating("A2");
+        b.setSpRating("A");
+        b.setFitchRating("A");
+        b.setSecured(false);
+        b.setSeniorityLevel("SENIOR_UNSECURED");
+
+        b.setResetSchedule(buildResetSchedule(TEST_CUSIP, issueDate, maturityDate, new BigDecimal("1.00")));
+
+        b.setCallSchedule(List.of(
+            new Bond.CallEntry(LocalDate.of(2027, 1, 15), new BigDecimal("102.00")),
+            new Bond.CallEntry(LocalDate.of(2028, 1, 15), new BigDecimal("101.50")),
+            new Bond.CallEntry(LocalDate.of(2029, 1, 15), new BigDecimal("101.00")),
+            new Bond.CallEntry(LocalDate.of(2030, 1, 15), new BigDecimal("100.50")),
+            new Bond.CallEntry(LocalDate.of(2031, 1, 15), new BigDecimal("100.00"))
+        ));
+
+        b.setPutSchedule(List.of(
+            new Bond.PutEntry(LocalDate.of(2025, 1, 15), new BigDecimal("100.00")),
+            new Bond.PutEntry(LocalDate.of(2027, 1, 15), new BigDecimal("100.00")),
+            new Bond.PutEntry(LocalDate.of(2029, 1, 15), new BigDecimal("100.00"))
+        ));
+
+        b.setSinkingFundSchedule(List.of(
+            new Bond.SinkingFundEntry(LocalDate.of(2028, 1, 15), new BigDecimal("200000000")),
+            new Bond.SinkingFundEntry(LocalDate.of(2029, 1, 15), new BigDecimal("200000000")),
+            new Bond.SinkingFundEntry(LocalDate.of(2030, 1, 15), new BigDecimal("200000000")),
+            new Bond.SinkingFundEntry(LocalDate.of(2031, 1, 15), new BigDecimal("200000000"))
+        ));
+
+        return b;
     }
 
     private static Bond buildCorporate(Object[] row, LocalDate today) {

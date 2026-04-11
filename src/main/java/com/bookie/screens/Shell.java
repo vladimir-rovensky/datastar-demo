@@ -1,21 +1,23 @@
 package com.bookie.screens;
 
+import com.bookie.components.MainNav;
 import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.RouteInfo;
 
-import static com.bookie.components.Link.link;
+import static com.bookie.components.MainNav.mainNav;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class Shell {
 
-    private String tabId = "";
+    private RouteInfo routeInfo;
     private String title = "";
     private String updateURL;
     private EscapedHtml content = EscapedHtml.blank();
     private EscapedHtml toolbarContent = EscapedHtml.blank();
 
-    public static Shell shell(String tabId) {
+    public static Shell shell(RouteInfo routeInfo) {
         var shell = new Shell();
-        shell.tabId = tabId;
+        shell.routeInfo = routeInfo;
         return shell;
     }
 
@@ -40,6 +42,11 @@ public class Shell {
     }
 
     public EscapedHtml render() {
+        var tabId = routeInfo.tabId().localID();
+        var nav = mainNav()
+                .withRouteInfo(routeInfo)
+                .withActiveTitle(title);
+
         return html("""
                 <!DOCTYPE html>
                 <html lang="en-US">
@@ -97,7 +104,7 @@ public class Shell {
                 "title", title,
                 "tabId", tabId,
                 "updateRequest", getUpdateRequestAttribute(),
-                "nav", buildNav(),
+                "nav", nav,
                 "content", content,
                 "toolbarContent", toolbarContent);
     }
@@ -110,18 +117,5 @@ public class Shell {
         return html("""
                 data-init="@post('${url}', {openWhenHidden: true, retry: 'always'})"
         """, "url", this.updateURL);
-    }
-
-    private EscapedHtml buildNav() {
-        var tradesLink = link("trades", "Trades", tabId).withActive("Trades".equals(title));
-        var positionsLink = link("positions", "Positions", tabId).withActive("Positions".equals(title));
-        var securitiesLink = link("securities/nocusip/general", "Securities", tabId).withActive("Securities".equals(title));
-        return html("""
-                <nav class="screen-nav">
-                    ${tradesLink}
-                    ${positionsLink}
-                    ${securitiesLink}
-                </nav>
-                """, "tradesLink", tradesLink, "positionsLink", positionsLink, "securitiesLink", securitiesLink);
     }
 }

@@ -66,6 +66,8 @@ public class SecuritiesScreen extends BaseScreen {
 
         currentSection = BondSection.fromPath(section);
 
+        updateRouteInfo(getRouteInfo().withActiveCusip(getCurrentCusip()).withActiveSection(currentSection.getPath()));
+
         return handleInitialRender(request, this::render);
     }
 
@@ -106,7 +108,7 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     private EscapedHtml renderSecondaryToolbar() {
-        var tabId = getTabID().localID();
+        var tabId = getRouteInfo().tabId().localID();
         var currentCusip = getCurrentCusip();
         var cusipValue = NO_CUSIP.equals(currentCusip) ? "" : currentCusip;
         var generalLink = link("securities/" + currentCusip + "/" + BondSection.GENERAL.getPath(), BondSection.GENERAL.getLabel(), tabId).withActive(currentSection == BondSection.GENERAL);

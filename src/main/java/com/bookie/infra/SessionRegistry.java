@@ -61,7 +61,7 @@ public class SessionRegistry implements SmartLifecycle {
     private <T extends BaseScreen> void addScreenToSession(ClientSession session, Class<T> screenType) {
         logger.info("Adding screen to session: {}, {}", screenType.getSimpleName(), session.getTabId());
         var screen = beanFactory.createBean(screenType);
-        screen.setTabID(session.getTabId());
+        screen.setRouteInfo(session.getRouteInfo());
         session.addScreen(screen);
     }
 

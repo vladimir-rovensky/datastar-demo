@@ -100,7 +100,7 @@ public class TradesScreen extends BaseScreen {
         var grid = DataGrid.withColumns(
                         column("", this::getCancelTradeButton),
                         column("ID", Trade::getId),
-                        column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getTabID().localID()).render()),
+                        column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID()).render()),
                         column("Book", Trade::getBook),
                         column("Type", Trade::getDirection),
                         column("Counterparty", Trade::getCounterparty),

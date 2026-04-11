@@ -2,13 +2,14 @@ package com.bookie.screens;
 
 import com.bookie.infra.ClientChannel;
 import com.bookie.infra.EscapedHtml;
-import com.bookie.infra.TabID;
+import com.bookie.infra.RouteInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.bookie.screens.Shell.shell;
@@ -18,7 +19,7 @@ public abstract class BaseScreen {
     @Value("${bookie.cache.enabled:true}")
     private boolean cacheEnabled;
 
-    private TabID tabID;
+    private AtomicReference<RouteInfo> routeInfo;
     private ClientChannel channel;
     private final String title;
     private long stateVersion = 0;
@@ -27,13 +28,17 @@ public abstract class BaseScreen {
         this.title = title;
     }
 
-    public TabID getTabID() {
-        return tabID;
+    public RouteInfo getRouteInfo() {
+        return routeInfo.get();
     }
 
-    public void setTabID(TabID tabID) {
-        this.tabID = tabID;
-        this.channel = new ClientChannel(title + " - " + tabID);
+    public void setRouteInfo(AtomicReference<RouteInfo> routeInfo) {
+        this.routeInfo = routeInfo;
+        this.channel = new ClientChannel(title + " - " + routeInfo.get().tabId());
+    }
+
+    protected void updateRouteInfo(RouteInfo newInfo) {
+        routeInfo.set(newInfo);
     }
 
     public ClientChannel getChannel() {
@@ -43,7 +48,8 @@ public abstract class BaseScreen {
     public void dispose() {}
 
     public EscapedHtml render() {
-        return shell(this.getTabID().localID())
+        var info = routeInfo.get();
+        return shell(info)
                 .withTitle(title)
                 .withUpdateURL(getUpdateURL())
                 .withToolbar(getToolbarContent())
@@ -84,7 +90,7 @@ public abstract class BaseScreen {
     }
 
     protected String getETag() {
-        return this.tabID.localID() + "-" + this.stateVersion;
+        return routeInfo.get().tabId().localID() + "-" + this.stateVersion;
     }
 
     public void triggerUpdate() {

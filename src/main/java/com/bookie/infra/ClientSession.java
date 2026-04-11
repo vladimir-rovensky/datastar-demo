@@ -7,20 +7,25 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ClientSession {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientSession.class);
 
-    private final TabID tabId;
+    private final AtomicReference<RouteInfo> routeInfo;
     private final Map<Class<? extends BaseScreen>, BaseScreen> screens = new HashMap<>();
     private final long timeoutSeconds;
     private Instant lastActive = Instant.now();
 
     public ClientSession(TabID tabId, long timeoutSeconds) {
-        this.tabId = tabId;
+        this.routeInfo = new AtomicReference<>(RouteInfo.initial(tabId));
         this.timeoutSeconds = timeoutSeconds;
         this.touch();
+    }
+
+    public AtomicReference<RouteInfo> getRouteInfo() {
+        return routeInfo;
     }
 
     public synchronized void touch() {
@@ -33,7 +38,7 @@ public class ClientSession {
     }
 
     public TabID getTabId() {
-        return tabId;
+        return routeInfo.get().tabId();
     }
 
     public synchronized void addScreen(BaseScreen screen) {
@@ -59,7 +64,7 @@ public class ClientSession {
     public synchronized void logStatus() {
         screens.forEach((screenClass, screen) -> {
             var streamCount = screen.getChannel().getStreamCount();
-            logger.info("  Session {} - {} - {} live streams", tabId, screenClass.getSimpleName(), streamCount);
+            logger.info("  Session {} - {} - {} live streams", getTabId(), screenClass.getSimpleName(), streamCount);
         });
         logger.info("");
     }

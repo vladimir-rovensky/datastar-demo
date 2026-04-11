@@ -78,7 +78,7 @@ public class PositionsScreen extends BaseScreen {
     @Override
     protected synchronized EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
-                        column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getTabID().localID()).render()),
+                        column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID()).render()),
                         column("Book", Position::getBook),
                         column("Current Position", p -> usd(p.getCurrentPosition())),
                         column("Settled Position", p -> usd(p.getSettledPosition())),

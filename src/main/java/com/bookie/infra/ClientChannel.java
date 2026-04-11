@@ -66,7 +66,10 @@ public class ClientChannel {
     }
 
     public synchronized void comment(String comment) {
-        forAllStreams(stream -> stream.comment(comment).send());
+        forAllStreams(stream -> stream
+                .id(String.valueOf(this.eventIdCounter++))
+                .comment(comment)
+                .send());
     }
 
     public synchronized ClientChannel executeScript(String script) {

@@ -84,7 +84,7 @@ public class SessionRegistry implements SmartLifecycle {
         sessions.values().forEach(ClientSession::reloadAllStylesheets);
     }
 
-    @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.SECONDS)
     public synchronized void cleanup() {
         sessions.values().forEach(ClientSession::heartbeatAllChannels);
         sessions.entrySet().removeIf(entry -> {

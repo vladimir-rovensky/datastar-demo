@@ -16,7 +16,7 @@ public class RedemptionSection {
 
         var callSchedule = bond.getCallSchedule();
         var callTable = html("""
-                        <div data-on:change="@post('/securities/callSchedule', {filterSignals: {include: /callSchedule.*/}})">
+                        <div data-on:change="@post('/securities/callSchedule', {filterSignals: {include: /callSchedule.*/}})" class="flex fill-height">
                             ${grid}
                         </div>
                         """, "grid",
@@ -37,7 +37,7 @@ public class RedemptionSection {
 
         var putSchedule = bond.getPutSchedule();
         var putTable = html("""
-                        <div data-on:change="@post('/securities/putSchedule', {filterSignals: {include: /putSchedule.*/}})">
+                        <div data-on:change="@post('/securities/putSchedule', {filterSignals: {include: /putSchedule.*/}})" class="flex fill-height">
                             ${grid}
                         </div>
                         """, "grid",
@@ -58,7 +58,7 @@ public class RedemptionSection {
 
         var sinkingFundSchedule = bond.getSinkingFundSchedule();
         var sinkingFundTable = html("""
-                        <div data-on:change="@post('/securities/sinkingFundSchedule', {filterSignals: {include: /sinkingFundSchedule.*/}})">
+                        <div data-on:change="@post('/securities/sinkingFundSchedule', {filterSignals: {include: /sinkingFundSchedule.*/}})" class="flex fill-height">
                             ${grid}
                         </div>
                         """, "grid",
@@ -94,7 +94,7 @@ public class RedemptionSection {
 
                     <style>
                     @scope {
-                        .data-grid { width: 500px; }
+                        .data-grid { max-width: 500px; }
                         .data-grid-cell input { width: 100%; }
                     }
                     </style>

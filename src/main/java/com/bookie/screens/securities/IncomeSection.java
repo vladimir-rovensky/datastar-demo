@@ -38,7 +38,7 @@ public class IncomeSection {
                         #reset-schedule-grid {
                             display: flex;
                             flex-direction: column;
-                            width: 500px;
+                            max-width: 500px;
                          }
                     }
                     </style>

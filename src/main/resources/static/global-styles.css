@@ -224,6 +224,7 @@ input.loading { opacity: 0; }
 
 .data-grid-body {
     overflow-y: auto;
+    flex: 1;
 }
 
 .data-grid-row {

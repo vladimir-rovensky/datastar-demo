@@ -33,7 +33,7 @@ public class Link implements Renderable {
         var href = getHref();
         var ariaCurrent = active ? html(" aria-current=\"page\"") : EscapedHtml.blank();
         return html("""
-                <a href="${href}"${ariaCurrent}>${label}</a>
+                <a href="${href}" ${ariaCurrent}>${label}</a>
                 """,
                 "href", href,
                 "ariaCurrent", ariaCurrent,

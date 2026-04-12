@@ -3,9 +3,6 @@ package com.bookie.components;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Renderable;
 import com.bookie.infra.Util;
-import org.jetbrains.annotations.NotNull;
-
-import java.math.BigDecimal;
 
 import static com.bookie.infra.TemplatingEngine.html;
 

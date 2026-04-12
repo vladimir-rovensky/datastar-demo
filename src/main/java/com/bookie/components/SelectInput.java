@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.bookie.infra.EscapedHtml;
-import com.bookie.infra.Util;
 
 import static com.bookie.infra.TemplatingEngine.html;
 

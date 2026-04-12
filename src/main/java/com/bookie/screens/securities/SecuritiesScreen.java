@@ -6,13 +6,16 @@ import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.BaseScreen;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.bookie.components.Link.link;
 import static com.bookie.infra.Response.connectUpdates;
@@ -52,7 +55,7 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("edit", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).startEdit())
                 .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
-                .POST("resetSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
+                .POST("resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
                 .POST("callSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleCallScheduleUpdate(request))
                 .POST("putSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handlePutScheduleUpdate(request))
                 .POST("sinkingFundSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleSinkingFundScheduleUpdate(request))
@@ -255,19 +258,14 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse handleResetScheduleUpdate(ServerRequest request) throws Exception {
-        var rowID = request.pathVariable("rowID");
-        var field = request.pathVariable("field");
-        var incomingEntry = request.body(Bond.ResetEntry.class);
+        var incomingData = request.body(new ParameterizedTypeReference<Map<String, Map<String, Bond.ResetEntry>>>() {});
+        Map<String, Bond.ResetEntry> incomingEntries = incomingData.get("resetSchedule");
 
-        var matchingEntry = editingBond.getResetSchedule().stream()
-                .filter(e -> Objects.equals(e.getId(), rowID))
-                .findFirst();
+        this.editingBond.setResetSchedule(
+                this.editingBond.getResetSchedule().stream()
+                        .map(e -> incomingEntries.getOrDefault(e.getId(), e))
+                        .collect(Collectors.toList()));
 
-        if (matchingEntry.isPresent()) {
-            var entryField = Bond.ResetEntry.class.getDeclaredField(field);
-            entryField.setAccessible(true);
-            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
-        }
 
         triggerUpdate();
 

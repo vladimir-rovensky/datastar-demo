@@ -21,13 +21,6 @@ public class IncomeSection {
 
     public static EscapedHtml render(Bond bond, boolean editing) {
         var disabled = !editing;
-        var resetSchedule = bond.getResetSchedule();
-
-        var resetTable = (resetSchedule == null || resetSchedule.isEmpty())
-                ? html("""
-                        <p class="centered-message">No reset schedule.</p>
-                        """)
-                : getResetScheduleGrid(resetSchedule, disabled);
 
         return html("""
                 <div class="bond-income fill-height">
@@ -39,12 +32,14 @@ public class IncomeSection {
                         ${dayCount}
                         ${floatingIndex}
                     </div>
-                    <div class="fill-height" style="display: flex; flex-direction: column;">
                     ${resetTable}
-                    </div>
                     <style>
                     @scope {
-                        .data-grid { width: 500px; }
+                        #reset-schedule-grid {
+                            display: flex;
+                            flex-direction: column;
+                            width: 500px;
+                         }
                     }
                     </style>
                 </div>
@@ -55,25 +50,30 @@ public class IncomeSection {
                 "couponFrequency", formField("Coupon Frequency").withInput(numberInput("couponFrequency", bond.getCouponFrequency()).withDisabled(disabled)),
                 "dayCount", formField("Day Count").withInput(selectInput("dayCount", DayCountConvention.class, bond.getDayCount()).withDisabled(disabled)),
                 "floatingIndex", formField("Floating Index").withInput(textInput("floatingIndex", bond.getFloatingIndex()).withDisabled(disabled)),
-                "resetTable", resetTable);
+                "resetTable", getResetScheduleGrid(bond.getResetSchedule(), disabled));
     }
 
     private static EscapedHtml getResetScheduleGrid(List<Bond.ResetEntry> resetSchedule, boolean disabled) {
-        return DataGrid
-                .withColumns(
-                        column("Reset Date", Bond.ResetEntry::getResetDate)
-                                .withRenderer(r -> dateInput("resetDate", r.getResetDate())
-                                        .withDisabled(disabled)
-                                        .noBind()),
-                        column("New Rate", Bond.ResetEntry::getNewRate)
-                                .withRenderer(r -> numberInput("newRate", r.getNewRate())
-                                        .withDisabled(disabled)
-                                        .noBind()))
-                .withRows(resetSchedule)
-                .withRowID(Bond.ResetEntry::getId)
-                .withRowAttrs(r -> html("""
-                        data-on:change="@post('/securities/resetSchedule/${rowID}/' + evt.target.name, {payload: {[evt.target.name]: evt.target.value}})"
-                """, "rowID", r.getId()))
-                .render();
+        if(resetSchedule == null || resetSchedule.isEmpty()) {
+            return html("<p class=\"centered-message\">No reset schedule.</p>");
+        }
+
+        return html("""           
+                        <div id="reset-schedule-grid" class="fill-height" data-on:change="@post('/securities/resetSchedule', {filterSignals: {include: /resetSchedule.*/}})">
+                        ${grid}
+                        </div>
+                """, "grid",
+                DataGrid
+                    .withColumns(
+                            column("Reset Date", Bond.ResetEntry::getResetDate)
+                                    .withRenderer(r -> dateInput("resetSchedule." + r.getId() + ".resetDate", r.getResetDate())
+                                            .withDisabled(disabled)),
+                            column("New Rate", Bond.ResetEntry::getNewRate)
+                                    .withRenderer(r -> numberInput("resetSchedule." + r.getId() + ".newRate", r.getNewRate())
+                                            .withDisabled(disabled)))
+                    .withRows(resetSchedule)
+                    .withRowID(Bond.ResetEntry::getId)
+                    .withRowIDSignal(r -> "resetSchedule." + r.getId() + ".id")
+                    .render());
     }
 }

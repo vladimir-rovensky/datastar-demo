@@ -1,6 +1,7 @@
 package com.bookie.components;
 
 import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.Util;
 import org.jetbrains.annotations.NotNull;
 
 import static com.bookie.infra.TemplatingEngine.html;
@@ -18,6 +19,7 @@ public class DataGrid<TRow> {
     private Function<TRow, EscapedHtml> onRowDoubleClick;
     private Function<TRow, Object> getRowID = _ -> null;
     private Function<TRow, EscapedHtml> getRowAttrs = _ -> EscapedHtml.blank();
+    private Function<TRow, String> rowIDSignal = _ -> "";
     private List<TRow> rows;
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
@@ -49,12 +51,18 @@ public class DataGrid<TRow> {
         return this;
     }
 
+    public DataGrid<TRow> withRowIDSignal(Function<TRow, String> rowIDSignal) {
+        this.rowIDSignal = rowIDSignal;
+        return this;
+    }
+
     public EscapedHtml render() {
         var headerCells = EscapedHtml.concat(columns, c -> html("""
                 <div class="data-grid-th">${h}</div>""", "h", c.header));
         var bodyRows = EscapedHtml.concat(rows, this::renderRow);
 
         return html("""
+                <!--suppress CssInvalidFunction -->
                 <div class="data-grid fill-height" style="--cols: repeat(${columnCount}, 1fr)">
                     <div class="data-grid-header">${headers}</div>
                     <div class="data-grid-body fill-height">${rows}</div>
@@ -75,13 +83,23 @@ public class DataGrid<TRow> {
         var attrs = getRowAttrs.apply(row);
 
         var id = getRowID.apply(row);
+        var idSignalAttr = getIdSignalAttr(row, id);
 
         return html("""
-                <div class="data-grid-row" id="${rowID}" ${dblClick} ${attrs}>${cells}</div>""",
+                <div class="data-grid-row" id="${rowID}" ${dblClick} ${rowIDSignal} ${attrs}>${cells}</div>""",
                 "rowID", id != null ? id : "",
                 "dblClick", dblClick,
+                "rowIDSignal", idSignalAttr,
                 "attrs", attrs,
                 "cells", cells);
+    }
+
+    private @NotNull EscapedHtml getIdSignalAttr(TRow row, Object id) {
+        var idSignal = rowIDSignal.apply(row);
+
+        return idSignal.isBlank()
+                ? EscapedHtml.blank()
+                : html("data-signals:${signal}=\"${rowID}\"", "signal", Util.toKebabCase(idSignal), "rowID", Util.toJson(id));
     }
 
     private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {

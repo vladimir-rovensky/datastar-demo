@@ -33,10 +33,10 @@ public abstract class BaseInput implements Renderable {
         }
 
         return html("""
-                    data-signals='{${name}: "${value}"}' data-bind="${name}"
+                    data-signals:${name}="${value}" data-bind:${name}
                 """,
-                "name", this.name,
-                "value", value);
+                "name", Util.toKebabCase(this.name),
+                "value", Util.toJson(value));
     }
 
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }

@@ -76,6 +76,8 @@ a {
     &:hover { color: var(--clr-accent-hi); text-decoration: underline; }
 }
 
+.flex { display: flex; }
+
 /* Buttons */
 button {
     background-color: var(--clr-btn);

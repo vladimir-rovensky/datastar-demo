@@ -24,6 +24,9 @@ public class DataGrid<TRow> {
     private List<TRow> rows;
     private Function<TRow, EscapedHtml> getDeleteAction;
     private String deleteRowTooltip = "Delete Row";
+    private EscapedHtml addRowAction;
+    private String addRowTooltip = "Add Row";
+    private String noRowsMessage = "Nothing here...";
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
@@ -69,33 +72,68 @@ public class DataGrid<TRow> {
         return this;
     }
 
+    public DataGrid<TRow> onAddRow(EscapedHtml addRowAction) {
+        this.addRowAction = addRowAction;
+        return this;
+    }
+
+    public DataGrid<TRow> withAddRowTooltip(String addRowTooltip) {
+        this.addRowTooltip = addRowTooltip;
+        return this;
+    }
+
+    public DataGrid<TRow> withNoRowsMessage(String noRowsMessage) {
+        this.noRowsMessage = noRowsMessage;
+        return this;
+    }
+
     public EscapedHtml render() {
-        var deleteHeaderCell = getDeleteAction != null
-                ? html("""
-                        <div class="data-grid-th"></div>""")
-                : EscapedHtml.blank();
+        var actionHeaderCell = getActionHeaderCell();
         var headerCells = EscapedHtml.concat(columns, c -> html("""
                 <div class="data-grid-th">${h}</div>""", "h", c.header));
-        var bodyRows = EscapedHtml.concat(rows, this::renderRow);
+        var bodyRows = rows.isEmpty()
+                ? html("""
+                        <p class="centered-message">${message}</p>""", "message", noRowsMessage)
+                : EscapedHtml.concat(rows, this::renderRow);
         var columnTemplate = getColumnStyleTemplate();
 
         return html("""
                 <!--suppress CssInvalidFunction -->
                 <div class="data-grid fill-height" style="--cols: ${columnTemplate}">
-                    <div class="data-grid-header">${deleteHeader}${headers}</div>
+                    <div class="data-grid-header">${actionHeader}${headers}</div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
                 """,
                 "columnTemplate", columnTemplate,
-                "deleteHeader", deleteHeaderCell,
+                "actionHeader", actionHeaderCell,
                 "headers", headerCells,
                 "rows", bodyRows);
     }
 
     private @NotNull String getColumnStyleTemplate() {
-        return getDeleteAction != null
-                ? "auto repeat(" + columns.size() + ", 1fr)"
+        return hasActionColumn()
+                ? "40px repeat(" + columns.size() + ", 1fr)"
                 : "repeat(" + columns.size() + ", 1fr)";
+    }
+
+    private boolean hasActionColumn() {
+        return addRowAction != null || getDeleteAction != null;
+    }
+
+    private EscapedHtml getActionHeaderCell() {
+        if (!hasActionColumn()) {
+            return EscapedHtml.blank();
+        }
+
+        if (addRowAction != null) {
+            return html("""
+                    <div class="data-grid-th data-grid-action-th"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>+</button></div>""",
+                    "action", addRowAction,
+                    "tooltip", addRowTooltip);
+        }
+
+        return html("""
+                <div class="data-grid-th"></div>""");
     }
 
     private EscapedHtml renderRow(TRow row) {

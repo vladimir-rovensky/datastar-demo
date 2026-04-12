@@ -56,12 +56,16 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
                 .POST("resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
+                .PUT("resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).addResetEntry())
                 .DELETE("resetSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteResetEntry(request))
                 .POST("callSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleCallScheduleUpdate(request))
+                .PUT("callSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).addCallEntry())
                 .DELETE("callSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteCallEntry(request))
                 .POST("putSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handlePutScheduleUpdate(request))
+                .PUT("putSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).addPutEntry())
                 .DELETE("putSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deletePutEntry(request))
                 .POST("sinkingFundSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleSinkingFundScheduleUpdate(request))
+                .PUT("sinkingFundSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).addSinkingFundEntry())
                 .DELETE("sinkingFundSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteSinkingFundEntry(request))
                 .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
@@ -261,12 +265,24 @@ public class SecuritiesScreen extends BaseScreen {
         return ServerResponse.ok().build();
     }
 
+    public synchronized ServerResponse addResetEntry() {
+        this.editingBond.getResetSchedule().add(bondRepository.createResetEntry());
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
     public synchronized ServerResponse deleteResetEntry(ServerRequest request) {
         var id = request.pathVariable("id");
         this.editingBond.setResetSchedule(
                 this.editingBond.getResetSchedule().stream()
                         .filter(e -> !e.getId().equals(id))
                         .collect(Collectors.toList()));
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse addCallEntry() {
+        this.editingBond.getCallSchedule().add(bondRepository.createCallEntry());
         triggerUpdate();
         return ServerResponse.ok().build();
     }
@@ -281,12 +297,24 @@ public class SecuritiesScreen extends BaseScreen {
         return ServerResponse.ok().build();
     }
 
+    public synchronized ServerResponse addPutEntry() {
+        this.editingBond.getPutSchedule().add(bondRepository.createPutEntry());
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
     public synchronized ServerResponse deletePutEntry(ServerRequest request) {
         var id = request.pathVariable("id");
         this.editingBond.setPutSchedule(
                 this.editingBond.getPutSchedule().stream()
                         .filter(e -> !e.getId().equals(id))
                         .collect(Collectors.toList()));
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse addSinkingFundEntry() {
+        this.editingBond.getSinkingFundSchedule().add(bondRepository.createSinkingFundEntry());
         triggerUpdate();
         return ServerResponse.ok().build();
     }

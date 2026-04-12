@@ -15,11 +15,7 @@ public class RedemptionSection {
         var disabled = !editing;
 
         var callSchedule = bond.getCallSchedule();
-        var callTable = (callSchedule == null || callSchedule.isEmpty())
-                ? html("""
-                        <p class="centered-message">No call schedule.</p>
-                        """)
-                : html("""
+        var callTable = html("""
                         <div data-on:change="@post('/securities/callSchedule', {filterSignals: {include: /callSchedule.*/}})">
                             ${grid}
                         </div>
@@ -35,14 +31,12 @@ public class RedemptionSection {
                                 .withRowID(Bond.CallEntry::getId)
                                 .withRowIDSignal(r -> "callSchedule." + r.getId() + ".id")
                                 .onDeleteRow(!disabled ? r -> html("@delete('/securities/callSchedule/${id}')", "id", r.getId()) : null)
+                                .onAddRow(!disabled ? html("@put('/securities/callSchedule')") : null)
+                                .withNoRowsMessage("No Call Schedule")
                                 .render());
 
         var putSchedule = bond.getPutSchedule();
-        var putTable = (putSchedule == null || putSchedule.isEmpty())
-                ? html("""
-                        <p class="centered-message">No put schedule.</p>
-                        """)
-                : html("""
+        var putTable = html("""
                         <div data-on:change="@post('/securities/putSchedule', {filterSignals: {include: /putSchedule.*/}})">
                             ${grid}
                         </div>
@@ -58,14 +52,12 @@ public class RedemptionSection {
                                 .withRowID(Bond.PutEntry::getId)
                                 .withRowIDSignal(r -> "putSchedule." + r.getId() + ".id")
                                 .onDeleteRow(!disabled ? r -> html("@delete('/securities/putSchedule/${id}')", "id", r.getId()) : null)
+                                .onAddRow(!disabled ? html("@put('/securities/putSchedule')") : null)
+                                .withNoRowsMessage("No Put Schedule")
                                 .render());
 
         var sinkingFundSchedule = bond.getSinkingFundSchedule();
-        var sinkingFundTable = (sinkingFundSchedule == null || sinkingFundSchedule.isEmpty())
-                ? html("""
-                        <p class="centered-message">No sinking fund schedule.</p>
-                        """)
-                : html("""
+        var sinkingFundTable = html("""
                         <div data-on:change="@post('/securities/sinkingFundSchedule', {filterSignals: {include: /sinkingFundSchedule.*/}})">
                             ${grid}
                         </div>
@@ -81,6 +73,8 @@ public class RedemptionSection {
                                 .withRowID(Bond.SinkingFundEntry::getId)
                                 .withRowIDSignal(r -> "sinkingFundSchedule." + r.getId() + ".id")
                                 .onDeleteRow(!disabled ? r -> html("@delete('/securities/sinkingFundSchedule/${id}')", "id", r.getId()) : null)
+                                .onAddRow(!disabled ? html("@put('/securities/sinkingFundSchedule')") : null)
+                                .withNoRowsMessage("No Sinking Fund Schedule")
                                 .render());
 
         return html("""

@@ -54,11 +54,7 @@ public class IncomeSection {
     }
 
     private static EscapedHtml getResetScheduleGrid(List<Bond.ResetEntry> resetSchedule, boolean disabled) {
-        if(resetSchedule == null || resetSchedule.isEmpty()) {
-            return html("<p class=\"centered-message\">No reset schedule.</p>");
-        }
-
-        return html("""           
+        return html("""
                         <div id="reset-schedule-grid" class="fill-height" data-on:change="@post('/securities/resetSchedule', {filterSignals: {include: /resetSchedule.*/}})">
                         ${grid}
                         </div>
@@ -75,6 +71,8 @@ public class IncomeSection {
                     .withRowID(Bond.ResetEntry::getId)
                     .withRowIDSignal(r -> "resetSchedule." + r.getId() + ".id")
                     .onDeleteRow(!disabled ? r -> html("@delete('/securities/resetSchedule/${id}')", "id", r.getId()) : null)
+                    .onAddRow(!disabled ? html("@put('/securities/resetSchedule')") : null)
+                    .withNoRowsMessage("No Reset Schedule")
                     .render());
     }
 }

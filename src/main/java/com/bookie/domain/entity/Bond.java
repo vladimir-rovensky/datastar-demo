@@ -34,10 +34,10 @@ public class Bond implements Cloneable {
     private DayCountConvention dayCount;
     private String floatingIndex;
     private BigDecimal spread;
-    private List<ResetEntry> resetSchedule;
-    private List<CallEntry> callSchedule;
-    private List<PutEntry> putSchedule;
-    private List<SinkingFundEntry> sinkingFundSchedule;
+    private List<ResetEntry> resetSchedule = new ArrayList<>();
+    private List<CallEntry> callSchedule = new ArrayList<>();
+    private List<PutEntry> putSchedule = new ArrayList<>();
+    private List<SinkingFundEntry> sinkingFundSchedule = new ArrayList<>();
 
     private String moodysRating;
     private String spRating;

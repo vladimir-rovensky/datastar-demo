@@ -7,14 +7,44 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 @Repository
 public class BondRepository {
 
     private final List<Bond> bonds;
+    private final AtomicLong scheduleIdCounter;
 
     public BondRepository() {
         bonds = new ArrayList<>(generateData());
+        long maximumUsedId = bonds.stream()
+                .flatMap(bond -> Stream.of(
+                        bond.getResetSchedule().stream().map(Bond.ResetEntry::getId),
+                        bond.getCallSchedule().stream().map(Bond.CallEntry::getId),
+                        bond.getPutSchedule().stream().map(Bond.PutEntry::getId),
+                        bond.getSinkingFundSchedule().stream().map(Bond.SinkingFundEntry::getId)))
+                .flatMap(s -> s)
+                .mapToLong(Long::parseLong)
+                .max()
+                .orElse(-1L);
+        scheduleIdCounter = new AtomicLong(maximumUsedId + 1);
+    }
+
+    public Bond.ResetEntry createResetEntry() {
+        return new Bond.ResetEntry(String.valueOf(scheduleIdCounter.getAndIncrement()), null, null);
+    }
+
+    public Bond.CallEntry createCallEntry() {
+        return new Bond.CallEntry(String.valueOf(scheduleIdCounter.getAndIncrement()), null, null);
+    }
+
+    public Bond.PutEntry createPutEntry() {
+        return new Bond.PutEntry(String.valueOf(scheduleIdCounter.getAndIncrement()), null, null);
+    }
+
+    public Bond.SinkingFundEntry createSinkingFundEntry() {
+        return new Bond.SinkingFundEntry(String.valueOf(scheduleIdCounter.getAndIncrement()), null, null);
     }
 
     public void saveBond(Bond bond) {

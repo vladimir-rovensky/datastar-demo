@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.bookie.infra.EscapedHtml;
-import com.bookie.infra.Util;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -52,6 +51,7 @@ public class SelectInput extends BaseInput {
             """,
                 "name", name,
                 "selected", selected != null ? selected : "",
+                "binding", this.getBindingAttr(selected),
                 "attrs", getAttrs(),
                 "options", renderedOptions);
     }

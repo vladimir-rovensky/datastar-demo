@@ -189,7 +189,7 @@ public class BondRepository {
 
     public static final String TEST_CUSIP = "000000AA0";
 
-    private static Bond buildTestBond(LocalDate today) {
+    private static Bond buildTestBond(LocalDate ignored) {
         LocalDate issueDate    = LocalDate.of(2022, 1, 15);
         LocalDate maturityDate = LocalDate.of(2032, 1, 15);
 
@@ -289,7 +289,7 @@ public class BondRepository {
             List<Bond.ResetEntry> resets = buildResetSchedule(cusip, issueDate, maturityDate, floatSpread);
             BigDecimal currentCoupon = resets.stream()
                     .filter(resetEntry -> !resetEntry.getResetDate().isAfter(today))
-                    .reduce((first, second) -> second)
+                    .reduce((ignored, second) -> second)
                     .map(Bond.ResetEntry::getNewRate)
                     .orElse(floatSpread);
             b.setCouponType(CouponType.FLOATING);

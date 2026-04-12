@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.bookie.infra.TemplatingEngine.html;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class DataGrid<TRow> {
@@ -17,10 +18,12 @@ public class DataGrid<TRow> {
 
     private final List<DataGridColumn<TRow>> columns;
     private Function<TRow, EscapedHtml> onRowDoubleClick;
-    private Function<TRow, Object> getRowID = _ -> null;
+    private Function<TRow, Object> getRowID = _ -> UUID.randomUUID().toString();
     private Function<TRow, EscapedHtml> getRowAttrs = _ -> EscapedHtml.blank();
     private Function<TRow, String> rowIDSignal = _ -> "";
     private List<TRow> rows;
+    private Function<TRow, EscapedHtml> getDeleteAction;
+    private String deleteRowTooltip = "Delete Row";
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
@@ -56,24 +59,49 @@ public class DataGrid<TRow> {
         return this;
     }
 
+    public DataGrid<TRow> onDeleteRow(Function<TRow, EscapedHtml> getDeleteAction) {
+        this.getDeleteAction = getDeleteAction;
+        return this;
+    }
+
+    public DataGrid<TRow> withDeleteRowTooltip(String deleteRowTooltip) {
+        this.deleteRowTooltip = deleteRowTooltip;
+        return this;
+    }
+
     public EscapedHtml render() {
+        var deleteHeaderCell = getDeleteAction != null
+                ? html("""
+                        <div class="data-grid-th"></div>""")
+                : EscapedHtml.blank();
         var headerCells = EscapedHtml.concat(columns, c -> html("""
                 <div class="data-grid-th">${h}</div>""", "h", c.header));
         var bodyRows = EscapedHtml.concat(rows, this::renderRow);
+        var columnTemplate = getColumnStyleTemplate();
 
         return html("""
                 <!--suppress CssInvalidFunction -->
-                <div class="data-grid fill-height" style="--cols: repeat(${columnCount}, 1fr)">
-                    <div class="data-grid-header">${headers}</div>
+                <div class="data-grid fill-height" style="--cols: ${columnTemplate}">
+                    <div class="data-grid-header">${deleteHeader}${headers}</div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
                 """,
-                "columnCount", columns.size(),
+                "columnTemplate", columnTemplate,
+                "deleteHeader", deleteHeaderCell,
                 "headers", headerCells,
                 "rows", bodyRows);
     }
 
+    private @NotNull String getColumnStyleTemplate() {
+        return getDeleteAction != null
+                ? "auto repeat(" + columns.size() + ", 1fr)"
+                : "repeat(" + columns.size() + ", 1fr)";
+    }
+
     private EscapedHtml renderRow(TRow row) {
+        var deleteCell = getDeleteAction != null
+                ? renderDeleteCell(row)
+                : EscapedHtml.blank();
         var cells = EscapedHtml.concat(columns, c -> renderCell(row, c));
 
         var dblClick = onRowDoubleClick != null
@@ -86,12 +114,21 @@ public class DataGrid<TRow> {
         var idSignalAttr = getIdSignalAttr(row, id);
 
         return html("""
-                <div class="data-grid-row" id="${rowID}" ${dblClick} ${rowIDSignal} ${attrs}>${cells}</div>""",
-                "rowID", id != null ? id : "",
+                <div class="data-grid-row" id="${rowID}" ${dblClick} ${rowIDSignal} ${attrs}>${deleteCell}${cells}</div>""",
+                "rowID", id,
                 "dblClick", dblClick,
                 "rowIDSignal", idSignalAttr,
                 "attrs", attrs,
+                "deleteCell", deleteCell,
                 "cells", cells);
+    }
+
+    private EscapedHtml renderDeleteCell(TRow row) {
+        return html("""
+                <div id="${cellID}" class="data-grid-cell"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>✕</button></div>""",
+                "cellID", getRowID.apply(row) + "-deleteRowBtn",
+                "action", getDeleteAction.apply(row),
+                "tooltip", deleteRowTooltip);
     }
 
     private @NotNull EscapedHtml getIdSignalAttr(TRow row, Object id) {
@@ -104,7 +141,8 @@ public class DataGrid<TRow> {
 
     private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {
         return html("""
-                <div class="data-grid-cell">${value}</div>""",
+                <div id="${cellID}" class="data-grid-cell">${value}</div>""",
+                "cellID", getRowID.apply(row) + "-" + column.getName(),
                 "value",
                 column.renderer != null
                         ? column.renderer.apply(row)

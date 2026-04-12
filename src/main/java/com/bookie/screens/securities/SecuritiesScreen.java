@@ -56,9 +56,13 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
                 .POST("resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
+                .DELETE("resetSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteResetEntry(request))
                 .POST("callSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleCallScheduleUpdate(request))
+                .DELETE("callSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteCallEntry(request))
                 .POST("putSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handlePutScheduleUpdate(request))
+                .DELETE("putSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deletePutEntry(request))
                 .POST("sinkingFundSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleSinkingFundScheduleUpdate(request))
+                .DELETE("sinkingFundSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteSinkingFundEntry(request))
                 .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
     }
@@ -254,6 +258,46 @@ public class SecuritiesScreen extends BaseScreen {
 
         triggerUpdate();
 
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse deleteResetEntry(ServerRequest request) {
+        var id = request.pathVariable("id");
+        this.editingBond.setResetSchedule(
+                this.editingBond.getResetSchedule().stream()
+                        .filter(e -> !e.getId().equals(id))
+                        .collect(Collectors.toList()));
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse deleteCallEntry(ServerRequest request) {
+        var id = request.pathVariable("id");
+        this.editingBond.setCallSchedule(
+                this.editingBond.getCallSchedule().stream()
+                        .filter(e -> !e.getId().equals(id))
+                        .collect(Collectors.toList()));
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse deletePutEntry(ServerRequest request) {
+        var id = request.pathVariable("id");
+        this.editingBond.setPutSchedule(
+                this.editingBond.getPutSchedule().stream()
+                        .filter(e -> !e.getId().equals(id))
+                        .collect(Collectors.toList()));
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    public synchronized ServerResponse deleteSinkingFundEntry(ServerRequest request) {
+        var id = request.pathVariable("id");
+        this.editingBond.setSinkingFundSchedule(
+                this.editingBond.getSinkingFundSchedule().stream()
+                        .filter(e -> !e.getId().equals(id))
+                        .collect(Collectors.toList()));
+        triggerUpdate();
         return ServerResponse.ok().build();
     }
 

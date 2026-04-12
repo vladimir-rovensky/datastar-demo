@@ -83,6 +83,22 @@ public class TradesScreen extends BaseScreen {
         return handleInitialRender(request, this::render);
     }
 
+    public ServerResponse openDeleteConfirmation(ServerRequest request) {
+        var tradeId = Long.parseLong(request.pathVariable("id"));
+        var content = Popup.popup()
+                .withStyle(Popup.Style.WARNING)
+                .withTitle("Cancel Trade")
+                .withContent(html("""
+                        <p>Are you sure you want to cancel trade ${tradeId}?</p>
+                        """, "tradeId", tradeId))
+                .withActions(html("""
+                        <button class="btn-primary" data-on:click="@post('/trades/delete/${tradeId}')">Confirm</button>
+                        <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
+                        """, "tradeId", tradeId))
+                .render();
+        return Popup.open(content);
+    }
+
     public ServerResponse deleteTradeById(ServerRequest request) {
         var tradeId = Long.parseLong(request.pathVariable("id"));
         tradeRepository.deleteTrade(tradeId);
@@ -98,7 +114,6 @@ public class TradesScreen extends BaseScreen {
     @Override
     protected synchronized EscapedHtml getContent() {
         var grid = DataGrid.withColumns(
-                        column("", this::getCancelTradeButton),
                         column("ID", Trade::getId),
                         column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID()).render()),
                         column("Book", Trade::getBook),
@@ -110,6 +125,8 @@ public class TradesScreen extends BaseScreen {
                         column("Settle Date", Trade::getSettleDate))
                 .withRowID(r -> "trade-" + r.getId())
                 .onRowDoubleClick(t -> html("@post('/trades/modify/${id}')", "id", t.getId()))
+                .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
+                .withDeleteRowTooltip("Cancel Trade")
                 .withRows(this.trades.reversed())
                 .render();
 
@@ -139,27 +156,6 @@ public class TradesScreen extends BaseScreen {
                     </style>
                 """);
     }
-
-    private EscapedHtml getCancelTradeButton(Trade t) {
-        return html("""
-                <button class="btn-no-bg" data-on:click="@get('/trades/delete/${tradeID}', {filterSignals:{exclude:/.*/}})" data-tooltip='Cancel Trade'>✕</button>
-                """, "tradeID", t.getId());
-    }
-
-    public ServerResponse openDeleteConfirmation(ServerRequest request) {
-        var tradeId = Long.parseLong(request.pathVariable("id"));
-        var content = Popup.popup()
-                .withStyle(Popup.Style.WARNING)
-                .withTitle("Cancel Trade")
-                .withContent(html("<p>Are you sure you want to cancel trade ${tradeId}?</p>", "tradeId", tradeId))
-                .withActions(html("""
-                        <button class="btn-primary" data-on:click="@post('/trades/delete/${tradeId}')">Confirm</button>
-                        <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
-                        """, "tradeId", tradeId))
-                .render();
-        return Popup.open(content);
-    }
-
 
     private synchronized void onTradesLoaded(TradesLoadedEvent event) {
         this.trades = new ArrayList<>(event.getTrades());

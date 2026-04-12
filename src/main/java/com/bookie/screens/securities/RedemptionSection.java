@@ -34,6 +34,7 @@ public class RedemptionSection {
                                 .withRows(callSchedule)
                                 .withRowID(Bond.CallEntry::getId)
                                 .withRowIDSignal(r -> "callSchedule." + r.getId() + ".id")
+                                .onDeleteRow(!disabled ? r -> html("@delete('/securities/callSchedule/${id}')", "id", r.getId()) : null)
                                 .render());
 
         var putSchedule = bond.getPutSchedule();
@@ -56,6 +57,7 @@ public class RedemptionSection {
                                 .withRows(putSchedule)
                                 .withRowID(Bond.PutEntry::getId)
                                 .withRowIDSignal(r -> "putSchedule." + r.getId() + ".id")
+                                .onDeleteRow(!disabled ? r -> html("@delete('/securities/putSchedule/${id}')", "id", r.getId()) : null)
                                 .render());
 
         var sinkingFundSchedule = bond.getSinkingFundSchedule();
@@ -78,6 +80,7 @@ public class RedemptionSection {
                                 .withRows(sinkingFundSchedule)
                                 .withRowID(Bond.SinkingFundEntry::getId)
                                 .withRowIDSignal(r -> "sinkingFundSchedule." + r.getId() + ".id")
+                                .onDeleteRow(!disabled ? r -> html("@delete('/securities/sinkingFundSchedule/${id}')", "id", r.getId()) : null)
                                 .render());
 
         return html("""

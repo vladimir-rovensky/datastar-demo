@@ -74,6 +74,7 @@ public class IncomeSection {
                     .withRows(resetSchedule)
                     .withRowID(Bond.ResetEntry::getId)
                     .withRowIDSignal(r -> "resetSchedule." + r.getId() + ".id")
+                    .onDeleteRow(!disabled ? r -> html("@delete('/securities/resetSchedule/${id}')", "id", r.getId()) : null)
                     .render());
     }
 }

@@ -1,6 +1,5 @@
 package com.bookie.components;
 
-import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Renderable;
 
 import java.util.function.Function;
@@ -18,5 +17,9 @@ public class DataGridColumn<TRow> {
     public DataGridColumn<TRow> withRenderer(Function<TRow, Renderable> renderer) {
         this.renderer = renderer;
         return this;
+    }
+
+    public String getName() {
+        return header.replace(" ", "_");
     }
 }

@@ -84,6 +84,7 @@ public class PositionsScreen extends BaseScreen {
                         column("Settled Position", p -> usd(p.getSettledPosition())),
                         column("Last Activity", Position::getLastActivity))
                 .withRows(this.positions)
+                .withRowID(p -> p.getCusip() + "-" + p.getBook())
                 .render();
 
         return html("""

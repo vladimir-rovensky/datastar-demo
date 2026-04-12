@@ -2,6 +2,9 @@ package com.bookie.screens;
 
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.RouteInfo;
+import com.bookie.infra.Util;
+
+import java.util.List;
 
 import static com.bookie.components.MainNav.mainNav;
 import static com.bookie.infra.TemplatingEngine.html;
@@ -46,6 +49,8 @@ public class Shell {
                 .withRouteInfo(routeInfo)
                 .withActiveTitle(title);
 
+        var prerenderURLs = html(Util.toJson(List.of(nav.getTradesLink().getHref(), nav.getPositionsLink().getHref(), nav.getSecuritiesLink().getHref())));
+
         return html("""
                 <!DOCTYPE html>
                 <html lang="en-US">
@@ -58,7 +63,7 @@ public class Shell {
                     <script type="speculationrules" data-ignore-morph>
                       {
                         "prerender": [{
-                          "urls": ["/trades?tabID=${tabId}", "/positions?tabID=${tabId}"]
+                          "urls": ${prerenderURLs}
                         }]
                       }
                     </script>
@@ -103,6 +108,7 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
+                "prerenderURLs", prerenderURLs,
                 "updateRequest", getUpdateRequestAttribute(),
                 "nav", nav,
                 "content", content,

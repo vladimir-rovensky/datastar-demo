@@ -2,6 +2,7 @@ package com.bookie.components;
 
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Renderable;
+import org.jetbrains.annotations.NotNull;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -29,7 +30,7 @@ public class Link implements Renderable {
 
     @Override
     public EscapedHtml render() {
-        var href = "/" + url + "?tabID=" + tabId;
+        var href = getHref();
         var ariaCurrent = active ? html(" aria-current=\"page\"") : EscapedHtml.blank();
         return html("""
                 <a href="${href}"${ariaCurrent}>${label}</a>
@@ -37,5 +38,9 @@ public class Link implements Renderable {
                 "href", href,
                 "ariaCurrent", ariaCurrent,
                 "label", label);
+    }
+
+    public @NotNull String getHref() {
+        return "/" + url + "?tabID=" + tabId;
     }
 }

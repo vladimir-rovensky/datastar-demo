@@ -28,12 +28,9 @@ public class MainNav implements Renderable {
 
     @Override
     public EscapedHtml render() {
-        var tabId = routeInfo.tabId().localID();
-        var securitiesPath = "securities/" + routeInfo.activeCusip() + "/" + routeInfo.activeSection();
-
-        var tradesLink = link("trades", "Trades", tabId).withActive("Trades".equals(activeTitle));
-        var positionsLink = link("positions", "Positions", tabId).withActive("Positions".equals(activeTitle));
-        var securitiesLink = link(securitiesPath, "Securities", tabId).withActive("Securities".equals(activeTitle));
+        var tradesLink = getTradesLink();
+        var positionsLink = getPositionsLink();
+        var securitiesLink = getSecuritiesLink();
 
         return html("""
                 <nav class="screen-nav">
@@ -45,5 +42,21 @@ public class MainNav implements Renderable {
                 "tradesLink", tradesLink,
                 "positionsLink", positionsLink,
                 "securitiesLink", securitiesLink);
+    }
+
+    public Link getTradesLink() {
+        var tabId = routeInfo.tabId().localID();
+        return link("trades", "Trades", tabId).withActive("Trades".equals(activeTitle));
+    }
+
+    public Link getPositionsLink() {
+        var tabId = routeInfo.tabId().localID();
+        return link("positions", "Positions", tabId).withActive("Positions".equals(activeTitle));
+    }
+
+    public Link getSecuritiesLink() {
+        var tabId = routeInfo.tabId().localID();
+        var securitiesPath = "securities/" + routeInfo.activeCusip() + "/" + routeInfo.activeSection();
+        return link(securitiesPath, "Securities", tabId).withActive("Securities".equals(activeTitle));
     }
 }

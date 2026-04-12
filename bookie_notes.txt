@@ -6,7 +6,7 @@ Open
 * Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);
 * Update channel needs retry: always, otherwise doesn't work
 * Including all signals when fetching feels wierd, every get gets all of them serialized
-* Had to add nonce to input signals to force signal reset on reRender
+* Attributes only processed if different - gotcha with Cancel
 
 Solved
 * Code reuse - everything is on the server (e.g. validation)
@@ -19,8 +19,10 @@ Solved
 
 TODO
 * Securities screen
+    - Loading (slow repo)
+    - Validation
+    - Bank Position / Outstanding Amount
 * Boost links
 * commands / ordering
 * extract routes
 * optimize Positions
-* remove loadning from trade repo - move to security repo

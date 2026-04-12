@@ -153,14 +153,14 @@ input.loading { opacity: 0; }
         pointer-events: none;
     }
     &[data-error]:hover::after { display: block; }
-    &:has(input.loading)::before {
+    &:has(input.loading, number-input.loading)::before {
         content: "";
         position: absolute;
         inset: 0;
         background-color: var(--clr-surface);
         border: 1px solid var(--clr-border);
     }
-    &:has(input.loading)::after {
+    &:has(input.loading, number-input.loading)::after {
         content: "";
         position: absolute;
         inset: 0;

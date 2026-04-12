@@ -43,12 +43,37 @@ public class Router {
     public RouterFunction<ServerResponse> routes() {
         return RouterFunctions.route()
                 .GET("/global-styles.css", this::serveGlobalStyles)
+                .GET("/number-input.js", this::serveNumberInputJs)
                 .GET("/", _ -> ServerResponse.temporaryRedirect(java.net.URI.create("/trades")).build())
                 .nest(path(TradesScreen.RoutePrefix), () -> TradesScreen.setupRoutes(sessionRegistry))
                 .nest(path(PositionsScreen.RoutePrefix), () -> PositionsScreen.setupRoutes(sessionRegistry))
                 .nest(path(SecuritiesScreen.RoutePrefix), () -> SecuritiesScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
                 .build();
+    }
+
+    private ServerResponse serveNumberInputJs(ServerRequest request) {
+        if (!cacheEnabled) {
+            return ServerResponse.ok()
+                    .contentType(MediaType.parseMediaType("application/javascript"))
+                    .body(numberInputJsResource());
+        }
+
+        var etag = "\"" + appVersion + "\"";
+        if (etag.equals(request.headers().firstHeader(HttpHeaders.IF_NONE_MATCH))) {
+            return ServerResponse.status(HttpStatus.NOT_MODIFIED).build();
+        }
+
+        return ServerResponse.ok()
+                .contentType(MediaType.parseMediaType("application/javascript"))
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=0, must-revalidate")
+                .header(HttpHeaders.ETAG, etag)
+                .body(numberInputJsResource());
+    }
+
+    private Resource numberInputJsResource() {
+        var fileResource = new FileSystemResource("src/main/resources/static/number-input.js");
+        return fileResource.exists() ? fileResource : new ClassPathResource("/static/number-input.js");
     }
 
     private ServerResponse serveGlobalStyles(ServerRequest request) {

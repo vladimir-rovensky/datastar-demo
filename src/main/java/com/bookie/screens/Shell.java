@@ -78,6 +78,7 @@ public class Shell {
                     </script>
 
                     <script type="module" src="/datastar1.0.0.RC8.js"></script>
+                    <script type="module" src="/number-input.js"></script>
                 </head>
 
                 <body ${updateRequest}>

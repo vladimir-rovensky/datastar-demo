@@ -5,6 +5,8 @@ import com.bookie.infra.Renderable;
 import com.bookie.infra.Util;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigDecimal;
+
 import static com.bookie.infra.TemplatingEngine.html;
 
 public abstract class BaseInput implements Renderable {
@@ -36,7 +38,9 @@ public abstract class BaseInput implements Renderable {
                     data-signals:${name}="${value}" data-bind:${name}
                 """,
                 "name", Util.toKebabCase(this.name),
-                "value", Util.toJson(value));
+                "value", value != null
+                        ? Util.toJson(value)
+                        : "\"\"");
     }
 
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }

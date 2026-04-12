@@ -22,7 +22,7 @@ TODO
     - Loading (slow repo)
     - Validation
     - Bank Position / Outstanding Amount
-* Boost links
-* commands / ordering
-* extract routes
+* Boost links / fix mixing state between tabs
 * optimize Positions
+* commands / ordering
+* Grid sort, filter, virtual scrolling

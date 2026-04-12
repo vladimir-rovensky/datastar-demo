@@ -128,11 +128,13 @@ public class TradeTicketPopup {
                         .withError(tradeRepository.validateCounterparty(ticket.getCounterparty())),
 
                 "quantity", formField("Quantity ($)")
-                        .withInput(numberInput("quantity", ticket.getQuantity()))
+                        .withInput(numberInput("quantity", ticket.getQuantity())
+                                .withFormat("currency"))
                         .withError(tradeRepository.validateQuantity(ticket.getQuantity())),
 
                 "accruedInterestField", formField("Accrued Interest ($)")
                         .withInput(numberInput("accruedInterest", ticket.getAccruedInterest())
+                                .withFormat("currency")
                                 .withLoadIndicator("_fetching")
                                 .withDisabled(true)),
 

@@ -249,6 +249,8 @@ public class SecuritiesScreen extends BaseScreen {
         bondField.setAccessible(true);
         bondField.set(editingBond, bondField.get(bond));
 
+        triggerUpdate();
+
         return ServerResponse.ok().build();
     }
 
@@ -266,6 +268,8 @@ public class SecuritiesScreen extends BaseScreen {
             entryField.setAccessible(true);
             entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
         }
+
+        triggerUpdate();
 
         return ServerResponse.ok().build();
     }
@@ -285,6 +289,8 @@ public class SecuritiesScreen extends BaseScreen {
             entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
         }
 
+        triggerUpdate();
+
         return ServerResponse.ok().build();
     }
 
@@ -303,6 +309,8 @@ public class SecuritiesScreen extends BaseScreen {
             entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
         }
 
+        triggerUpdate();
+
         return ServerResponse.ok().build();
     }
 
@@ -320,6 +328,8 @@ public class SecuritiesScreen extends BaseScreen {
             entryField.setAccessible(true);
             entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
         }
+
+        triggerUpdate();
 
         return ServerResponse.ok().build();
     }

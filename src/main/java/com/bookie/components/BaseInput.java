@@ -33,9 +33,8 @@ public abstract class BaseInput implements Renderable {
         }
 
         return html("""
-                    data-signals='{nonce: "${nonce}", ${name}: "${value}"}' data-bind="${name}"
+                    data-signals='{${name}: "${value}"}' data-bind="${name}"
                 """,
-                "nonce", Util.nonce(),
                 "name", this.name,
                 "value", value);
     }

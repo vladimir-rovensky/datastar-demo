@@ -19,63 +19,66 @@ public class RedemptionSection {
                 ? html("""
                         <p class="centered-message">No call schedule.</p>
                         """)
-                : DataGrid.withColumns(
-                        column("Call Date", Bond.CallEntry::getCallDate)
-                                .withRenderer(r -> dateInput("callDate", r.getCallDate())
-                                        .withDisabled(disabled)
-                                        .noBind()),
-                        column("Call Price", Bond.CallEntry::getCallPrice)
-                                .withRenderer(r -> numberInput("callPrice", r.getCallPrice())
-                                        .withDisabled(disabled)
-                                        .noBind()))
-                        .withRows(callSchedule)
-                        .withRowID(Bond.CallEntry::getId)
-                        .withRowAttrs(r -> html("""
-                                data-on:change="@post('/securities/callSchedule/${rowID}/' + evt.target.name, {payload: {[evt.target.name]: evt.target.value}})"
-                                """, "rowID", r.getId()))
-                        .render();
+                : html("""
+                        <div data-on:change="@post('/securities/callSchedule', {filterSignals: {include: /callSchedule.*/}})">
+                            ${grid}
+                        </div>
+                        """, "grid",
+                        DataGrid.withColumns(
+                                column("Call Date", Bond.CallEntry::getCallDate)
+                                        .withRenderer(r -> dateInput("callSchedule." + r.getId() + ".callDate", r.getCallDate())
+                                                .withDisabled(disabled)),
+                                column("Call Price", Bond.CallEntry::getCallPrice)
+                                        .withRenderer(r -> numberInput("callSchedule." + r.getId() + ".callPrice", r.getCallPrice())
+                                                .withDisabled(disabled)))
+                                .withRows(callSchedule)
+                                .withRowID(Bond.CallEntry::getId)
+                                .withRowIDSignal(r -> "callSchedule." + r.getId() + ".id")
+                                .render());
 
         var putSchedule = bond.getPutSchedule();
         var putTable = (putSchedule == null || putSchedule.isEmpty())
                 ? html("""
                         <p class="centered-message">No put schedule.</p>
                         """)
-                : DataGrid.withColumns(
-                        column("Put Date", Bond.PutEntry::getPutDate)
-                                .withRenderer(r -> dateInput("putDate", r.getPutDate())
-                                        .withDisabled(disabled)
-                                        .noBind()),
-                        column("Put Price", Bond.PutEntry::getPutPrice)
-                                .withRenderer(r -> numberInput("putPrice", r.getPutPrice())
-                                        .withDisabled(disabled)
-                                        .noBind()))
-                        .withRows(putSchedule)
-                        .withRowID(Bond.PutEntry::getId)
-                        .withRowAttrs(r -> html("""
-                                data-on:change="@post('/securities/putSchedule/${rowID}/' + evt.target.name, {payload: {[evt.target.name]: evt.target.value}})"
-                                """, "rowID", r.getId()))
-                        .render();
+                : html("""
+                        <div data-on:change="@post('/securities/putSchedule', {filterSignals: {include: /putSchedule.*/}})">
+                            ${grid}
+                        </div>
+                        """, "grid",
+                        DataGrid.withColumns(
+                                column("Put Date", Bond.PutEntry::getPutDate)
+                                        .withRenderer(r -> dateInput("putSchedule." + r.getId() + ".putDate", r.getPutDate())
+                                                .withDisabled(disabled)),
+                                column("Put Price", Bond.PutEntry::getPutPrice)
+                                        .withRenderer(r -> numberInput("putSchedule." + r.getId() + ".putPrice", r.getPutPrice())
+                                                .withDisabled(disabled)))
+                                .withRows(putSchedule)
+                                .withRowID(Bond.PutEntry::getId)
+                                .withRowIDSignal(r -> "putSchedule." + r.getId() + ".id")
+                                .render());
 
         var sinkingFundSchedule = bond.getSinkingFundSchedule();
         var sinkingFundTable = (sinkingFundSchedule == null || sinkingFundSchedule.isEmpty())
                 ? html("""
                         <p class="centered-message">No sinking fund schedule.</p>
                         """)
-                : DataGrid.withColumns(
-                        column("Sink Date", Bond.SinkingFundEntry::getSinkDate)
-                                .withRenderer(r -> dateInput("sinkDate", r.getSinkDate())
-                                        .withDisabled(disabled)
-                                        .noBind()),
-                        column("Amount", Bond.SinkingFundEntry::getAmount)
-                                .withRenderer(r -> numberInput("amount", r.getAmount())
-                                        .withDisabled(disabled)
-                                        .noBind()))
-                        .withRows(sinkingFundSchedule)
-                        .withRowID(Bond.SinkingFundEntry::getId)
-                        .withRowAttrs(r -> html("""
-                                data-on:change="@post('/securities/sinkingFundSchedule/${rowID}/' + evt.target.name, {payload: {[evt.target.name]: evt.target.value}})"
-                                """, "rowID", r.getId()))
-                        .render();
+                : html("""
+                        <div data-on:change="@post('/securities/sinkingFundSchedule', {filterSignals: {include: /sinkingFundSchedule.*/}})">
+                            ${grid}
+                        </div>
+                        """, "grid",
+                        DataGrid.withColumns(
+                                column("Sink Date", Bond.SinkingFundEntry::getSinkDate)
+                                        .withRenderer(r -> dateInput("sinkingFundSchedule." + r.getId() + ".sinkDate", r.getSinkDate())
+                                                .withDisabled(disabled)),
+                                column("Amount", Bond.SinkingFundEntry::getAmount)
+                                        .withRenderer(r -> numberInput("sinkingFundSchedule." + r.getId() + ".amount", r.getAmount())
+                                                .withDisabled(disabled)))
+                                .withRows(sinkingFundSchedule)
+                                .withRowID(Bond.SinkingFundEntry::getId)
+                                .withRowIDSignal(r -> "sinkingFundSchedule." + r.getId() + ".id")
+                                .render());
 
         return html("""
                 <div class="bond-redemption fill-height">

@@ -1,6 +1,5 @@
 package com.bookie.screens;
 
-import com.bookie.components.MainNav;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.RouteInfo;
 

@@ -56,9 +56,9 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("save", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit())
                 .POST("cancel", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
                 .POST("resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
-                .POST("callSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleCallScheduleUpdate(request))
-                .POST("putSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handlePutScheduleUpdate(request))
-                .POST("sinkingFundSchedule/{rowID}/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleSinkingFundScheduleUpdate(request))
+                .POST("callSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleCallScheduleUpdate(request))
+                .POST("putSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handlePutScheduleUpdate(request))
+                .POST("sinkingFundSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleSinkingFundScheduleUpdate(request))
                 .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
     }
@@ -273,19 +273,13 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse handleCallScheduleUpdate(ServerRequest request) throws Exception {
-        var rowID = request.pathVariable("rowID");
-        var field = request.pathVariable("field");
-        var incomingEntry = request.body(Bond.CallEntry.class);
+        var incomingData = request.body(new ParameterizedTypeReference<Map<String, Map<String, Bond.CallEntry>>>() {});
+        Map<String, Bond.CallEntry> incomingEntries = incomingData.get("callSchedule");
 
-        var matchingEntry = editingBond.getCallSchedule().stream()
-                .filter(e -> Objects.equals(e.getId(), rowID))
-                .findFirst();
-
-        if (matchingEntry.isPresent()) {
-            var entryField = Bond.CallEntry.class.getDeclaredField(field);
-            entryField.setAccessible(true);
-            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
-        }
+        this.editingBond.setCallSchedule(
+                this.editingBond.getCallSchedule().stream()
+                        .map(e -> incomingEntries.getOrDefault(e.getId(), e))
+                        .collect(Collectors.toList()));
 
         triggerUpdate();
 
@@ -293,19 +287,13 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse handlePutScheduleUpdate(ServerRequest request) throws Exception {
-        var rowID = request.pathVariable("rowID");
-        var field = request.pathVariable("field");
-        var incomingEntry = request.body(Bond.PutEntry.class);
+        var incomingData = request.body(new ParameterizedTypeReference<Map<String, Map<String, Bond.PutEntry>>>() {});
+        Map<String, Bond.PutEntry> incomingEntries = incomingData.get("putSchedule");
 
-        var matchingEntry = editingBond.getPutSchedule().stream()
-                .filter(e -> Objects.equals(e.getId(), rowID))
-                .findFirst();
-
-        if (matchingEntry.isPresent()) {
-            var entryField = Bond.PutEntry.class.getDeclaredField(field);
-            entryField.setAccessible(true);
-            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
-        }
+        this.editingBond.setPutSchedule(
+                this.editingBond.getPutSchedule().stream()
+                        .map(e -> incomingEntries.getOrDefault(e.getId(), e))
+                        .collect(Collectors.toList()));
 
         triggerUpdate();
 
@@ -313,19 +301,13 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse handleSinkingFundScheduleUpdate(ServerRequest request) throws Exception {
-        var rowID = request.pathVariable("rowID");
-        var field = request.pathVariable("field");
-        var incomingEntry = request.body(Bond.SinkingFundEntry.class);
+        var incomingData = request.body(new ParameterizedTypeReference<Map<String, Map<String, Bond.SinkingFundEntry>>>() {});
+        Map<String, Bond.SinkingFundEntry> incomingEntries = incomingData.get("sinkingFundSchedule");
 
-        var matchingEntry = editingBond.getSinkingFundSchedule().stream()
-                .filter(e -> Objects.equals(e.getId(), rowID))
-                .findFirst();
-
-        if (matchingEntry.isPresent()) {
-            var entryField = Bond.SinkingFundEntry.class.getDeclaredField(field);
-            entryField.setAccessible(true);
-            entryField.set(matchingEntry.get(), entryField.get(incomingEntry));
-        }
+        this.editingBond.setSinkingFundSchedule(
+                this.editingBond.getSinkingFundSchedule().stream()
+                        .map(e -> incomingEntries.getOrDefault(e.getId(), e))
+                        .collect(Collectors.toList()));
 
         triggerUpdate();
 

@@ -55,7 +55,7 @@ public class Shell {
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
 
-                    <script type="speculationrules">
+                    <script type="speculationrules" data-ignore-morph>
                       {
                         "prerender": [{
                           "urls": ["/trades?tabID=${tabId}", "/positions?tabID=${tabId}"]

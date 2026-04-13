@@ -40,6 +40,8 @@ public abstract class BaseInput implements Renderable {
                         : "\"\"");
     }
 
+    public boolean isDisabled() { return disabled; }
+
     public BaseInput withDisabled(boolean disabled) { this.disabled = disabled; return this; }
     public BaseInput withLoadIndicator(String signal) { this.loadIndicator = signal; return this; }
     public BaseInput noBind() {  this.bind = false; return this; }

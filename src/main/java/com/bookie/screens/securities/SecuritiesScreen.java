@@ -119,9 +119,9 @@ public class SecuritiesScreen extends BaseScreen {
 
     private EscapedHtml renderSection() {
         return switch (currentSection) {
-            case GENERAL -> GeneralSection.render(getActiveBond(), isEditing());
-            case INCOME -> IncomeSection.render(getActiveBond(), isEditing());
-            case REDEMPTION -> RedemptionSection.render(getActiveBond(), isEditing());
+            case GENERAL -> GeneralSection.render(getActiveBond(), isEditing(), bondRepository);
+            case INCOME -> IncomeSection.render(getActiveBond(), isEditing(), bondRepository);
+            case REDEMPTION -> RedemptionSection.render(getActiveBond(), isEditing(), bondRepository);
         };
     }
 
@@ -169,10 +169,12 @@ public class SecuritiesScreen extends BaseScreen {
                     """);
         }
 
+        var saveDisabled = !bondRepository.isValid(editingBond);
         return html("""
-                <button class="btn-primary" data-on:click="@post('/securities/save')">Save</button>
+                <button class="btn-primary" ${saveDisabled} data-on:click="@post('/securities/save')">Save</button>
                 <button data-on:click="@post('/securities/cancel')">Cancel</button>
-                """);
+                """,
+                "saveDisabled", saveDisabled ? html("disabled data-tooltip=\"Please fix any invalid values before saving.\"") : EscapedHtml.blank());
     }
 
     private EscapedHtml getStyles() {
@@ -239,6 +241,9 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse saveEdit() {
+        if (!bondRepository.isValid(editingBond)) {
+            throw new RuntimeException("Tried to save an invalid bond.");
+        }
         bondRepository.saveBond(editingBond);
         currentBond = editingBond;
         editingBond = null;

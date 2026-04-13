@@ -1,6 +1,7 @@
 package com.bookie.screens.securities;
 
 import com.bookie.domain.entity.Bond;
+import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.BondType;
 import com.bookie.infra.EscapedHtml;
 
@@ -14,7 +15,7 @@ import static com.bookie.infra.TemplatingEngine.html;
 
 public class GeneralSection {
 
-    public static EscapedHtml render(Bond bond, boolean editing) {
+    public static EscapedHtml render(Bond bond, boolean editing, BondRepository bondRepository) {
         var disabled = !editing;
 
         return html("""
@@ -43,22 +44,34 @@ public class GeneralSection {
                 </div>
                 """,
                 "cusip", bond.getCusip(),
-                "isin", formField("ISIN").withInput(textInput("isin", bond.getIsin()).withDisabled(disabled)),
-                "ticker", formField("Ticker").withInput(textInput("ticker", bond.getTicker()).withDisabled(disabled)),
-                "issuerName", formField("Issuer Name").withInput(textInput("issuerName", bond.getIssuerName()).withDisabled(disabled)),
+                "isin", formField("ISIN").withInput(textInput("isin", bond.getIsin()).withDisabled(disabled))
+                        .withError(bondRepository.validateIsin(bond.getIsin())),
+                "ticker", formField("Ticker").withInput(textInput("ticker", bond.getTicker()).withDisabled(disabled))
+                        .withError(bondRepository.validateTicker(bond.getTicker())),
+                "issuerName", formField("Issuer Name").withInput(textInput("issuerName", bond.getIssuerName()).withDisabled(disabled))
+                        .withError(bondRepository.validateIssuerName(bond.getIssuerName())),
                 "description", formField("Description").withInput(textInput("description", bond.getDescription()).withDisabled(disabled)),
-                "bondType", formField("Bond Type").withInput(selectInput("bondType", BondType.class, bond.getBondType()).withDisabled(disabled)),
+                "bondType", formField("Bond Type").withInput(selectInput("bondType", BondType.class, bond.getBondType()).withDisabled(disabled))
+                        .withError(bondRepository.validateBondType(bond.getBondType())),
                 "sector", formField("Sector").withInput(textInput("sector", bond.getSector()).withDisabled(disabled)),
-                "currency", formField("Currency").withInput(textInput("currency", bond.getCurrency()).withDisabled(disabled)),
-                "country", formField("Country").withInput(textInput("country", bond.getCountry()).withDisabled(disabled)),
+                "currency", formField("Currency").withInput(textInput("currency", bond.getCurrency()).withDisabled(disabled))
+                        .withError(bondRepository.validateCurrency(bond.getCurrency())),
+                "country", formField("Country").withInput(textInput("country", bond.getCountry()).withDisabled(disabled))
+                        .withError(bondRepository.validateCountry(bond.getCountry())),
                 "seniorityLevel", formField("Seniority Level").withInput(textInput("seniorityLevel", bond.getSeniorityLevel()).withDisabled(disabled)),
-                "issueDate", formField("Issue Date").withInput(dateInput("issueDate", bond.getIssueDate()).withDisabled(disabled)),
+                "issueDate", formField("Issue Date").withInput(dateInput("issueDate", bond.getIssueDate()).withDisabled(disabled))
+                        .withError(bondRepository.validateIssueDate(bond.getIssueDate())),
                 "datedDate", formField("Dated Date").withInput(dateInput("datedDate", bond.getDatedDate()).withDisabled(disabled)),
-                "maturityDate", formField("Maturity Date").withInput(dateInput("maturityDate", bond.getMaturityDate()).withDisabled(disabled)),
-                "firstCouponDate", formField("First Coupon Date").withInput(dateInput("firstCouponDate", bond.getFirstCouponDate()).withDisabled(disabled)),
-                "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withDisabled(disabled)),
-                "faceValue", formField("Face Value").withInput(numberInput("faceValue", bond.getFaceValue()).withDisabled(disabled)),
-                "issuePrice", formField("Issue Price").withInput(numberInput("issuePrice", bond.getIssuePrice()).withDisabled(disabled)),
+                "maturityDate", formField("Maturity Date").withInput(dateInput("maturityDate", bond.getMaturityDate()).withDisabled(disabled))
+                        .withError(bondRepository.validateMaturityDate(bond.getMaturityDate(), bond.getIssueDate())),
+                "firstCouponDate", formField("First Coupon Date").withInput(dateInput("firstCouponDate", bond.getFirstCouponDate()).withDisabled(disabled))
+                        .withError(bondRepository.validateFirstCouponDate(bond.getFirstCouponDate(), bond.getIssueDate(), bond.getMaturityDate())),
+                "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withFormat("currency").withDisabled(disabled))
+                        .withError(bondRepository.validateIssueSize(bond.getIssueSize())),
+                "faceValue", formField("Face Value").withInput(numberInput("faceValue", bond.getFaceValue()).withFormat("currency").withDisabled(disabled))
+                        .withError(bondRepository.validateFaceValue(bond.getFaceValue())),
+                "issuePrice", formField("Issue Price").withInput(numberInput("issuePrice", bond.getIssuePrice()).withDisabled(disabled))
+                        .withError(bondRepository.validateIssuePrice(bond.getIssuePrice())),
                 "moodysRating", formField("Moody's Rating").withInput(textInput("moodysRating", bond.getMoodysRating()).withDisabled(disabled)),
                 "spRating", formField("S&P Rating").withInput(textInput("spRating", bond.getSpRating()).withDisabled(disabled)),
                 "fitchRating", formField("Fitch Rating").withInput(textInput("fitchRating", bond.getFitchRating()).withDisabled(disabled)),

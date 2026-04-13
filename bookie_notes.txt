@@ -20,7 +20,6 @@ Solved
 TODO
 * Securities screen
     - Loading (slow repo)
-    - Validation
     - Bank Position / Outstanding Amount
 * Boost links / fix mixing state between tabs
 * optimize Positions

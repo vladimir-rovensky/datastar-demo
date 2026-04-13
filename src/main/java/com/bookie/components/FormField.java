@@ -7,13 +7,31 @@ import static com.bookie.infra.TemplatingEngine.html;
 public class FormField implements Renderable {
     private String label;
     private String error;
-    private EscapedHtml input;
+    private BaseInput input;
 
     public static FormField formField(String label) {
         return new FormField().withLabel(label);
     }
 
+    public static FormField formField() {
+        return new FormField().withLabel("");
+    }
+
     public EscapedHtml render() {
+        var showError = this.input != null && !this.input.isDisabled();
+        var errorAttr = showError && this.error != null ? html("data-error=\"${msg}\"", "msg", this.error) : EscapedHtml.blank();
+        var inputContent = this.input != null ? this.input.render() : EscapedHtml.blank();
+
+        if (this.label == null || this.label.isBlank()) {
+            return html("""
+                <div class="input-wrapper" ${error}>
+                    ${input}
+                </div>
+            """,
+                    "error", errorAttr,
+                    "input", inputContent);
+        }
+
         return html("""
             <label>
                 ${label}
@@ -23,8 +41,8 @@ public class FormField implements Renderable {
             </label>
         """,
                 "label", this.label,
-                "error", this.error != null ? html("data-error=\"${msg}\"", "msg", this.error) : EscapedHtml.blank(),
-                "input", this.input != null ? this.input : EscapedHtml.blank());
+                "error", errorAttr,
+                "input", inputContent);
     }
 
     public FormField withLabel(String label) {
@@ -38,7 +56,7 @@ public class FormField implements Renderable {
     }
 
     public FormField withInput(BaseInput input) {
-        this.input = input != null ? input.render() : null;
+        this.input = input;
         return this;
     }
 

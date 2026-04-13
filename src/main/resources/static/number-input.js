@@ -6,7 +6,7 @@ sharedStylesheet.replaceSync(`
     input {
         background-color: var(--clr-surface);
         color: var(--clr-text);
-        border: 1px solid var(--clr-border);
+        border: 1px solid var(--input-border-color, var(--clr-border));
         padding: var(--sp-xs) var(--sp-sm);
         font-size: var(--fs-sm);
         outline: none;
@@ -127,7 +127,11 @@ class NumberInputElement extends HTMLElement {
             });
             this._input.value = format === 'currency' ? '$' + formatted : formatted;
         } else {
-            this._input.value = this._numericValue.toFixed(this._getDecimals());
+            const decimals = this._getDecimals();
+            this._input.value = this._numericValue.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
         }
     }
 }

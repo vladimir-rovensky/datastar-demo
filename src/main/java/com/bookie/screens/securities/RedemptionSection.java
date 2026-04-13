@@ -2,16 +2,18 @@ package com.bookie.screens.securities;
 
 import com.bookie.components.DataGrid;
 import com.bookie.domain.entity.Bond;
+import com.bookie.domain.entity.BondRepository;
 import com.bookie.infra.EscapedHtml;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.DateInput.dateInput;
+import static com.bookie.components.FormField.formField;
 import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class RedemptionSection {
 
-    public static EscapedHtml render(Bond bond, boolean editing) {
+    public static EscapedHtml render(Bond bond, boolean editing, BondRepository bondRepository) {
         var disabled = !editing;
 
         var callSchedule = bond.getCallSchedule();
@@ -22,11 +24,15 @@ public class RedemptionSection {
                         """, "grid",
                         DataGrid.withColumns(
                                 column("Call Date", Bond.CallEntry::getCallDate)
-                                        .withRenderer(r -> dateInput("callSchedule." + r.getId() + ".callDate", r.getCallDate())
-                                                .withDisabled(disabled)),
+                                        .withRenderer(r -> formField()
+                                                .withInput(dateInput("callSchedule." + r.getId() + ".callDate", r.getCallDate()).withDisabled(disabled))
+                                                .withError(bondRepository.validateCallScheduleDate(r.getCallDate(), callSchedule))
+                                                .render()),
                                 column("Call Price", Bond.CallEntry::getCallPrice)
-                                        .withRenderer(r -> numberInput("callSchedule." + r.getId() + ".callPrice", r.getCallPrice())
-                                                .withDisabled(disabled)))
+                                        .withRenderer(r -> formField()
+                                                .withInput(numberInput("callSchedule." + r.getId() + ".callPrice", r.getCallPrice()).withDisabled(disabled))
+                                                .withError(bondRepository.validateCallSchedulePrice(r.getCallPrice()))
+                                                .render()))
                                 .withRows(callSchedule)
                                 .withRowID(Bond.CallEntry::getId)
                                 .withRowIDSignal(r -> "callSchedule." + r.getId() + ".id")
@@ -43,11 +49,15 @@ public class RedemptionSection {
                         """, "grid",
                         DataGrid.withColumns(
                                 column("Put Date", Bond.PutEntry::getPutDate)
-                                        .withRenderer(r -> dateInput("putSchedule." + r.getId() + ".putDate", r.getPutDate())
-                                                .withDisabled(disabled)),
+                                        .withRenderer(r -> formField()
+                                                .withInput(dateInput("putSchedule." + r.getId() + ".putDate", r.getPutDate()).withDisabled(disabled))
+                                                .withError(bondRepository.validatePutScheduleDate(r.getPutDate(), putSchedule))
+                                                .render()),
                                 column("Put Price", Bond.PutEntry::getPutPrice)
-                                        .withRenderer(r -> numberInput("putSchedule." + r.getId() + ".putPrice", r.getPutPrice())
-                                                .withDisabled(disabled)))
+                                        .withRenderer(r -> formField()
+                                                .withInput(numberInput("putSchedule." + r.getId() + ".putPrice", r.getPutPrice()).withDisabled(disabled))
+                                                .withError(bondRepository.validatePutSchedulePrice(r.getPutPrice()))
+                                                .render()))
                                 .withRows(putSchedule)
                                 .withRowID(Bond.PutEntry::getId)
                                 .withRowIDSignal(r -> "putSchedule." + r.getId() + ".id")
@@ -64,11 +74,15 @@ public class RedemptionSection {
                         """, "grid",
                         DataGrid.withColumns(
                                 column("Sink Date", Bond.SinkingFundEntry::getSinkDate)
-                                        .withRenderer(r -> dateInput("sinkingFundSchedule." + r.getId() + ".sinkDate", r.getSinkDate())
-                                                .withDisabled(disabled)),
+                                        .withRenderer(r -> formField()
+                                                .withInput(dateInput("sinkingFundSchedule." + r.getId() + ".sinkDate", r.getSinkDate()).withDisabled(disabled))
+                                                .withError(bondRepository.validateSinkingFundScheduleDate(r.getSinkDate(), sinkingFundSchedule))
+                                                .render()),
                                 column("Amount", Bond.SinkingFundEntry::getAmount)
-                                        .withRenderer(r -> numberInput("sinkingFundSchedule." + r.getId() + ".amount", r.getAmount())
-                                                .withDisabled(disabled)))
+                                        .withRenderer(r -> formField()
+                                                .withInput(numberInput("sinkingFundSchedule." + r.getId() + ".amount", r.getAmount()).withFormat("currency").withDisabled(disabled))
+                                                .withError(bondRepository.validateSinkingFundScheduleAmount(r.getAmount()))
+                                                .render()))
                                 .withRows(sinkingFundSchedule)
                                 .withRowID(Bond.SinkingFundEntry::getId)
                                 .withRowIDSignal(r -> "sinkingFundSchedule." + r.getId() + ".id")

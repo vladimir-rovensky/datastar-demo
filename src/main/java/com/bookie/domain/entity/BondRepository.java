@@ -7,8 +7,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
+
+import static com.bookie.infra.Validators.*;
 
 @Repository
 public class BondRepository {
@@ -419,5 +422,162 @@ public class BondRepository {
         long raw = min + (hash % range);
         long rounded = (raw / 50_000_000) * 50_000_000;
         return new BigDecimal(Math.max(rounded, min));
+    }
+
+    public boolean isValid(Bond bond) {
+        return validateIsin(bond.getIsin()) == null
+                && validateTicker(bond.getTicker()) == null
+                && validateIssuerName(bond.getIssuerName()) == null
+                && validateBondType(bond.getBondType()) == null
+                && validateCurrency(bond.getCurrency()) == null
+                && validateCountry(bond.getCountry()) == null
+                && validateIssueDate(bond.getIssueDate()) == null
+                && validateMaturityDate(bond.getMaturityDate(), bond.getIssueDate()) == null
+                && validateFirstCouponDate(bond.getFirstCouponDate(), bond.getIssueDate(), bond.getMaturityDate()) == null
+                && validateFaceValue(bond.getFaceValue()) == null
+                && validateIssuePrice(bond.getIssuePrice()) == null
+                && validateIssueSize(bond.getIssueSize()) == null
+                && validateCouponType(bond.getCouponType(), bond.getResetSchedule()) == null
+                && validateCouponFrequency(bond.getCouponFrequency()) == null
+                && validateDayCount(bond.getDayCount()) == null
+                && validateCoupon(bond.getCoupon(), bond.getCouponType()) == null
+                && validateFloatingIndex(bond.getFloatingIndex(), bond.getCouponType()) == null
+                && bond.getResetSchedule().stream().allMatch(e ->
+                        validateResetScheduleDate(e.getResetDate(), bond.getResetSchedule()) == null
+                        && validateResetScheduleRate(e.getNewRate()) == null)
+                && bond.getCallSchedule().stream().allMatch(e ->
+                        validateCallScheduleDate(e.getCallDate(), bond.getCallSchedule()) == null
+                        && validateCallSchedulePrice(e.getCallPrice()) == null)
+                && bond.getPutSchedule().stream().allMatch(e ->
+                        validatePutScheduleDate(e.getPutDate(), bond.getPutSchedule()) == null
+                        && validatePutSchedulePrice(e.getPutPrice()) == null)
+                && bond.getSinkingFundSchedule().stream().allMatch(e ->
+                        validateSinkingFundScheduleDate(e.getSinkDate(), bond.getSinkingFundSchedule()) == null
+                        && validateSinkingFundScheduleAmount(e.getAmount()) == null);
+    }
+
+    public String validateIsin(String isin) {
+        return required(isin);
+    }
+
+    public String validateTicker(String ticker) {
+        return required(ticker);
+    }
+
+    public String validateIssuerName(String issuerName) {
+        return required(issuerName);
+    }
+
+    public String validateBondType(BondType bondType) {
+        return required(bondType);
+    }
+
+    public String validateCurrency(String currency) {
+        return required(currency);
+    }
+
+    public String validateCountry(String country) {
+        return required(country);
+    }
+
+    public String validateIssueDate(LocalDate issueDate) {
+        return required(issueDate);
+    }
+
+    public String validateMaturityDate(LocalDate maturityDate, LocalDate issueDate) {
+        return and(required(maturityDate), after(maturityDate, issueDate, "issue date"));
+    }
+
+    public String validateFirstCouponDate(LocalDate firstCouponDate, LocalDate issueDate, LocalDate maturityDate) {
+        if (firstCouponDate == null) {
+            return null;
+        }
+        return and(after(firstCouponDate, issueDate, "issue date"), before(firstCouponDate, maturityDate, "maturity date"));
+    }
+
+    public String validateFaceValue(BigDecimal faceValue) {
+        return and(required(faceValue), greaterThan(faceValue, BigDecimal.ZERO));
+    }
+
+    public String validateIssuePrice(BigDecimal issuePrice) {
+        return and(required(issuePrice), greaterThan(issuePrice, BigDecimal.ZERO));
+    }
+
+    public String validateIssueSize(BigDecimal issueSize) {
+        return and(required(issueSize), atLeast(issueSize, BigDecimal.ZERO));
+    }
+
+    public String validateCouponType(CouponType couponType, List<Bond.ResetEntry> resetSchedule) {
+        var error = required(couponType);
+        if (error != null) {
+            return error;
+        }
+        if (couponType == CouponType.FLOATING && (resetSchedule == null || resetSchedule.isEmpty())) {
+            return "At least one reset entry is required for floating rate bonds";
+        }
+        return null;
+    }
+
+    private static final Set<Integer> VALID_COUPON_FREQUENCIES = Set.of(1, 2, 4, 12);
+
+    public String validateCouponFrequency(int couponFrequency) {
+        return oneOf(couponFrequency, VALID_COUPON_FREQUENCIES);
+    }
+
+    public String validateDayCount(DayCountConvention dayCount) {
+        return required(dayCount);
+    }
+
+    public String validateCoupon(BigDecimal coupon, CouponType couponType) {
+        if (couponType != CouponType.FIXED) {
+            return null;
+        }
+        if (coupon == null) {
+            return "Required for fixed rate bonds";
+        }
+        return null;
+    }
+
+    public String validateFloatingIndex(String floatingIndex, CouponType couponType) {
+        if (couponType != CouponType.FLOATING) {
+            return null;
+        }
+        if (floatingIndex == null || floatingIndex.isBlank()) {
+            return "Required for floating rate bonds";
+        }
+        return null;
+    }
+
+
+    public String validateResetScheduleDate(LocalDate resetDate, List<Bond.ResetEntry> allEntries) {
+        return and(required(resetDate), unique(resetDate, allEntries.stream().map(Bond.ResetEntry::getResetDate)));
+    }
+
+    public String validateResetScheduleRate(BigDecimal newRate) {
+        return and(required(newRate), atLeast(newRate, BigDecimal.ZERO));
+    }
+
+    public String validateCallScheduleDate(LocalDate callDate, List<Bond.CallEntry> allEntries) {
+        return and(required(callDate), unique(callDate, allEntries.stream().map(Bond.CallEntry::getCallDate)));
+    }
+
+    public String validateCallSchedulePrice(BigDecimal callPrice) {
+        return and(required(callPrice), atLeast(callPrice, BigDecimal.ZERO));
+    }
+
+    public String validatePutScheduleDate(LocalDate putDate, List<Bond.PutEntry> allEntries) {
+        return and(required(putDate), unique(putDate, allEntries.stream().map(Bond.PutEntry::getPutDate)));
+    }
+
+    public String validatePutSchedulePrice(BigDecimal putPrice) {
+        return and(required(putPrice), atLeast(putPrice, BigDecimal.ZERO));
+    }
+
+    public String validateSinkingFundScheduleDate(LocalDate sinkDate, List<Bond.SinkingFundEntry> allEntries) {
+        return and(required(sinkDate), unique(sinkDate, allEntries.stream().map(Bond.SinkingFundEntry::getSinkDate)));
+    }
+
+    public String validateSinkingFundScheduleAmount(BigDecimal amount) {
+        return and(required(amount), atLeast(amount, BigDecimal.ZERO));
     }
 }

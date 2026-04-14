@@ -11,7 +11,7 @@ Open
 Solved
 * Code reuse - everything is on the server (e.g. validation)
 * Live reload - both server restart and hot reload work.
-* Editor support - language injections
+* Editor support - language injections (Intellij plugin doesn't work for injected languages though)
 * XSS protection
 * Encapsulation
     - scripts - IIFE + document.currentScript
@@ -20,6 +20,7 @@ Solved
 TODO
 * Securities screen
     - Bank Position / Outstanding Amount
+    - Description columns in Trades/Positions
 * Boost links / fix mixing state between tabs
 * commands / ordering
 * Grid sort, filter, virtual scrolling

@@ -5,6 +5,7 @@ import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import com.bookie.infra.events.TradesLoadedEvent;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -12,9 +13,11 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static com.bookie.infra.Util.sleep;
@@ -24,7 +27,7 @@ public class TradeRepository {
 
     private static final int TRADE_COUNT = 1000;
 
-    private List<Trade> trades;
+    private Map<Long, Trade> trades;
     private long nextId = 1001;
     private final EventBus eventBus;
     private final BondRepository bondRepository;
@@ -36,29 +39,39 @@ public class TradeRepository {
         this.referenceDataRepository = referenceDataRepository;
     }
 
+    @PostConstruct
+    public void init() {
+        Thread.startVirtualThread(this::loadTradesFromDB);
+    }
+
     public synchronized List<Trade> getAllTrades() {
-        if(trades == null) {
-            Thread.startVirtualThread(this::loadTradesFromDB);
+        if (trades == null) {
             return Collections.emptyList();
         }
 
-        return new ArrayList<>(trades);
+        return new ArrayList<>(trades.values());
     }
 
     public synchronized Trade findById(Long id) {
-        return trades.stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
+        return trades.get(id);
     }
 
     public synchronized void deleteTrade(Long id) {
-        trades.removeIf(t -> t.getId().equals(id));
-        eventBus.publish(new TradeDeletedEvent(id));
+        Trade deletedTrade = trades.remove(id);
+        if (deletedTrade == null) {
+            return;
+        }
+        eventBus.publish(new TradeDeletedEvent(deletedTrade));
     }
 
     public synchronized Trade modifyTrade(Trade trade) {
-        trades.removeIf(t -> t.getId().equals(trade.getId()));
+        Trade originalTrade = trades.get(trade.getId());
+        if (originalTrade == null) {
+            return null;
+        }
         trade.setExecutionTime(new Date());
-        trades.add(trade);
-        eventBus.publish(new TradeModifiedEvent(trade));
+        trades.put(trade.getId(), trade);
+        eventBus.publish(new TradeModifiedEvent(originalTrade, trade));
         return trade;
     }
 
@@ -69,7 +82,7 @@ public class TradeRepository {
 
         trade.setExecutionTime(new Date());
 
-        trades.add(trade);
+        trades.put(trade.getId(), trade);
 
         eventBus.publish(new TradeBookedEvent(trade));
 
@@ -161,7 +174,11 @@ public class TradeRepository {
     private void loadTradesFromDB() {
         //Slow DB here.
         sleep(1000L);
-        this.trades = new ArrayList<>(Collections.unmodifiableList(generate(bondRepository, referenceDataRepository)));
-        eventBus.publish(new TradesLoadedEvent(this.trades));
+        Map<Long, Trade> loaded = new HashMap<>();
+        generate(bondRepository, referenceDataRepository).forEach(t -> loaded.put(t.getId(), t));
+        synchronized (this) {
+            this.trades = loaded;
+        }
+        eventBus.publish(new TradesLoadedEvent(new ArrayList<>(loaded.values())));
     }
 }

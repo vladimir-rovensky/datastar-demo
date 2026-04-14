@@ -22,6 +22,5 @@ TODO
     - Loading (slow repo)
     - Bank Position / Outstanding Amount
 * Boost links / fix mixing state between tabs
-* optimize Positions
 * commands / ordering
 * Grid sort, filter, virtual scrolling

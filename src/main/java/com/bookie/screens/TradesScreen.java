@@ -168,12 +168,12 @@ public class TradesScreen extends BaseScreen {
     }
 
     private synchronized void onTradeModified(TradeModifiedEvent event) {
-        this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
+        this.trades.replaceAll(t -> t.getId().equals(event.updatedTrade().getId()) ? event.updatedTrade() : t);
         triggerUpdate();
     }
 
     private synchronized void onTradeDeleted(TradeDeletedEvent event) {
-        this.trades.removeIf(t -> t.getId().equals(event.getTradeId()));
+        this.trades.removeIf(t -> t.getId().equals(event.deletedTrade().getId()));
         triggerUpdate();
     }
 

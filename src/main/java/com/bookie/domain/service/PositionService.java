@@ -1,54 +1,110 @@
 package com.bookie.domain.service;
 
 import com.bookie.domain.entity.Position;
+import com.bookie.domain.entity.PositionKey;
 import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
+import com.bookie.infra.EventBus;
+import com.bookie.infra.events.PositionChangedEvent;
+import com.bookie.infra.events.PositionsLoadedEvent;
+import com.bookie.infra.events.TradeBookedEvent;
+import com.bookie.infra.events.TradeDeletedEvent;
+import com.bookie.infra.events.TradeModifiedEvent;
+import com.bookie.infra.events.TradesLoadedEvent;
+import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Component
 public class PositionService {
 
-    public List<Position> compute(List<Trade> trades) {
+    private final EventBus eventBus;
+    private final Map<PositionKey, Position> positions = new HashMap<>();
+    private final List<Runnable> eventSubscriptions = new ArrayList<>();
+
+    public PositionService(EventBus eventBus) {
+        this.eventBus = eventBus;
+        eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
+        eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
+        eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
+        eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+    }
+
+    @PreDestroy
+    public void dispose() {
+        eventSubscriptions.reversed().forEach(Runnable::run);
+    }
+
+    public synchronized List<Position> getPositions() {
+        return List.copyOf(positions.values());
+    }
+
+    private synchronized Position getPosition(PositionKey key) {
+        return positions.get(key);
+    }
+
+    private synchronized void onTradesLoaded(TradesLoadedEvent event) {
+        positions.clear();
+        for (Trade trade : event.getTrades()) {
+            addTradeToPosition(trade);
+        }
+        eventBus.publish(new PositionsLoadedEvent(List.copyOf(positions.values())));
+    }
+
+    private synchronized void onTradeBooked(TradeBookedEvent event) {
+        addTradeToPosition(event.getTrade());
+        eventBus.publish(new PositionChangedEvent(getPosition(event.getTrade().getPositionKey())));
+    }
+
+    private synchronized void onTradeModified(TradeModifiedEvent event) {
+        removeTradeFromPosition(event.originalTrade());
+        addTradeToPosition(event.updatedTrade());
+        eventBus.publish(new PositionChangedEvent(getPosition(event.updatedTrade().getPositionKey())));
+    }
+
+    private synchronized void onTradeDeleted(TradeDeletedEvent event) {
+        removeTradeFromPosition(event.deletedTrade());
+        getPosition(event.deletedTrade().getPositionKey()).setLastActivity(new Date());
+        eventBus.publish(new PositionChangedEvent(getPosition(event.deletedTrade().getPositionKey())));
+    }
+
+    private void addTradeToPosition(Trade trade) {
+        applyDeltaToPosition(trade, 1);
+    }
+
+    private void removeTradeFromPosition(Trade trade) {
+        applyDeltaToPosition(trade, -1);
+    }
+
+    private void applyDeltaToPosition(Trade trade, int sign) {
+        var key = trade.getPositionKey();
+        var position = positions.computeIfAbsent(key, Position::new);
+
         var today = LocalDate.now();
+        var signedQuantity = signedQuantity(trade).multiply(BigDecimal.valueOf(sign));
 
-        return trades.stream()
-                .collect(Collectors.groupingBy(t -> new PositionKey(t.getCusip(), t.getBook())))
-                .entrySet().stream()
-                .map(e -> {
-                    var key = e.getKey();
-                    var group = e.getValue();
-                    var currentPosition = signedSum(group, t -> !t.getTradeDate().isAfter(today));
-                    var settledPosition = signedSum(group, t -> !t.getSettleDate().isAfter(today));
-                    var lastActivity = group.stream()
-                            .map(Trade::getExecutionTime)
-                            .max(Comparator.naturalOrder())
-                            .orElse(null);
+        if (!trade.getTradeDate().isAfter(today)) {
+            position.setCurrentPosition(position.getCurrentPosition().add(signedQuantity));
+        }
 
-                    var position = new Position();
-                    position.setCusip(key.cusip());
-                    position.setBook(key.book());
-                    position.setCurrentPosition(currentPosition);
-                    position.setSettledPosition(settledPosition);
-                    position.setLastActivity(lastActivity);
-                    return position;
-                })
-                .sorted(Comparator.comparing(Position::getLastActivity))
-                .toList();
+        if (!trade.getSettleDate().isAfter(today)) {
+            position.setSettledPosition(position.getSettledPosition().add(signedQuantity));
+        }
+
+        Date executionTime = trade.getExecutionTime();
+        if (position.getLastActivity() == null || executionTime.after(position.getLastActivity())) {
+            position.setLastActivity(executionTime);
+        }
     }
 
-    private BigDecimal signedSum(List<Trade> group, Predicate<Trade> filter) {
-        return group.stream()
-                .filter(filter)
-                .map(t -> t.getDirection() == TradeDirection.BUY ? t.getQuantity() : t.getQuantity().negate())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    private BigDecimal signedQuantity(Trade trade) {
+        return trade.getDirection() == TradeDirection.BUY ? trade.getQuantity() : trade.getQuantity().negate();
     }
-
-    private record PositionKey(String cusip, String book) {}
 }

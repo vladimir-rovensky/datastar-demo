@@ -54,4 +54,6 @@ public class Trade {
 
     public Date getExecutionTime() { return executionTime; }
     public void setExecutionTime(Date executionTime) { this.executionTime = executionTime; }
+
+    public PositionKey getPositionKey() { return new PositionKey(cusip, book); }
 }

@@ -1,12 +1,6 @@
 package com.bookie.infra.events;
 
-public class TradeDeletedEvent {
+import com.bookie.domain.entity.Trade;
 
-    private final Long tradeId;
-
-    public TradeDeletedEvent(Long tradeId) {
-        this.tradeId = tradeId;
-    }
-
-    public Long getTradeId() { return tradeId; }
+public record TradeDeletedEvent(Trade deletedTrade) {
 }

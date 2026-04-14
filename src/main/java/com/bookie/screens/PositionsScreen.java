@@ -2,14 +2,10 @@ package com.bookie.screens;
 
 import com.bookie.components.DataGrid;
 import com.bookie.domain.entity.Position;
-import com.bookie.domain.entity.Trade;
-import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PositionService;
 import com.bookie.infra.*;
-import com.bookie.infra.events.TradeBookedEvent;
-import com.bookie.infra.events.TradeDeletedEvent;
-import com.bookie.infra.events.TradeModifiedEvent;
-import com.bookie.infra.events.TradesLoadedEvent;
+import com.bookie.infra.events.PositionChangedEvent;
+import com.bookie.infra.events.PositionsLoadedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -17,6 +13,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.bookie.components.DataGrid.column;
@@ -28,27 +25,19 @@ import static com.bookie.infra.TemplatingEngine.html;
 @Configuration
 public class PositionsScreen extends BaseScreen {
 
-    private final PositionService positionService;
-
-    private List<Trade> trades;
     private List<Position> positions;
 
     private final List<Runnable> eventSubscriptions = new ArrayList<>();
 
     public static final String RoutePrefix = "/positions";
 
-    public PositionsScreen(TradeRepository tradeRepository, PositionService positionService,
-                           EventBus eventBus) {
+    public PositionsScreen(PositionService positionService, EventBus eventBus) {
         super("Positions");
 
-        this.positionService = positionService;
-        this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+        this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));
+        this.eventSubscriptions.add(eventBus.subscribe(PositionChangedEvent.class, this::onPositionChanged));
 
-        this.trades = tradeRepository.getAllTrades();
-        this.positions = positionService.compute(this.trades);
+        this.positions = positionService.getPositions();
     }
 
     @Override
@@ -95,27 +84,17 @@ public class PositionsScreen extends BaseScreen {
                 "grid", grid);
     }
 
-    private synchronized void onTradesLoaded(TradesLoadedEvent event) {
-        this.trades = new ArrayList<>(event.getTrades());
-        this.positions = positionService.compute(this.trades);
+    private synchronized void onPositionsLoaded(PositionsLoadedEvent event) {
+        this.positions = new ArrayList<>(event.positions());
+        this.positions.sort(Comparator.comparing(Position::getLastActivity).reversed());
         this.triggerUpdate();
     }
 
-    private synchronized void onTradeBooked(TradeBookedEvent event) {
-        this.trades.add(event.getTrade());
-        this.positions = positionService.compute(this.trades);
-        this.triggerUpdate();
-    }
-
-    private synchronized void onTradeModified(TradeModifiedEvent event) {
-        this.trades.replaceAll(t -> t.getId().equals(event.getTrade().getId()) ? event.getTrade() : t);
-        this.positions = positionService.compute(this.trades);
-        this.triggerUpdate();
-    }
-
-    private synchronized void onTradeDeleted(TradeDeletedEvent event) {
-        this.trades.removeIf(t -> t.getId().equals(event.getTradeId()));
-        this.positions = positionService.compute(this.trades);
+    private synchronized void onPositionChanged(PositionChangedEvent event) {
+        Position changedPosition = event.position();
+        this.positions.removeIf(p -> p.getKey().equals(changedPosition.getKey()));
+        this.positions.add(changedPosition);
+        this.positions.sort(Comparator.comparing(Position::getLastActivity).reversed());
         this.triggerUpdate();
     }
 }

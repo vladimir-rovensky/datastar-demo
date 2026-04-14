@@ -11,6 +11,15 @@ public class Position {
     private BigDecimal settledPosition;
     private Date lastActivity;
 
+    public Position(PositionKey key) {
+        this.cusip = key.cusip();
+        this.book = key.book();
+        this.currentPosition = BigDecimal.ZERO;
+        this.settledPosition = BigDecimal.ZERO;
+    }
+
+    public PositionKey getKey() { return new PositionKey(cusip, book); }
+
     public String getCusip() { return cusip; }
     public void setCusip(String cusip) { this.cusip = cusip; }
 

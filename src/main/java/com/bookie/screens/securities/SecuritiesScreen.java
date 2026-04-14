@@ -76,13 +76,15 @@ public class SecuritiesScreen extends BaseScreen {
         var section = request.pathVariable("section");
 
         if(!Objects.equals(cusip, getCurrentCusip())) {
-            currentBond = bondRepository.findBondByCusip(cusip);
+            currentBond = NO_CUSIP.equals(cusip) ? null : bondRepository.findBondByCusip(cusip);
             editingBond = null;
         }
 
         currentSection = BondSection.fromPath(section);
 
-        updateRouteInfo(getRouteInfo().withActiveCusip(getCurrentCusip()).withActiveSection(currentSection.getPath()));
+        updateRouteInfo(getRouteInfo()
+                .withActiveCusip(getCurrentCusip())
+                .withActiveSection(currentSection.getPath()));
 
         return handleInitialRender(request, this::render);
     }

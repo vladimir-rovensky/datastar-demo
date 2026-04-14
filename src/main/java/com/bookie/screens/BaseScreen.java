@@ -23,6 +23,7 @@ public abstract class BaseScreen {
     private ClientChannel channel;
     private final String title;
     private long stateVersion = 0;
+    private long renderedStateVersion = 0;
 
     public BaseScreen(String title) {
         this.title = title;
@@ -68,6 +69,8 @@ public abstract class BaseScreen {
     }
 
     protected ServerResponse handleInitialRender(ServerRequest request, Supplier<EscapedHtml> render) {
+        this.renderedStateVersion = this.stateVersion;
+
         if (!cacheEnabled) {
             return ServerResponse.ok()
                     .contentType(MediaType.TEXT_HTML)
@@ -91,6 +94,10 @@ public abstract class BaseScreen {
 
     protected String getETag() {
         return routeInfo.get().tabId().localID() + "-" + this.stateVersion;
+    }
+
+    public boolean hasPendingUpdate() {
+        return stateVersion > renderedStateVersion;
     }
 
     public void triggerUpdate() {

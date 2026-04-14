@@ -1,9 +1,6 @@
 package com.bookie.domain.service;
 
-import com.bookie.domain.entity.Position;
-import com.bookie.domain.entity.PositionKey;
-import com.bookie.domain.entity.Trade;
-import com.bookie.domain.entity.TradeDirection;
+import com.bookie.domain.entity.*;
 import com.bookie.infra.EventBus;
 import com.bookie.infra.events.PositionChangedEvent;
 import com.bookie.infra.events.PositionsLoadedEvent;
@@ -29,12 +26,14 @@ public class PositionService {
     private final Map<PositionKey, Position> positions = new HashMap<>();
     private final List<Runnable> eventSubscriptions = new ArrayList<>();
 
-    public PositionService(EventBus eventBus) {
+    public PositionService(TradeRepository tradeRepository, EventBus eventBus) {
         this.eventBus = eventBus;
         eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
         eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
         eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
         eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+
+        processTrades(tradeRepository.getAllTrades());
     }
 
     @PreDestroy
@@ -51,8 +50,12 @@ public class PositionService {
     }
 
     private synchronized void onTradesLoaded(TradesLoadedEvent event) {
+        processTrades(event.getTrades());
+    }
+
+    private void processTrades(List<Trade> trades) {
         positions.clear();
-        for (Trade trade : event.getTrades()) {
+        for (Trade trade : trades) {
             addTradeToPosition(trade);
         }
         eventBus.publish(new PositionsLoadedEvent(List.copyOf(positions.values())));

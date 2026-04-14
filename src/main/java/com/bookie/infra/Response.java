@@ -71,6 +71,9 @@ public class Response {
             if (isReconnectAttempt) {
                 logger.info("Channel lost - broken connection - re-rendering page.");
                 screen.reRender();
+            } else if (screen.hasPendingUpdate()) {
+                logger.info("Update channel connected after state updates - re-rendering page.");
+                screen.reRender();
             }
         });
     }

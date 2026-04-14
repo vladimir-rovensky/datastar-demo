@@ -2,6 +2,7 @@ package com.bookie.screens.securities;
 
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondRepository;
+import com.bookie.infra.Util;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.BaseScreen;
@@ -18,6 +19,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.bookie.components.Link.link;
+import static com.bookie.components.Loader.loader;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -32,6 +34,8 @@ public class SecuritiesScreen extends BaseScreen {
     private Bond currentBond;
     private Bond editingBond;
     private BondSection currentSection;
+
+    private boolean isLoading = false;
 
     private boolean isEditing() { return editingBond != null; }
 
@@ -76,14 +80,21 @@ public class SecuritiesScreen extends BaseScreen {
         var section = request.pathVariable("section");
 
         if(!Objects.equals(cusip, getCurrentCusip())) {
-            currentBond = NO_CUSIP.equals(cusip) ? null : bondRepository.findBondByCusip(cusip);
+            currentBond = null;
             editingBond = null;
+            if (NO_CUSIP.equals(cusip)) {
+                isLoading = false;
+            } else {
+                isLoading = true;
+                var targetCusip = cusip;
+                Util.startAsync(() -> finishLoading(bondRepository.findBondByCusip(targetCusip)));
+            }
         }
 
         currentSection = BondSection.fromPath(section);
 
         updateRouteInfo(getRouteInfo()
-                .withActiveCusip(getCurrentCusip())
+                .withActiveCusip(cusip)
                 .withActiveSection(currentSection.getPath()));
 
         return handleInitialRender(request, this::render);
@@ -112,11 +123,13 @@ public class SecuritiesScreen extends BaseScreen {
                     ${styles}
                     ${secondaryToolbar}
                     ${body}
+                    ${loader}
                 </div>
                 """,
                 "styles", getStyles(),
                 "secondaryToolbar", secondaryToolbar,
-                "body", body);
+                "body", body,
+                "loader", loader(isLoading, "Loading Security..."));
     }
 
     private EscapedHtml renderSection() {
@@ -257,6 +270,15 @@ public class SecuritiesScreen extends BaseScreen {
         editingBond = null;
         triggerUpdate();
         return ServerResponse.ok().build();
+    }
+
+    private synchronized void finishLoading(Bond bond) {
+        if (bond != null && !bond.getCusip().equals(getRouteInfo().activeCusip())) {
+            return;
+        }
+        currentBond = bond;
+        isLoading = false;
+        triggerUpdate();
     }
 
     public synchronized ServerResponse handleInput(ServerRequest request) throws Exception {

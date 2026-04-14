@@ -1,5 +1,6 @@
 package com.bookie.domain.entity;
 
+import com.bookie.infra.Util;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -59,6 +60,7 @@ public class BondRepository {
     }
 
     public Bond findBondByCusip(String cusip) {
+        Util.sleep(1500);
         return bonds.stream().filter(b -> b.getCusip().equals(cusip)).findFirst().orElse(null);
     }
 

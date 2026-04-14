@@ -19,7 +19,6 @@ Solved
 
 TODO
 * Securities screen
-    - Loading (slow repo)
     - Bank Position / Outstanding Amount
 * Boost links / fix mixing state between tabs
 * commands / ordering

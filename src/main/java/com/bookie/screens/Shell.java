@@ -82,7 +82,7 @@ public class Shell {
                         history.replaceState(null, '', _tabUrl);
                     </script>
 
-                    <script type="module" src="/datastar1.0.0.RC8.js"></script>
+                    <script type="module" src="/datastar1.0.0.js"></script>
                     <script type="module" src="/number-input.js"></script>
                 </head>
 

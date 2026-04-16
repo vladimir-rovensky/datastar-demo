@@ -229,40 +229,6 @@ public class SecuritiesScreen extends BaseScreen {
                             column-gap: var(--sp-lg);
                         }
 
-                        .bond-general {
-                            padding: var(--sp-lg);
-                            align-content: start;
-                        }
-
-                        .bond-income {
-                            padding: var(--sp-lg);
-                            display: flex;
-                            flex-direction: column;
-                            gap: var(--sp-lg);
-                        }
-
-                        .bond-income .form-fields { align-content: start; }
-
-                        .cusip-display {
-                            padding: var(--sp-xs) var(--sp-sm);
-                            color: var(--clr-text-faint);
-                            border: 1px solid var(--clr-border-dim);
-                            background-color: var(--clr-bg);
-                        }
-
-                        .bond-redemption {
-                            padding: var(--sp-lg);
-                            display: flex;
-                            flex-direction: column;
-                            gap: var(--sp-lg);
-                        }
-
-                        .redemption-panel {
-                            display: flex;
-                            flex-direction: column;
-                            gap: var(--sp-sm);
-                        }
-
                     }
                 </style>
                 """);

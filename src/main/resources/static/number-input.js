@@ -18,7 +18,7 @@ sharedStylesheet.replaceSync(`
 `);
 
 class NumberInputElement extends HTMLElement {
-    static observedAttributes = ['name', 'disabled', 'format', 'decimals'];
+    static observedAttributes = ['name', 'disabled', 'format', 'decimals', 'value'];
 
     _numericValue = null;
     _previousValue = null;
@@ -100,6 +100,7 @@ class NumberInputElement extends HTMLElement {
         if (name === 'name') this._input.name = newValue ?? '';
         if (name === 'disabled') this._input.disabled = newValue !== null;
         if (name === 'format' || name === 'decimals') this._applyFormatted();
+        if (name === 'value') this.value = newValue;
     }
 
     _getDecimals() {

@@ -34,11 +34,30 @@ public class IncomeSection {
                     ${resetTable}
                     <style>
                     @scope {
+                        :scope {
+                            padding: var(--sp-lg);
+                            display: flex;
+                            flex-direction: column;
+                            gap: var(--sp-lg);
+                        }
+
+                        .form-fields { align-content: start; }
+
+                        .reset-schedule-panel {
+                            display: flex;
+                            flex-direction: column;
+                            gap: var(--sp-sm);
+                            min-height: 0;
+                            flex: 1;
+                        }
+
                         #reset-schedule-grid {
                             display: flex;
                             flex-direction: column;
                             max-width: 500px;
-                         }
+                            flex: 1;
+                            min-height: 0;
+                        }
                     }
                     </style>
                 </div>
@@ -61,8 +80,11 @@ public class IncomeSection {
         var resetSchedule = bond.getResetSchedule();
 
         return html("""
-                        <div id="reset-schedule-grid" class="fill-height" data-on:change="@post('/securities/resetSchedule', {filterSignals: {include: /resetSchedule.*/}})">
-                        ${grid}
+                        <div class="reset-schedule-panel fill-height">
+                            <h3>Reset Schedule</h3>
+                            <div id="reset-schedule-grid" data-on:change="@post('/securities/resetSchedule', {filterSignals: {include: /resetSchedule.*/}})">
+                            ${grid}
+                            </div>
                         </div>
                 """,
                 "grid",

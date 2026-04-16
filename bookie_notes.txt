@@ -18,8 +18,6 @@ Solved
     - styles - CSS scopes
 
 TODO
-* Securities screen
-    - Bank Position / Outstanding Amount
 * Boost links / fix mixing state between tabs
-* commands / ordering
 * Grid sort, filter, virtual scrolling
+* commands / ordering

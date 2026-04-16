@@ -19,28 +19,47 @@ public class GeneralSection {
         var disabled = !editing;
 
         return html("""
-                <div class="form-fields bond-general" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
-                    <label>CUSIP<span class="cusip-display">${cusip}</span></label>
-                    ${isin}
-                    ${ticker}
-                    ${issuerName}
-                    ${description}
-                    ${bondType}
-                    ${sector}
-                    ${currency}
-                    ${country}
-                    ${seniorityLevel}
-                    ${issueDate}
-                    ${datedDate}
-                    ${maturityDate}
-                    ${firstCouponDate}
-                    ${issueSize}
-                    ${faceValue}
-                    ${issuePrice}
-                    ${moodysRating}
-                    ${spRating}
-                    ${fitchRating}
-                    ${secured}
+                <div class="bond-general">
+                    <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
+                        <label>CUSIP<span class="cusip-display">${cusip}</span></label>
+                        ${isin}
+                        ${ticker}
+                        ${issuerName}
+                        ${description}
+                        ${bondType}
+                        ${sector}
+                        ${currency}
+                        ${country}
+                        ${seniorityLevel}
+                        ${issueDate}
+                        ${datedDate}
+                        ${maturityDate}
+                        ${firstCouponDate}
+                        ${faceValue}
+                        ${issuePrice}
+                        ${moodysRating}
+                        ${spRating}
+                        ${fitchRating}
+                        ${secured}
+                    </div>
+                    <style>
+                    @scope {
+                        :scope {
+                            padding: var(--sp-lg);
+                        }
+
+                        .form-fields {
+                            align-content: start;
+                        }
+
+                        .cusip-display {
+                            padding: var(--sp-xs) var(--sp-sm);
+                            color: var(--clr-text-faint);
+                            border: 1px solid var(--clr-border-dim);
+                            background-color: var(--clr-bg);
+                        }
+                    }
+                    </style>
                 </div>
                 """,
                 "cusip", bond.getCusip(),
@@ -66,8 +85,6 @@ public class GeneralSection {
                         .withError(bondRepository.validateMaturityDate(bond.getMaturityDate(), bond.getIssueDate())),
                 "firstCouponDate", formField("First Coupon Date").withInput(dateInput("firstCouponDate", bond.getFirstCouponDate()).withDisabled(disabled))
                         .withError(bondRepository.validateFirstCouponDate(bond.getFirstCouponDate(), bond.getIssueDate(), bond.getMaturityDate())),
-                "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withFormat("currency").withDisabled(disabled))
-                        .withError(bondRepository.validateIssueSize(bond.getIssueSize())),
                 "faceValue", formField("Face Value").withInput(numberInput("faceValue", bond.getFaceValue()).withFormat("currency").withDisabled(disabled))
                         .withError(bondRepository.validateFaceValue(bond.getFaceValue())),
                 "issuePrice", formField("Issue Price").withInput(numberInput("issuePrice", bond.getIssuePrice()).withDisabled(disabled))

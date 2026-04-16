@@ -5,6 +5,9 @@ import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondRepository;
 import com.bookie.infra.EscapedHtml;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.DateInput.dateInput;
 import static com.bookie.components.FormField.formField;
@@ -15,6 +18,8 @@ public class RedemptionSection {
 
     public static EscapedHtml render(Bond bond, boolean editing, BondRepository bondRepository) {
         var disabled = !editing;
+
+        var outstandingAmount = calculateOutstandingAmount(bond);
 
         var callSchedule = bond.getCallSchedule();
         var callTable = html("""
@@ -93,29 +98,73 @@ public class RedemptionSection {
 
         return html("""
                 <div class="bond-redemption fill-height">
-                    <div class="redemption-panel fill-height">
+                    <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
+                        ${issueSize}
+                        ${outstandingAmount}
+                    </div>
+                    <div class="redemption-panel">
+                        <h3>Sink Schedule</h3>
+                        ${sinkingFundTable}
+                    </div>
+                    <div class="redemption-panel">
                         <h3>Call Schedule</h3>
                         ${callTable}
                     </div>
-                    <div class="redemption-panel fill-height">
+                    <div class="redemption-panel">
                         <h3>Put Schedule</h3>
                         ${putTable}
-                    </div>
-                    <div class="redemption-panel fill-height">
-                        <h3>Sinking Fund</h3>
-                        ${sinkingFundTable}
                     </div>
 
                     <style>
                     @scope {
-                        .data-grid { max-width: 500px; }
+                        :scope {
+                            padding: var(--sp-lg);
+                            display: grid;
+                            grid-template-columns: 1fr 1fr 1fr;
+                            grid-template-rows: auto 1fr;
+                            gap: var(--sp-lg);
+                        }
+
+                        .form-fields {
+                            grid-column: 1;
+                            grid-row: 1;
+                            width: auto;
+                        }
+
+                        .redemption-panel {
+                            grid-row: 2;
+                            display: flex;
+                            flex-direction: column;
+                            gap: var(--sp-sm);
+                        }
+
                         .data-grid-cell input { width: 100%; }
                     }
                     </style>
                 </div>
                 """,
+                "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withFormat("currency").withDisabled(disabled))
+                        .withError(bondRepository.validateIssueSize(bond.getIssueSize())),
+                "outstandingAmount", formField("Outstanding Amount").withInput(numberInput("outstandingAmount", outstandingAmount).withFormat("currency").withDisabled(true)),
                 "callTable", callTable,
                 "putTable", putTable,
                 "sinkingFundTable", sinkingFundTable);
+    }
+
+    private static BigDecimal calculateOutstandingAmount(Bond bond) {
+        if (bond.getIssueSize() == null) {
+            return null;
+        }
+        var today = LocalDate.now();
+        BigDecimal sunkAmount = BigDecimal.ZERO;
+        for (var entry : bond.getSinkingFundSchedule()) {
+            if (entry.getSinkDate() == null || entry.getAmount() == null) {
+                return null;
+            }
+            if (!entry.getSinkDate().isAfter(today)) {
+                sunkAmount = sunkAmount.add(entry.getAmount());
+            }
+        }
+        return bond.getIssueSize().subtract(sunkAmount);
     }
 }

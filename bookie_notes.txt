@@ -20,7 +20,6 @@ Solved
 TODO
 * Securities screen
     - Bank Position / Outstanding Amount
-    - Description columns in Trades/Positions
 * Boost links / fix mixing state between tabs
 * commands / ordering
 * Grid sort, filter, virtual scrolling

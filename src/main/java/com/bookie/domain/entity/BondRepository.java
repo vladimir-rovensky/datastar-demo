@@ -1,12 +1,17 @@
 package com.bookie.domain.entity;
 
+import com.bookie.infra.EventBus;
 import com.bookie.infra.Util;
+import com.bookie.infra.events.BondSavedEvent;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,8 +24,10 @@ public class BondRepository {
 
     private final List<Bond> bonds;
     private final AtomicLong scheduleIdCounter;
+    private final EventBus eventBus;
 
-    public BondRepository() {
+    public BondRepository(EventBus eventBus) {
+        this.eventBus = eventBus;
         bonds = new ArrayList<>(generateData());
         long maximumUsedId = bonds.stream()
                 .flatMap(bond -> Stream.of(
@@ -53,6 +60,7 @@ public class BondRepository {
 
     public void saveBond(Bond bond) {
         bonds.replaceAll(existing -> Objects.equals(existing.getCusip(), bond.getCusip()) ? bond : existing);
+        eventBus.publish(new BondSavedEvent(bond));
     }
 
     public List<Bond> getAllBonds() {
@@ -62,6 +70,16 @@ public class BondRepository {
     public Bond findBondByCusip(String cusip) {
         Util.sleep(1500);
         return bonds.stream().filter(b -> b.getCusip().equals(cusip)).findFirst().orElse(null);
+    }
+
+    public Map<String, Bond> findBondsByCusips(Collection<String> cusips) {
+        Util.sleep(1500);
+        var result = new HashMap<String, Bond>();
+        var cusipSet = Set.copyOf(cusips);
+        bonds.stream()
+                .filter(b -> cusipSet.contains(b.getCusip()))
+                .forEach(b -> result.put(b.getCusip(), b));
+        return result;
     }
 
     public boolean isValidCusip(String cusip) {

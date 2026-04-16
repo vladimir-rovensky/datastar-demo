@@ -1,9 +1,12 @@
 package com.bookie.screens;
 
 import com.bookie.components.DataGrid;
+import com.bookie.domain.entity.Bond;
+import com.bookie.domain.entity.BondRepository;
 import com.bookie.domain.entity.Position;
 import com.bookie.domain.service.PositionService;
 import com.bookie.infra.*;
+import com.bookie.infra.events.BondSavedEvent;
 import com.bookie.infra.events.PositionChangedEvent;
 import com.bookie.infra.events.PositionsLoadedEvent;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +17,11 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.Link.link;
@@ -26,18 +33,24 @@ import static com.bookie.infra.TemplatingEngine.html;
 public class PositionsScreen extends BaseScreen {
 
     private List<Position> positions;
+    private final Map<String, Bond> bondByCusip = new HashMap<>();
+    private final BondRepository bondRepository;
 
     private final List<Runnable> eventSubscriptions = new ArrayList<>();
 
     public static final String RoutePrefix = "/positions";
 
-    public PositionsScreen(PositionService positionService, EventBus eventBus) {
+    public PositionsScreen(PositionService positionService, BondRepository bondRepository, EventBus eventBus) {
         super("Positions");
+
+        this.bondRepository = bondRepository;
 
         this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(PositionChangedEvent.class, this::onPositionChanged));
+        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
-        this.positions = positionService.getPositions();
+        this.positions = new ArrayList<>(positionService.getPositions());
+        loadBondsFor(this.positions);
     }
 
     @Override
@@ -69,6 +82,7 @@ public class PositionsScreen extends BaseScreen {
         var grid = DataGrid.withColumns(
                         column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID()).render()),
                         column("Book", Position::getBook),
+                        column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Current Position", p -> usd(p.getCurrentPosition())),
                         column("Settled Position", p -> usd(p.getSettledPosition())),
                         column("Last Activity", Position::getLastActivity))
@@ -87,6 +101,7 @@ public class PositionsScreen extends BaseScreen {
     private synchronized void onPositionsLoaded(PositionsLoadedEvent event) {
         this.positions = new ArrayList<>(event.positions());
         this.positions.sort(Comparator.comparing(Position::getLastActivity).reversed());
+        loadBondsFor(this.positions);
         this.triggerUpdate();
     }
 
@@ -95,6 +110,35 @@ public class PositionsScreen extends BaseScreen {
         this.positions.removeIf(p -> p.getKey().equals(changedPosition.getKey()));
         this.positions.add(changedPosition);
         this.positions.sort(Comparator.comparing(Position::getLastActivity).reversed());
+        loadBondsFor(List.of(changedPosition));
         this.triggerUpdate();
+    }
+
+    private synchronized void onBondSaved(BondSavedEvent event) {
+        var bond = event.getBond();
+        if (bondByCusip.containsKey(bond.getCusip())) {
+            bondByCusip.put(bond.getCusip(), bond);
+            triggerUpdate();
+        }
+    }
+
+    private Optional<Bond> getBond(String cusip) {
+        return Optional.ofNullable(bondByCusip.get(cusip));
+    }
+
+    private void loadBondsFor(List<Position> positionList) {
+        var missingCusips = new HashSet<String>();
+        positionList.forEach(p -> missingCusips.add(p.getCusip()));
+        missingCusips.removeAll(bondByCusip.keySet());
+        if (missingCusips.isEmpty()) {
+            return;
+        }
+        Util.startAsync(() -> {
+            var loaded = bondRepository.findBondsByCusips(missingCusips);
+            synchronized (this) {
+                bondByCusip.putAll(loaded);
+                triggerUpdate();
+            }
+        });
     }
 }

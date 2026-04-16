@@ -431,6 +431,18 @@ input.loading { opacity: 0; }
     &:hover { background-color: var(--clr-danger-hi); }
 }
 
+.notification {
+    padding: var(--sp-xs) var(--sp-md);
+    text-align: center;
+    font-size: var(--fs-sm);
+}
+
+.notification--warning {
+    background-color: var(--clr-warning);
+    border-bottom: 1px solid var(--clr-warning-border);
+    color: var(--clr-text-bright);
+}
+
 .centered-message {
     padding: var(--sp-xl);
     color: var(--clr-text-muted);

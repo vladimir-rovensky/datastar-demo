@@ -23,6 +23,10 @@ public class Link implements Renderable {
         return new Link(url, label, tabId);
     }
 
+    public static Link link(String url, String label) {
+        return new Link(url, label, null);
+    }
+
     public Link withActive(boolean active) {
         this.active = active;
         return this;
@@ -41,6 +45,9 @@ public class Link implements Renderable {
     }
 
     public @NotNull String getHref() {
-        return "/" + url + "?tabID=" + tabId;
+        String baseURL = "/" + url;
+        return tabId != null
+                ? baseURL + "?tabID=" + tabId
+                : baseURL;
     }
 }

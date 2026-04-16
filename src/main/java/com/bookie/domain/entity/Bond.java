@@ -39,6 +39,8 @@ public class Bond implements Cloneable {
     private List<PutEntry> putSchedule = new ArrayList<>();
     private List<SinkingFundEntry> sinkingFundSchedule = new ArrayList<>();
 
+    private int version = 0;
+
     private String moodysRating;
     private String spRating;
     private String fitchRating;
@@ -160,6 +162,9 @@ public class Bond implements Cloneable {
         public BigDecimal getAmount() { return amount; }
         public void setAmount(BigDecimal amount) { this.amount = amount; }
     }
+
+    public int getVersion() { return version; }
+    public void setVersion(int version) { this.version = version; }
 
     public String getCusip() { return cusip; }
     public void setCusip(String cusip) { this.cusip = cusip; }

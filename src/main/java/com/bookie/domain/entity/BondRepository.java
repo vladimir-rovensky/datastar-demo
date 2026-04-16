@@ -59,6 +59,7 @@ public class BondRepository {
     }
 
     public void saveBond(Bond bond) {
+        bond.setVersion(bond.getVersion() + 1);
         bonds.replaceAll(existing -> Objects.equals(existing.getCusip(), bond.getCusip()) ? bond : existing);
         eventBus.publish(new BondSavedEvent(bond));
     }

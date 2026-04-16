@@ -2,9 +2,11 @@ package com.bookie.screens.securities;
 
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondRepository;
+import com.bookie.infra.EventBus;
 import com.bookie.infra.Util;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.infra.events.BondSavedEvent;
 import com.bookie.screens.BaseScreen;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ParameterizedTypeReference;
@@ -14,12 +16,16 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.bookie.components.Link.link;
 import static com.bookie.components.Loader.loader;
+import static com.bookie.components.Notification.notification;
+import static com.bookie.components.Notification.warning;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -30,21 +36,29 @@ public class SecuritiesScreen extends BaseScreen {
     public static final String NO_CUSIP = "nocusip";
 
     private final BondRepository bondRepository;
+    private final List<Runnable> eventSubscriptions = new ArrayList<>();
 
     private Bond currentBond;
     private Bond editingBond;
     private BondSection currentSection;
 
     private boolean isLoading = false;
+    private boolean isModifiedBySomeoneElse = false;
 
     private boolean isEditing() { return editingBond != null; }
 
     private Bond getActiveBond() { return isEditing() ? editingBond : currentBond; }
 
-    public SecuritiesScreen(BondRepository bondRepository) {
+    public SecuritiesScreen(BondRepository bondRepository, EventBus eventBus) {
         super("Securities");
         this.bondRepository = bondRepository;
         this.currentSection = BondSection.GENERAL;
+        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
+    }
+
+    @Override
+    public void dispose() {
+        this.eventSubscriptions.reversed().forEach(Runnable::run);
     }
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
@@ -118,16 +132,21 @@ public class SecuritiesScreen extends BaseScreen {
                         """)
                 : renderSection();
 
+        var refreshLink = link("securities/" + getCurrentCusip() + "/" + currentSection.getPath(), "refresh");
+        var topBar = isModifiedBySomeoneElse
+                ? notification(html("This bond was modified by someone else. Please ${refreshLink} the page.", "refreshLink", refreshLink)).withStyle(warning).render()
+                : secondaryToolbar;
+
         return html("""
                 <div id="securities-screen" class="fill-height">
                     ${styles}
-                    ${secondaryToolbar}
+                    ${topBar}
                     ${body}
                     ${loader}
                 </div>
                 """,
                 "styles", getStyles(),
-                "secondaryToolbar", secondaryToolbar,
+                "topBar", topBar,
                 "body", body,
                 "loader", loader(isLoading, "Loading Security..."));
     }
@@ -278,7 +297,20 @@ public class SecuritiesScreen extends BaseScreen {
         }
         currentBond = bond;
         isLoading = false;
+        isModifiedBySomeoneElse = false;
         triggerUpdate();
+    }
+
+    private synchronized void onBondSaved(BondSavedEvent event) {
+        if (currentBond == null) {
+            return;
+        }
+
+        if (Objects.equals(event.getBond().getCusip(), currentBond.getCusip())
+                && event.getBond().getVersion() != currentBond.getVersion()) {
+            isModifiedBySomeoneElse = true;
+            triggerUpdate();
+        }
     }
 
     public synchronized ServerResponse handleInput(ServerRequest request) throws Exception {

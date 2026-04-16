@@ -20,4 +20,5 @@ Solved
 TODO
 * Boost links / fix mixing state between tabs
 * Grid sort, filter, virtual scrolling
+* tests
 * commands / ordering

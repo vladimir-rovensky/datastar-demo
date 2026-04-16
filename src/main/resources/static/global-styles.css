@@ -63,7 +63,8 @@ body {
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-width: 800px;
+    overflow: auto;
 }
 
 h1 { font-size: var(--fs-xl);  font-weight: var(--fw-semibold); color: var(--clr-text-bright); margin-bottom: var(--sp-lg); }

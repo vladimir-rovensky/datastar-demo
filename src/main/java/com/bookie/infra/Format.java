@@ -8,4 +8,12 @@ public class Format {
         return "$" + String.format("%,.2f", amount);
     }
 
+    public static String ratings(String moodys, String sp, String fitch) {
+        return blankToDash(moodys) + " / " + blankToDash(sp) + " / " + blankToDash(fitch);
+    }
+
+    private static String blankToDash(String rating) {
+        return rating == null || rating.isBlank() ? "—" : rating;
+    }
+
 }

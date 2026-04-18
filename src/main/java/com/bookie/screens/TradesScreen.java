@@ -1,5 +1,6 @@
 package com.bookie.screens;
 
+import com.bookie.components.CommonColumns;
 import com.bookie.components.DataGrid;
 import com.bookie.components.Popup;
 import com.bookie.domain.entity.Bond;
@@ -13,6 +14,7 @@ import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import com.bookie.infra.events.TradesLoadedEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -41,6 +43,7 @@ public class TradesScreen extends BaseScreen {
     private List<Trade> trades;
     private final Map<String, Bond> bondByCusip = new HashMap<>();
     private final List<Runnable> eventSubscriptions = new ArrayList<>();
+    private final DataGrid<Trade> tradeGrid;
 
     public static final String RoutePrefix = "/trades";
 
@@ -54,6 +57,26 @@ public class TradesScreen extends BaseScreen {
 
         this.trades = new ArrayList<>(tradeRepository.getAllTrades());
         loadBondsFor(this.trades);
+
+        this.tradeGrid = DataGrid.withColumns(
+                        column("ID", Trade::getId),
+                        column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID()).render()),
+                        column("Description", t -> getBond(t.getCusip()).map(Bond::getDescription).orElse("")),
+                        column("Book", Trade::getBook),
+                        column("Type", Trade::getDirection),
+                        column("Counterparty", Trade::getCounterparty),
+                        column("Quantity", t -> usd(t.getQuantity())),
+                        column("Accrued Interest", t -> usd(t.getAccruedInterest())),
+                        column("Trade Date", Trade::getTradeDate),
+                        column("Settle Date", Trade::getSettleDate))
+                .columns(CommonColumns.bondColumns(t -> getBond(t.getCusip())))
+                .withRowID(r -> "trade-" + r.getId())
+                .onRowDoubleClick(t -> html("@post('/trades/modify/${id}')", "id", t.getId()))
+                .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
+                .withDeleteRowTooltip("Cancel Trade")
+                .withStripedRows()
+                .withColumnPicker("/trades/grid")
+                .onReRenderTriggered(this::triggerUpdate);
 
         this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
@@ -83,6 +106,7 @@ public class TradesScreen extends BaseScreen {
                 .POST("delete/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .deleteTradeById(request))
+                .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, TradesScreen.class).tradeGrid))
                 .build();
     }
 
@@ -123,26 +147,13 @@ public class TradesScreen extends BaseScreen {
         return Popup.open(tradeTicketPopup.render(trade));
     }
 
+    public DataGrid<Trade> getTradeGrid() {
+        return this.tradeGrid;
+    }
+
     @Override
     protected synchronized EscapedHtml getContent() {
-        var grid = DataGrid.withColumns(
-                        column("ID", Trade::getId),
-                        column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID()).render()),
-                        column("Description", t -> getBond(t.getCusip()).map(Bond::getDescription).orElse("")),
-                        column("Book", Trade::getBook),
-                        column("Type", Trade::getDirection),
-                        column("Counterparty", Trade::getCounterparty),
-                        column("Quantity", t -> usd(t.getQuantity())),
-                        column("Accrued Interest", t -> usd(t.getAccruedInterest())),
-                        column("Trade Date", Trade::getTradeDate),
-                        column("Settle Date", Trade::getSettleDate))
-                .withRowID(r -> "trade-" + r.getId())
-                .onRowDoubleClick(t -> html("@post('/trades/modify/${id}')", "id", t.getId()))
-                .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
-                .withDeleteRowTooltip("Cancel Trade")
-                .withRows(this.trades.reversed())
-                .withStripedRows()
-                .render();
+        var grid = this.tradeGrid.withRows(this.trades.reversed()).render();
 
         return html("""
                     <div id="trades-screen" class="trades-screen fill-height">

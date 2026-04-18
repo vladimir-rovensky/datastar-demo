@@ -203,13 +203,40 @@ input.loading { opacity: 0; }
     border: 1px solid var(--clr-border-dim);
 }
 
-.data-grid-header {
-    display: grid;
-    grid-template-columns: var(--cols);
+
+.data-grid-header-wrapper {
     position: sticky;
     top: 0;
     z-index: 1;
     min-width: fit-content;
+
+    .column-picker-btn {
+        display: none;
+        position: absolute;
+        left: var(--sp-md);
+        top: 0;
+        bottom: 0;
+        margin-block: auto;
+        height: fit-content;
+        &:hover { color: var(--clr-accent); }
+    }
+
+    &:hover .column-picker-btn {
+        display: flex;
+    }
+}
+
+.column-picker-content {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    select { flex: 1; min-height: 0; }
+}
+
+.data-grid-header {
+    display: grid;
+    grid-template-columns: var(--cols);
+    min-height: var(--row-height);
     background-color: var(--clr-surface);
     color: var(--clr-text-muted);
     text-transform: uppercase;

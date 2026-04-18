@@ -3,10 +3,16 @@ package com.bookie.components;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Util;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
+import org.springframework.web.servlet.function.ServerResponse;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -28,14 +34,29 @@ public class DataGrid<TRow> {
     private String addRowTooltip = "Add Row";
     private String noRowsMessage = "Nothing here...";
     private boolean stripedRows = false;
+    private String columnPickerBasePath;
+    private Runnable reRenderCallback = () -> {};
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
     }
 
+    public List<DataGridColumn<TRow>> getColumns() {
+        return this.columns;
+    }
+
+    private List<DataGridColumn<TRow>> getVisibleColumns() {
+        return columns.stream().filter(c -> c.visible).toList();
+    }
+
     @SafeVarargs
     public static <T> DataGrid<T> withColumns(DataGridColumn<T>... columns) {
-        return new DataGrid<>(List.of(columns));
+        return new DataGrid<>(new ArrayList<>(List.of(columns)));
+    }
+
+    public DataGrid<TRow> columns(List<DataGridColumn<TRow>> additionalColumns) {
+        this.columns.addAll(additionalColumns);
+        return this;
     }
 
     public DataGrid<TRow> onRowDoubleClick(Function<TRow, EscapedHtml> action) {
@@ -93,9 +114,57 @@ public class DataGrid<TRow> {
         return this;
     }
 
+    public DataGrid<TRow> withColumnPicker(String basePath) {
+        this.columnPickerBasePath = basePath;
+        return this;
+    }
+
+    public DataGrid<TRow> onReRenderTriggered(Runnable callback) {
+        this.reRenderCallback = callback;
+        return this;
+    }
+
+    public ServerResponse openColumnPicker() {
+        var allHeaders = this.columns.stream().map(c -> c.header).toList();
+        var visibleHeaders = getVisibleColumns().stream().map(c -> c.header).toList();
+        var pickerPath = columnPickerBasePath + "/column-picker";
+        var content = Popup.popup()
+                .withTitle("Columns")
+                .withContent(html("""
+                        <div class="column-picker-content">${multiselect}</div>
+                        """, "multiselect", MultiselectInput.multiselectInput("visibleColumns", allHeaders, visibleHeaders).render()))
+                .withActions(html("""
+                        <button class="btn-primary" data-on:click="@post('${path}')">OK</button>
+                        <button data-on:click="@delete('${path}')">Cancel</button>
+                        """, "path", pickerPath))
+                .render();
+        return Popup.open(content);
+    }
+
+    @SuppressWarnings("unchecked")
+    public ServerResponse applyColumnPicker(ServerRequest request) throws Exception {
+        var body = request.body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        var visibleColumns = (List<String>) body.getOrDefault("visibleColumns", List.of());
+        this.columns.forEach(c -> c.withVisible(visibleColumns.contains(c.header)));
+        reRenderCallback.run();
+        return Popup.close();
+    }
+
+    public ServerResponse cancelColumnPicker() {
+        return Popup.close();
+    }
+
+    public static <T> void setupRoutes(RouterFunctions.Builder builder, Function<ServerRequest, DataGrid<T>> getGrid) {
+        builder
+                .GET("column-picker", request -> getGrid.apply(request).openColumnPicker())
+                .POST("column-picker", request -> getGrid.apply(request).applyColumnPicker(request))
+                .DELETE("column-picker", request -> getGrid.apply(request).cancelColumnPicker());
+    }
+
     public EscapedHtml render() {
+        var visibleColumns = getVisibleColumns();
         var actionHeaderCell = getActionHeaderCell();
-        var headerCells = EscapedHtml.concat(columns, c -> html("""
+        var headerCells = EscapedHtml.concat(visibleColumns, c -> html("""
                 <div class="data-grid-th">${h}</div>""", "h", c.header));
         var bodyRows = rows.isEmpty()
                 ? html("""
@@ -105,10 +174,19 @@ public class DataGrid<TRow> {
 
         var stripedClass = stripedRows ? " striped-rows" : "";
 
+        var pickerButton = columnPickerBasePath != null
+                ? html("""
+                        <button class="column-picker-btn btn-no-bg" data-on:click="@get('${path}/column-picker')" data-tooltip="Pick columns">≡</button>""",
+                        "path", columnPickerBasePath)
+                : EscapedHtml.blank();
+
         return html("""
                 <!--suppress CssInvalidFunction -->
                 <div class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
-                    <div class="data-grid-header">${actionHeader}${headers}</div>
+                    <div class="data-grid-header-wrapper">
+                        <div class="data-grid-header">${actionHeader}${headers}</div>
+                        ${pickerButton}
+                    </div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
                 """,
@@ -116,17 +194,18 @@ public class DataGrid<TRow> {
                 "columnTemplate", columnTemplate,
                 "actionHeader", actionHeaderCell,
                 "headers", headerCells,
+                "pickerButton", pickerButton,
                 "rows", bodyRows);
     }
 
     private @NotNull String getColumnStyleTemplate() {
         return hasActionColumn()
-                ? "40px repeat(" + columns.size() + ", minmax(150px, 1fr))"
-                : "repeat(" + columns.size() + ", minmax(150px, 1fr))";
+                ? "40px repeat(" + getVisibleColumns().size() + ", minmax(150px, 1fr))"
+                : "repeat(" + getVisibleColumns().size() + ", minmax(150px, 1fr))";
     }
 
     private boolean hasActionColumn() {
-        return addRowAction != null || getDeleteAction != null;
+        return addRowAction != null || getDeleteAction != null || columnPickerBasePath != null;
     }
 
     private EscapedHtml getActionHeaderCell() {
@@ -146,10 +225,15 @@ public class DataGrid<TRow> {
     }
 
     private EscapedHtml renderRow(TRow row) {
-        var deleteCell = getDeleteAction != null
-                ? renderDeleteCell(row)
+        var actionCell = hasActionColumn()
+                ? (getDeleteAction != null
+                   ? renderDeleteCell(row)
+                    : html("""
+                        <div id="${cellID}" class="data-grid-cell"></div>""",
+                        "cellID", getRowID.apply(row) + "-actionCell"))
                 : EscapedHtml.blank();
-        var cells = EscapedHtml.concat(columns, c -> renderCell(row, c));
+
+        var cells = EscapedHtml.concat(getVisibleColumns(), c -> renderCell(row, c));
 
         var dblClick = onRowDoubleClick != null
                 ? " data-on:dblclick=" + onRowDoubleClick.apply(row)
@@ -161,12 +245,12 @@ public class DataGrid<TRow> {
         var idSignalAttr = getIdSignalAttr(row, id);
 
         return html("""
-                <div class="data-grid-row" id="${rowID}" ${dblClick} ${rowIDSignal} ${attrs}>${deleteCell}${cells}</div>""",
+                <div class="data-grid-row" id="${rowID}" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
                 "rowID", id,
                 "dblClick", dblClick,
                 "rowIDSignal", idSignalAttr,
                 "attrs", attrs,
-                "deleteCell", deleteCell,
+                "actionCell", actionCell,
                 "cells", cells);
     }
 

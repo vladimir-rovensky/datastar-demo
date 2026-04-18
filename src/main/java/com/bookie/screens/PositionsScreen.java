@@ -1,5 +1,6 @@
 package com.bookie.screens;
 
+import com.bookie.components.CommonColumns;
 import com.bookie.components.DataGrid;
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondRepository;
@@ -10,6 +11,7 @@ import com.bookie.infra.events.BondSavedEvent;
 import com.bookie.infra.events.PositionChangedEvent;
 import com.bookie.infra.events.PositionsLoadedEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -37,6 +39,7 @@ public class PositionsScreen extends BaseScreen {
     private final BondRepository bondRepository;
 
     private final List<Runnable> eventSubscriptions = new ArrayList<>();
+    private final DataGrid<Position> positionGrid;
 
     public static final String RoutePrefix = "/positions";
 
@@ -45,12 +48,29 @@ public class PositionsScreen extends BaseScreen {
 
         this.bondRepository = bondRepository;
 
+        this.positionGrid = DataGrid.withColumns(
+                        column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID()).render()),
+                        column("Book", Position::getBook),
+                        column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
+                        column("Current Position", p -> usd(p.getCurrentPosition())),
+                        column("Settled Position", p -> usd(p.getSettledPosition())),
+                        column("Last Activity", Position::getLastActivity))
+                .columns(CommonColumns.bondColumns(p -> getBond(p.getCusip())))
+                .withRowID(p -> p.getCusip() + "-" + p.getBook())
+                .withStripedRows()
+                .withColumnPicker("/positions/grid")
+                .onReRenderTriggered(this::triggerUpdate);
+
         this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(PositionChangedEvent.class, this::onPositionChanged));
         this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
         this.positions = new ArrayList<>(positionService.getPositions());
         loadBondsFor(this.positions);
+    }
+
+    public DataGrid<Position> getPositionGrid() {
+        return this.positionGrid;
     }
 
     @Override
@@ -65,6 +85,7 @@ public class PositionsScreen extends BaseScreen {
                         .getScreen(PositionsScreen.class)
                         .initialRender(request))
                 .POST("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
+                .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, PositionsScreen.class).positionGrid))
                 .build();
     }
 
@@ -79,17 +100,7 @@ public class PositionsScreen extends BaseScreen {
 
     @Override
     protected synchronized EscapedHtml getContent() {
-        var grid = DataGrid.withColumns(
-                        column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID()).render()),
-                        column("Book", Position::getBook),
-                        column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
-                        column("Current Position", p -> usd(p.getCurrentPosition())),
-                        column("Settled Position", p -> usd(p.getSettledPosition())),
-                        column("Last Activity", Position::getLastActivity))
-                .withRows(this.positions)
-                .withRowID(p -> p.getCusip() + "-" + p.getBook())
-                .withStripedRows()
-                .render();
+        var grid = this.positionGrid.withRows(this.positions).render();
 
         return html("""
                     <div id="positions-screen" class="positions-screen fill-height">

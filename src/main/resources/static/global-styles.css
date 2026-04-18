@@ -207,17 +207,13 @@ input.loading { opacity: 0; }
 .data-grid-header-wrapper {
     position: sticky;
     top: 0;
-    z-index: 1;
-    min-width: fit-content;
+    z-index: 2;
 
     .column-picker-btn {
         display: none;
         position: absolute;
-        left: var(--sp-md);
-        top: 0;
-        bottom: 0;
-        margin-block: auto;
-        height: fit-content;
+        left: var(--sp-xs);
+        padding-left: 0 !important;
         &:hover { color: var(--clr-accent); }
     }
 
@@ -247,6 +243,7 @@ input.loading { opacity: 0; }
 .data-grid-th {
     padding: var(--sp-sm) var(--sp-md);
     border-bottom: 1px solid var(--clr-border-dim);
+    border-right: 1px solid var(--clr-border-dim);
     font-weight: var(--fw-semibold);
     overflow: hidden;
     white-space: nowrap;
@@ -255,6 +252,13 @@ input.loading { opacity: 0; }
 
 .data-grid-action-th {
     padding: 0;
+    position: sticky;
+    left: 0;
+    top: 0;
+    width: 40px;
+    background-color: var(--clr-surface);
+    border-right: 1px solid var(--clr-border-dim);
+    z-index: 1;
 
     button.btn-no-bg {
         width: 100%;
@@ -266,6 +270,19 @@ input.loading { opacity: 0; }
         padding-left: 10px;
     }
 }
+
+.data-grid-action-cell {
+    position: sticky;
+    left: 0;
+    width: 40px;
+    background-color: var(--clr-bg);
+    border-right: 1px solid var(--clr-border-dim);
+    z-index: 1;
+}
+
+.data-grid-row:hover .data-grid-action-cell { background-color: var(--clr-surface-hi); }
+.striped-rows .data-grid-row:nth-child(even) .data-grid-action-cell { background-color: var(--clr-bg-alt); }
+.striped-rows .data-grid-row:nth-child(even):hover .data-grid-action-cell { background-color: var(--clr-surface-hi); }
 
 .data-grid-body {
     flex: 1;
@@ -286,11 +303,13 @@ input.loading { opacity: 0; }
     align-items: center;
     padding: 0 var(--sp-md);
     border-bottom: 1px solid var(--clr-surface-hi);
+    border-right: 1px solid var(--clr-surface-hi);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: clip;
     --number-input-bg: transparent;
-    input, select { width: 100%; height: 100%; background-color: transparent; }
+    --input-border-color: transparent;
+    input, select { width: 100%; height: 100%; background-color: transparent; border-color: transparent; }
 }
 
 /* Toolbar */

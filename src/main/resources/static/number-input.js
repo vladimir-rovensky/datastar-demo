@@ -3,6 +3,7 @@ const sharedStylesheet = new CSSStyleSheet();
 sharedStylesheet.replaceSync(`
     :host { display: contents; }
     :host(.loading) input { opacity: 0; }
+
     input {
         background-color: var(--number-input-bg, var(--clr-surface));
         color: var(--clr-text);
@@ -14,8 +15,14 @@ sharedStylesheet.replaceSync(`
         height: 100%;
         box-sizing: border-box;
     }
-    input:focus    { border-color: var(--clr-accent); }
-    input:disabled { background-color: var(--number-input-bg, var(--clr-bg)); color: var(--clr-text-faint); border-color: var(--clr-border-dim); }
+
+    input:focus { border-color: var(--clr-accent); }
+    
+    input:disabled { 
+        background-color: var(--number-input-bg, var(--clr-bg));
+        color: var(--clr-text-faint);
+        border-color: var(--input-border-color, var(--clr-border-dim));
+    }
 `);
 
 class NumberInputElement extends HTMLElement {

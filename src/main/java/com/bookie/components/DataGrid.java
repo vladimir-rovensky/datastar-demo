@@ -174,18 +174,11 @@ public class DataGrid<TRow> {
 
         var stripedClass = stripedRows ? " striped-rows" : "";
 
-        var pickerButton = columnPickerBasePath != null
-                ? html("""
-                        <button class="column-picker-btn btn-no-bg" data-on:click="@get('${path}/column-picker')" data-tooltip="Pick columns">≡</button>""",
-                        "path", columnPickerBasePath)
-                : EscapedHtml.blank();
-
         return html("""
                 <!--suppress CssInvalidFunction -->
                 <div class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
                     <div class="data-grid-header-wrapper">
                         <div class="data-grid-header">${actionHeader}${headers}</div>
-                        ${pickerButton}
                     </div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
@@ -194,7 +187,6 @@ public class DataGrid<TRow> {
                 "columnTemplate", columnTemplate,
                 "actionHeader", actionHeaderCell,
                 "headers", headerCells,
-                "pickerButton", pickerButton,
                 "rows", bodyRows);
     }
 
@@ -215,13 +207,23 @@ public class DataGrid<TRow> {
 
         if (addRowAction != null) {
             return html("""
-                    <div class="data-grid-th data-grid-action-th"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>+</button></div>""",
+                    <div class="data-grid-th data-grid-action-th">
+                        <button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>+</button>
+                    </div>""",
                     "action", addRowAction,
                     "tooltip", addRowTooltip);
         }
 
+        if (columnPickerBasePath != null) {
+            return html("""
+                    <div class="data-grid-th data-grid-action-th">
+                        <button class="column-picker-btn btn-no-bg" data-on:click="@get('${path}/column-picker')" data-tooltip="Pick columns">≡</button>
+                    </div>""",
+                    "path", columnPickerBasePath);
+        }
+
         return html("""
-                <div class="data-grid-th"></div>""");
+                <div class="data-grid-th data-grid-action-th"></div>""");
     }
 
     private EscapedHtml renderRow(TRow row) {
@@ -229,7 +231,7 @@ public class DataGrid<TRow> {
                 ? (getDeleteAction != null
                    ? renderDeleteCell(row)
                     : html("""
-                        <div id="${cellID}" class="data-grid-cell"></div>""",
+                        <div id="${cellID}" class="data-grid-cell data-grid-action-cell"></div>""",
                         "cellID", getRowID.apply(row) + "-actionCell"))
                 : EscapedHtml.blank();
 
@@ -256,7 +258,7 @@ public class DataGrid<TRow> {
 
     private EscapedHtml renderDeleteCell(TRow row) {
         return html("""
-                <div id="${cellID}" class="data-grid-cell"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>✕</button></div>""",
+                <div id="${cellID}" class="data-grid-cell data-grid-action-cell"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>✕</button></div>""",
                 "cellID", getRowID.apply(row) + "-deleteRowBtn",
                 "action", getDeleteAction.apply(row),
                 "tooltip", deleteRowTooltip);

@@ -157,28 +157,10 @@ public class TradesScreen extends BaseScreen {
 
         return html("""
                     <div id="trades-screen" class="trades-screen fill-height">
-                    ${styles}
                     ${grid}
                     </div>
                 """,
-                "styles", getStyles(),
                 "grid", grid);
-    }
-
-    private EscapedHtml getStyles() {
-        return html("""
-                    <style>
-                        @scope {
-                            .data-grid-cell:first-child,
-                            .data-grid-th:first-child {
-                                width: 1px;
-                                white-space: nowrap;
-                                padding-right: 30px;
-                                border-right: 1px solid #1e3d5c;
-                            }
-                        }
-                    </style>
-                """);
     }
 
     private synchronized void onTradesLoaded(TradesLoadedEvent event) {

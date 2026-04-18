@@ -7,7 +7,7 @@ import java.util.Date;
 public class Format {
 
     public static String dateTime(Date date) {
-        return new SimpleDateFormat("MM/dd/yyyy hh:mm:ss").format(date);
+        return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(date);
     }
 
     public static String usd(BigDecimal amount) {

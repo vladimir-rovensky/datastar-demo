@@ -242,6 +242,8 @@ input.loading { opacity: 0; }
 }
 
 .data-grid-th {
+    display: flex;
+    align-items: center;
     padding: var(--sp-sm) var(--sp-md);
     border-bottom: 1px solid var(--clr-border-dim);
     border-right: 1px solid var(--clr-border-dim);
@@ -249,6 +251,13 @@ input.loading { opacity: 0; }
     overflow: hidden;
     white-space: nowrap;
     text-overflow: clip;
+
+    &.sortable { cursor: pointer; }
+}
+
+.data-grid-sort-indicator {
+    margin-left: auto;
+    padding-left: var(--sp-xs);
 }
 
 .data-grid-action-th {

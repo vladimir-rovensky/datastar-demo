@@ -29,7 +29,7 @@ import java.util.Optional;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.Link.link;
-import static com.bookie.infra.Format.usd;
+import com.bookie.infra.Format;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -60,13 +60,16 @@ public class TradesScreen extends BaseScreen {
 
         this.tradeGrid = DataGrid.withColumns(
                         column("ID", Trade::getId),
-                        column("CUSIP", t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID()).render()),
+                        column("CUSIP", Trade::getCusip)
+                                .withRenderer(t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID())),
                         column("Description", t -> getBond(t.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Book", Trade::getBook),
                         column("Type", Trade::getDirection),
                         column("Counterparty", Trade::getCounterparty),
-                        column("Quantity", t -> usd(t.getQuantity())),
-                        column("Accrued Interest", t -> usd(t.getAccruedInterest())),
+                        column("Quantity", Trade::getQuantity)
+                                .withFormat(Format::usd),
+                        column("Accrued Interest", Trade::getAccruedInterest)
+                                .withFormat(Format::usd),
                         column("Trade Date", Trade::getTradeDate),
                         column("Settle Date", Trade::getSettleDate))
                 .columns(CommonColumns.bondColumns(t -> getBond(t.getCusip())))
@@ -75,7 +78,8 @@ public class TradesScreen extends BaseScreen {
                 .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
                 .withDeleteRowTooltip("Cancel Trade")
                 .withStripedRows()
-                .withColumnPicker("/trades/grid")
+                .withEndpoint("/trades/grid")
+                .withColumnPicker()
                 .withUpdateChannel(this::getChannel);
 
         this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));

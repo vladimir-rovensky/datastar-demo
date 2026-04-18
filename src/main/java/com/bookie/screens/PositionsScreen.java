@@ -27,8 +27,7 @@ import java.util.Optional;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.Link.link;
-import static com.bookie.infra.Format.dateTime;
-import static com.bookie.infra.Format.usd;
+import com.bookie.infra.Format;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -50,16 +49,21 @@ public class PositionsScreen extends BaseScreen {
         this.bondRepository = bondRepository;
 
         this.positionGrid = DataGrid.withColumns(
-                        column("CUSIP", p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID()).render()),
+                        column("CUSIP", Position::getCusip)
+                                .withRenderer(p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID())),
                         column("Book", Position::getBook),
                         column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
-                        column("Current Position", p -> usd(p.getCurrentPosition())),
-                        column("Settled Position", p -> usd(p.getSettledPosition())),
-                        column("Last Activity", p -> dateTime(p.getLastActivity())))
+                        column("Current Position", Position::getCurrentPosition)
+                                .withFormat(Format::usd),
+                        column("Settled Position", Position::getSettledPosition)
+                                .withFormat(Format::usd),
+                        column("Last Activity", Position::getLastActivity)
+                                .withFormat(Format::dateTime))
                 .columns(CommonColumns.bondColumns(p -> getBond(p.getCusip())))
                 .withRowID(p -> p.getCusip() + "-" + p.getBook())
                 .withStripedRows()
-                .withColumnPicker("/positions/grid")
+                .withEndpoint("/positions/grid")
+                .withColumnPicker()
                 .withUpdateChannel(this::getChannel);
 
         this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));

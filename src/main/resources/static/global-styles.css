@@ -208,6 +208,7 @@ input.loading { opacity: 0; }
     position: sticky;
     top: 0;
     z-index: 2;
+    min-width: fit-content;
 
     .column-picker-btn {
         display: none;

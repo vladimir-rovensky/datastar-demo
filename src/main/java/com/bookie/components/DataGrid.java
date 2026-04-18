@@ -27,6 +27,7 @@ public class DataGrid<TRow> {
     private EscapedHtml addRowAction;
     private String addRowTooltip = "Add Row";
     private String noRowsMessage = "Nothing here...";
+    private boolean stripedRows = false;
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
@@ -87,6 +88,11 @@ public class DataGrid<TRow> {
         return this;
     }
 
+    public DataGrid<TRow> withStripedRows() {
+        this.stripedRows = true;
+        return this;
+    }
+
     public EscapedHtml render() {
         var actionHeaderCell = getActionHeaderCell();
         var headerCells = EscapedHtml.concat(columns, c -> html("""
@@ -97,13 +103,16 @@ public class DataGrid<TRow> {
                 : EscapedHtml.concat(rows, this::renderRow);
         var columnTemplate = getColumnStyleTemplate();
 
+        var stripedClass = stripedRows ? " striped-rows" : "";
+
         return html("""
                 <!--suppress CssInvalidFunction -->
-                <div class="data-grid fill-height" style="--cols: ${columnTemplate}">
+                <div class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
                     <div class="data-grid-header">${actionHeader}${headers}</div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
                 """,
+                "stripedClass", stripedClass,
                 "columnTemplate", columnTemplate,
                 "actionHeader", actionHeaderCell,
                 "headers", headerCells,

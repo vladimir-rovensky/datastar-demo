@@ -246,7 +246,7 @@ input.loading { opacity: 0; }
     display: grid;
     grid-template-columns: var(--cols);
     min-width: fit-content;
-    &:nth-child(even) { background-color: var(--clr-bg-alt); }
+    .striped-rows &:nth-child(even) { background-color: var(--clr-bg-alt); }
     &:hover { background-color: var(--clr-surface-hi); }
 }
 

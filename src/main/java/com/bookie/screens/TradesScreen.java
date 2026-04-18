@@ -141,6 +141,7 @@ public class TradesScreen extends BaseScreen {
                 .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
                 .withDeleteRowTooltip("Cancel Trade")
                 .withRows(this.trades.reversed())
+                .withStripedRows()
                 .render();
 
         return html("""

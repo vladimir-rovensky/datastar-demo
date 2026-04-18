@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.Link.link;
+import static com.bookie.infra.Format.dateTime;
 import static com.bookie.infra.Format.usd;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
@@ -54,7 +55,7 @@ public class PositionsScreen extends BaseScreen {
                         column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Current Position", p -> usd(p.getCurrentPosition())),
                         column("Settled Position", p -> usd(p.getSettledPosition())),
-                        column("Last Activity", Position::getLastActivity))
+                        column("Last Activity", p -> dateTime(p.getLastActivity())))
                 .columns(CommonColumns.bondColumns(p -> getBond(p.getCusip())))
                 .withRowID(p -> p.getCusip() + "-" + p.getBook())
                 .withStripedRows()

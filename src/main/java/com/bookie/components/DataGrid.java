@@ -1,5 +1,6 @@
 package com.bookie.components;
 
+import com.bookie.infra.ClientChannel;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Util;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class DataGrid<TRow> {
 
@@ -35,7 +37,8 @@ public class DataGrid<TRow> {
     private String noRowsMessage = "Nothing here...";
     private boolean stripedRows = false;
     private String columnPickerBasePath;
-    private Runnable reRenderCallback = () -> {};
+    private Supplier<ClientChannel> getUpdateChannel = () -> null;
+    private final String id = "grid-" + UUID.randomUUID();
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
@@ -119,8 +122,8 @@ public class DataGrid<TRow> {
         return this;
     }
 
-    public DataGrid<TRow> onReRenderTriggered(Runnable callback) {
-        this.reRenderCallback = callback;
+    public DataGrid<TRow> withUpdateChannel(Supplier<ClientChannel> getUpdateChannel) {
+        this.getUpdateChannel = getUpdateChannel;
         return this;
     }
 
@@ -129,7 +132,7 @@ public class DataGrid<TRow> {
         var visibleHeaders = getVisibleColumns().stream().map(c -> c.header).toList();
         var pickerPath = columnPickerBasePath + "/column-picker";
         var content = Popup.popup()
-                .withTitle("Columns")
+                .withTitle("Visible Columns")
                 .withContent(html("""
                         <div class="column-picker-content">${multiselect}</div>
                         """, "multiselect", MultiselectInput.multiselectInput("visibleColumns", allHeaders, visibleHeaders).render()))
@@ -146,8 +149,18 @@ public class DataGrid<TRow> {
         var body = request.body(new ParameterizedTypeReference<Map<String, Object>>() {});
         var visibleColumns = (List<String>) body.getOrDefault("visibleColumns", List.of());
         this.columns.forEach(c -> c.withVisible(visibleColumns.contains(c.header)));
-        reRenderCallback.run();
+        this.reRender();
         return Popup.close();
+    }
+
+    private void reRender() {
+        var updateChannel = getUpdateChannel.get();
+
+        if(updateChannel == null) {
+            throw new RuntimeException("Grid update channel not set.");
+        }
+
+        updateChannel.updateFragment(this.render());
     }
 
     public ServerResponse cancelColumnPicker() {
@@ -176,13 +189,14 @@ public class DataGrid<TRow> {
 
         return html("""
                 <!--suppress CssInvalidFunction -->
-                <div class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
+                <div id="${id}" class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
                     <div class="data-grid-header-wrapper">
                         <div class="data-grid-header">${actionHeader}${headers}</div>
                     </div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
                 """,
+                "id", this.id,
                 "stripedClass", stripedClass,
                 "columnTemplate", columnTemplate,
                 "actionHeader", actionHeaderCell,

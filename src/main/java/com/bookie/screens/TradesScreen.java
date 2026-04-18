@@ -76,7 +76,7 @@ public class TradesScreen extends BaseScreen {
                 .withDeleteRowTooltip("Cancel Trade")
                 .withStripedRows()
                 .withColumnPicker("/trades/grid")
-                .onReRenderTriggered(this::triggerUpdate);
+                .withUpdateChannel(this::getChannel);
 
         this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));

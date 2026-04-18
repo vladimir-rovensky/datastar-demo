@@ -59,7 +59,7 @@ public class PositionsScreen extends BaseScreen {
                 .withRowID(p -> p.getCusip() + "-" + p.getBook())
                 .withStripedRows()
                 .withColumnPicker("/positions/grid")
-                .onReRenderTriggered(this::triggerUpdate);
+                .withUpdateChannel(this::getChannel);
 
         this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(PositionChangedEvent.class, this::onPositionChanged));

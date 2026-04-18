@@ -1,6 +1,5 @@
 Open
-* Style management - state on the client (TradeTicketPopup) vs state on the server.
-* Possible DataStar bug in data-indicator?
+* State management - state on the client (TradeTicketPopup) vs state on the server.
 * Had to monkey patch fetch to auto-include header.
 * Clearing signals on popup hide - expected signals to auto-clear when their defining element is removed - not the case.
 * Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);
@@ -16,9 +15,11 @@ Solved
 * Encapsulation
     - scripts - IIFE + document.currentScript
     - styles - CSS scopes
+* Possible DataStar bug in data-indicator? Fixed in v1
 
 TODO
 * Boost links / fix mixing state between tabs
 * Grid sort, filter, virtual scrolling
+* Column picker
 * tests
 * commands / ordering

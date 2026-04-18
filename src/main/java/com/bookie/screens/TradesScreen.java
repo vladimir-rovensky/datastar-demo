@@ -155,7 +155,6 @@ public class TradesScreen extends BaseScreen {
 
     private EscapedHtml getStyles() {
         return html("""
-                    <div id="trades-screen" class="trades-screen">
                     <style>
                         @scope {
                             .data-grid-cell:first-child,

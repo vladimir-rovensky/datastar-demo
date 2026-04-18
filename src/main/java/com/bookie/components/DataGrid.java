@@ -112,8 +112,8 @@ public class DataGrid<TRow> {
 
     private @NotNull String getColumnStyleTemplate() {
         return hasActionColumn()
-                ? "40px repeat(" + columns.size() + ", 1fr)"
-                : "repeat(" + columns.size() + ", 1fr)";
+                ? "40px repeat(" + columns.size() + ", minmax(150px, 1fr))"
+                : "repeat(" + columns.size() + ", minmax(150px, 1fr))";
     }
 
     private boolean hasActionColumn() {

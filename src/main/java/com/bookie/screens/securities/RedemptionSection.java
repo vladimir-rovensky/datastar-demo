@@ -19,7 +19,7 @@ public class RedemptionSection {
     public static EscapedHtml render(Bond bond, boolean editing, BondRepository bondRepository) {
         var disabled = !editing;
 
-        var outstandingAmount = calculateOutstandingAmount(bond);
+        var outstandingAmount = bond.getOutstandingAmount();
 
         var callSchedule = bond.getCallSchedule();
         var callTable = html("""
@@ -151,20 +151,4 @@ public class RedemptionSection {
                 "sinkingFundTable", sinkingFundTable);
     }
 
-    private static BigDecimal calculateOutstandingAmount(Bond bond) {
-        if (bond.getIssueSize() == null) {
-            return null;
-        }
-        var today = LocalDate.now();
-        BigDecimal sunkAmount = BigDecimal.ZERO;
-        for (var entry : bond.getSinkingFundSchedule()) {
-            if (entry.getSinkDate() == null || entry.getAmount() == null) {
-                return null;
-            }
-            if (!entry.getSinkDate().isAfter(today)) {
-                sunkAmount = sunkAmount.add(entry.getAmount());
-            }
-        }
-        return bond.getIssueSize().subtract(sunkAmount);
-    }
 }

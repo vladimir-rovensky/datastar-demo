@@ -49,6 +49,23 @@ public class Bond implements Cloneable {
 
     public Bond() {}
 
+    public BigDecimal getOutstandingAmount() {
+        if (getIssueSize() == null) {
+            return null;
+        }
+        var today = LocalDate.now();
+        BigDecimal sunkAmount = BigDecimal.ZERO;
+        for (var entry : getSinkingFundSchedule()) {
+            if (entry.getSinkDate() == null || entry.getAmount() == null) {
+                return null;
+            }
+            if (!entry.getSinkDate().isAfter(today)) {
+                sunkAmount = sunkAmount.add(entry.getAmount());
+            }
+        }
+        return getIssueSize().subtract(sunkAmount);
+    }
+
     @Override
     public Bond clone() {
         try {

@@ -4,7 +4,7 @@ sharedStylesheet.replaceSync(`
     :host { display: contents; }
     :host(.loading) input { opacity: 0; }
     input {
-        background-color: var(--clr-surface);
+        background-color: var(--number-input-bg, var(--clr-surface));
         color: var(--clr-text);
         border: 1px solid var(--input-border-color, var(--clr-border));
         padding: var(--sp-xs) var(--sp-sm);
@@ -15,7 +15,7 @@ sharedStylesheet.replaceSync(`
         box-sizing: border-box;
     }
     input:focus    { border-color: var(--clr-accent); }
-    input:disabled { background-color: var(--clr-bg); color: var(--clr-text-faint); border-color: var(--clr-border-dim); }
+    input:disabled { background-color: var(--number-input-bg, var(--clr-bg)); color: var(--clr-text-faint); border-color: var(--clr-border-dim); }
 `);
 
 class NumberInputElement extends HTMLElement {

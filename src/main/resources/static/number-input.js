@@ -11,6 +11,7 @@ sharedStylesheet.replaceSync(`
         font-size: var(--fs-sm);
         outline: none;
         width: 100%;
+        height: 100%;
         box-sizing: border-box;
     }
     input:focus    { border-color: var(--clr-accent); }

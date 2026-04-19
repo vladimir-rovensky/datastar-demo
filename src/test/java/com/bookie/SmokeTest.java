@@ -8,7 +8,7 @@ import java.net.http.HttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SmokeTest extends BookieE2ETest {
+public class SmokeTest extends TestBase {
 
     @Test
     void rootRedirectsToTrades() throws Exception {

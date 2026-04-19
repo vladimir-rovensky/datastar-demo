@@ -17,6 +17,9 @@ public class Format {
     private static final NumberFormat DecimalFormat = createNumberFormat();
 
     public static String dateTime(Date date) {
+        if (date == null) {
+            return "";
+        }
         return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(date);
     }
 

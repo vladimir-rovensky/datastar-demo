@@ -12,5 +12,8 @@ out/
 ### Keystore ###
 src/main/resources/keystore.p12
 
+### Tests ###
+trace.zip
+
 ### Claude Code ###
 .claude/settings.local.json

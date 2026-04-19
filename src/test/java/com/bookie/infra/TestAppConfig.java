@@ -7,6 +7,7 @@ import com.bookie.domain.entity.FakeTradeDAO;
 import com.bookie.domain.entity.ReferenceDataRepository;
 import com.bookie.domain.entity.TradeRepository;
 import com.bookie.domain.service.PricingService;
+import com.bookie.domain.service.PositionService;
 import com.bookie.screens.TradeTicketPopup;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -78,6 +79,11 @@ public class TestAppConfig {
         TradeRepository tradeRepository = new TradeRepository(fakeTradeDAO, bondRepository, referenceDataRepository, eventBus);
         tradeRepository.setGenerateFakeData(false);
         return tradeRepository;
+    }
+
+    @Bean
+    public PositionService positionService(TradeRepository tradeRepository, EventBus eventBus) {
+        return new PositionService(tradeRepository, eventBus);
     }
 
     @Bean

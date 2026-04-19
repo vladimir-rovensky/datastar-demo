@@ -26,34 +26,34 @@ public class Trade {
     }
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Trade setId(Long id) { this.id = id; return this; }
 
     public String getCusip() { return cusip; }
-    public void setCusip(String cusip) { this.cusip = cusip; }
+    public Trade setCusip(String cusip) { this.cusip = cusip; return this; }
 
     public TradeDirection getDirection() { return direction; }
-    public void setDirection(TradeDirection direction) { this.direction = direction; }
+    public Trade setDirection(TradeDirection direction) { this.direction = direction; return this; }
 
     public LocalDate getTradeDate() { return tradeDate; }
-    public void setTradeDate(LocalDate tradeDate) { this.tradeDate = tradeDate; }
+    public Trade setTradeDate(LocalDate tradeDate) { this.tradeDate = tradeDate; return this; }
 
     public LocalDate getSettleDate() { return settleDate; }
-    public void setSettleDate(LocalDate settleDate) { this.settleDate = settleDate; }
+    public Trade setSettleDate(LocalDate settleDate) { this.settleDate = settleDate; return this; }
 
     public BigDecimal getAccruedInterest() { return accruedInterest; }
-    public void setAccruedInterest(BigDecimal accruedInterest) { this.accruedInterest = accruedInterest; }
+    public Trade setAccruedInterest(BigDecimal accruedInterest) { this.accruedInterest = accruedInterest; return this; }
 
     public String getBook() { return book; }
-    public void setBook(String book) { this.book = book; }
+    public Trade setBook(String book) { this.book = book; return this; }
 
     public BigDecimal getQuantity() { return quantity; }
-    public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
+    public Trade setQuantity(BigDecimal quantity) { this.quantity = quantity; return this; }
 
     public String getCounterparty() { return counterparty; }
-    public void setCounterparty(String counterparty) { this.counterparty = counterparty; }
+    public Trade setCounterparty(String counterparty) { this.counterparty = counterparty; return this; }
 
     public Date getExecutionTime() { return executionTime; }
-    public void setExecutionTime(Date executionTime) { this.executionTime = executionTime; }
+    public Trade setExecutionTime(Date executionTime) { this.executionTime = executionTime; return this; }
 
     public PositionKey getPositionKey() { return new PositionKey(cusip, book); }
 }

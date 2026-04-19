@@ -1,5 +1,6 @@
-package com.bookie;
+package com.bookie.screens.trades;
 
+import com.bookie.TestBase;
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class TradesScreenTest extends BookieE2ETest {
+public class TradesScreenTest extends TestBase {
 
     @Test
     public void tradeRowRendersWithCusipAndDescription() {

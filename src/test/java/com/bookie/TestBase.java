@@ -1,9 +1,11 @@
 package com.bookie;
 
 import com.bookie.domain.entity.*;
+import com.bookie.domain.service.PositionService;
 import com.bookie.infra.JettyBootstrap;
 import com.bookie.infra.PlaywrightManager;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.screens.positions.PositionsScreenPageObject;
 import com.bookie.screens.trades.TradesScreenPageObject;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
@@ -22,7 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class BookieE2ETest {
+public abstract class TestBase {
 
     private JettyBootstrap server;
     private BrowserContext browserContext;
@@ -43,6 +45,7 @@ public abstract class BookieE2ETest {
         getSessionRegistry().clearAll();
         getBondDAO().clear();
         getTradeDAO().clear();
+        getPositionService().clear();
         browserContext = PlaywrightManager.getBrowser().newContext();
         page = browserContext.newPage();
         page.setDefaultTimeout(5000);
@@ -84,8 +87,16 @@ public abstract class BookieE2ETest {
         return server.getBean(FakeTradeDAO.class);
     }
 
+    protected PositionService getPositionService() {
+        return server.getBean(PositionService.class);
+    }
+
     protected FakeBondDAO getBondDAO() {
         return server.getBean(FakeBondDAO.class);
+    }
+
+    protected TradeRepository getTradeRepository() {
+        return server.getBean(TradeRepository.class);
     }
 
     private SessionRegistry getSessionRegistry() {
@@ -101,7 +112,7 @@ public abstract class BookieE2ETest {
     }
 
     protected void givenExistingTrades(List<Trade> trades) {
-        getTradeDAO().saveAll(trades);
+        trades.forEach(t -> getTradeRepository().bookTrade(t));
     }
 
     protected void givenExistingBonds(Bond... bonds) {
@@ -137,5 +148,18 @@ public abstract class BookieE2ETest {
     protected TradesScreenPageObject switchToTrades() {
         page.navigate(baseUrl() + "/trades");
         return new TradesScreenPageObject(page);
+    }
+
+    protected PositionsScreenPageObject switchToPositions() {
+        page.navigate(baseUrl() + "/positions");
+        return new PositionsScreenPageObject(page);
+    }
+
+    @NonNull
+    protected static Position aPosition(String cusip, String book, int currentPosition) {
+        Position position = new Position(new PositionKey(cusip, book));
+        position.setCurrentPosition(BigDecimal.valueOf(currentPosition));
+        position.setSettledPosition(BigDecimal.valueOf(currentPosition));
+        return position;
     }
 }

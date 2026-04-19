@@ -44,8 +44,21 @@ public class DataGridHelper {
         columnHeader.waitFor();
 
         return (int) this.root.getByRole(AriaRole.COLUMNHEADER).evaluateAll(
-                "elements => elements.findIndex(el => el.innerText.trim() === '" + header + "')"
+                "elements => elements.findIndex(el => el.innerText.trim() === '" + header.toUpperCase() + "')"
         );
+    }
+
+    public GridRowHelper getRowByCellValues(String header1, String value1, String header2, String value2) {
+        var columnIndex1 = getColumnIndexByHeader(header1);
+        var columnIndex2 = getColumnIndexByHeader(header2);
+        Locator rowLocator = this.root.getByRole(AriaRole.ROW);
+        var row = rowLocator
+                .filter(new Locator.FilterOptions().setHas(
+                        rowLocator.page().getByRole(AriaRole.GRIDCELL).nth(columnIndex1).getByText(value1)))
+                .filter(new Locator.FilterOptions().setHas(
+                        rowLocator.page().getByRole(AriaRole.GRIDCELL).nth(columnIndex2).getByText(value2)));
+
+        return new GridRowHelper(row, this);
     }
 
     public GridRowHelper getRowByCellValue(String header, String value) {

@@ -45,6 +45,10 @@ public class PositionService {
         return List.copyOf(positions.values());
     }
 
+    public synchronized void clear() {
+        positions.clear();
+    }
+
     private synchronized Position getPosition(PositionKey key) {
         return positions.get(key);
     }

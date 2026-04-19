@@ -80,6 +80,7 @@ public class TradesScreen extends BaseScreen {
                 .withStripedRows()
                 .withEndpoint("/trades/grid")
                 .withColumnPicker()
+                .filterable()
                 .withUpdateChannel(this::getChannel);
 
         this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));

@@ -14,20 +14,22 @@ import static com.bookie.infra.TemplatingEngine.html;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class DataGrid<TRow> {
 
-    public enum SortDirection { Ascending, Descending }
+    private static final AtomicInteger idCounter = new AtomicInteger(0);
 
-    public static <T> DataGridColumn<T> column(String header, Function<T, Object> value) {
-        return new DataGridColumn<>(header, value);
-    }
+    public enum SortDirection { Ascending, Descending }
 
     private final List<DataGridColumn<TRow>> columns;
     private Function<TRow, EscapedHtml> onRowDoubleClick;
@@ -46,10 +48,21 @@ public class DataGrid<TRow> {
     private String sortColumnName;
     private SortDirection sortDirection;
     private Supplier<ClientChannel> getUpdateChannel = () -> null;
-    private final String id = "grid-" + UUID.randomUUID();
+    private final String id = "grid" + idCounter.getAndIncrement();
+    private boolean filterable = false;
+    private final Map<String, String> filters = new HashMap<>();
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
+    }
+
+    public static <T> DataGridColumn<T> column(String header, Function<T, Object> value) {
+        return new DataGridColumn<>(header, value);
+    }
+
+    @SafeVarargs
+    public static <T> DataGrid<T> withColumns(DataGridColumn<T>... columns) {
+        return new DataGrid<>(new ArrayList<>(List.of(columns)));
     }
 
     public static <T> void setupRoutes(RouterFunctions.Builder builder, Function<ServerRequest, DataGrid<T>> getGrid) {
@@ -57,7 +70,8 @@ public class DataGrid<TRow> {
                 .GET("column-picker", request -> getGrid.apply(request).openColumnPicker())
                 .POST("column-picker", request -> getGrid.apply(request).applyColumnPicker(request))
                 .DELETE("column-picker", request -> getGrid.apply(request).cancelColumnPicker())
-                .POST("sort/{columnName}", request -> getGrid.apply(request).applySort(request.pathVariable("columnName")));
+                .POST("sort/{columnName}", request -> getGrid.apply(request).applySort(request.pathVariable("columnName")))
+                .POST("filter", request -> getGrid.apply(request).applyFilter(request));
     }
 
     public EscapedHtml render() {
@@ -76,7 +90,9 @@ public class DataGrid<TRow> {
                     <div class="data-grid-th">${h}</div>""", "h", c.header);
         });
 
-        var displayRows = sortRows(this.rows);
+        var filterRow = getFilterRow(visibleColumns);
+
+        var displayRows = sortRows(filterRows(this.rows));
 
         var bodyRows = displayRows.isEmpty()
                 ? html("""
@@ -91,6 +107,7 @@ public class DataGrid<TRow> {
                 <div id="${id}" class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
                     <div class="data-grid-header-wrapper">
                         <div class="data-grid-header">${actionHeader}${headers}</div>
+                        ${filterRow}
                     </div>
                     <div class="data-grid-body fill-height">${rows}</div>
                 </div>
@@ -100,7 +117,127 @@ public class DataGrid<TRow> {
                 "columnTemplate", columnTemplate,
                 "actionHeader", actionHeaderCell,
                 "headers", headerCells,
+                "filterRow", filterRow,
                 "rows", bodyRows);
+    }
+
+    private ServerResponse openColumnPicker() {
+        if (endpoint == null) {
+            throw new RuntimeException("DataGrid endpoint not set.");
+        }
+        var allHeaders = this.columns.stream().map(c -> c.header).toList();
+        var visibleHeaders = getVisibleColumns().stream().map(c -> c.header).toList();
+        var pickerPath = endpoint + "/column-picker";
+        var content = Popup.popup()
+                .withTitle("Visible Columns")
+                .withContent(html("""
+                        <div class="column-picker-content">${multiselect}</div>
+                        """, "multiselect", MultiselectInput.multiselectInput("visibleColumns", allHeaders, visibleHeaders).render()))
+                .withActions(html("""
+                        <button class="btn-primary" data-on:click="@post('${path}')">OK</button>
+                        <button data-on:click="@delete('${path}')">Cancel</button>
+                        """, "path", pickerPath))
+                .render();
+        return Popup.open(content);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ServerResponse applyColumnPicker(ServerRequest request) throws Exception {
+        var body = request.body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        var visibleColumns = (List<String>) body.getOrDefault("visibleColumns", List.of());
+        this.columns.forEach(c -> c.withVisible(visibleColumns.contains(c.header)));
+
+        var sortColumn = getSortColumn();
+        if (sortColumn != null && !sortColumn.visible) {
+            clearSort();
+        }
+
+        this.filters.keySet().removeIf(columnName ->
+                getColumnByName(columnName).map(c -> !c.visible).orElse(true));
+
+        this.reRender();
+        return Popup.close();
+    }
+
+    private ServerResponse cancelColumnPicker() {
+        return Popup.close();
+    }
+
+    private ServerResponse applySort(String columnName) {
+        var matchingColumn = getColumnByName(columnName);
+
+        if (matchingColumn.isEmpty()) {
+            return ServerResponse.ok().build();
+        }
+
+        if (!Objects.equals(sortColumnName, columnName)) {
+            sortColumnName = columnName;
+            sortDirection = SortDirection.Ascending;
+        } else if (sortDirection == SortDirection.Ascending) {
+            sortDirection = SortDirection.Descending;
+        } else {
+            clearSort();
+        }
+
+        reRender();
+        return ServerResponse.ok().build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private ServerResponse applyFilter(ServerRequest request) throws Exception {
+        var body = request.body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        var gridSignals = (Map<String, Object>) body.getOrDefault(this.id, Map.of());
+        var filterSignals = (Map<String, Object>) gridSignals.getOrDefault("filter", Map.of());
+
+        this.filters.clear();
+
+        filterSignals.forEach((columnName, rawValue) -> {
+            if (rawValue != null && !rawValue.toString().isBlank()) {
+                this.filters.put(columnName, rawValue.toString());
+            }
+        });
+
+        this.reRender();
+        return ServerResponse.ok().build();
+    }
+
+    private EscapedHtml getFilterRow(List<DataGridColumn<TRow>> visibleColumns) {
+        if (!filterable) {
+            return EscapedHtml.blank();
+        }
+
+        var filterActionCell = hasActionColumn()
+                ? html("""
+                        <div class="data-grid-th data-grid-action-th">🔍</div>""")
+                : EscapedHtml.blank();
+
+        var filterCells = EscapedHtml.concat(visibleColumns, column -> html("""
+                <div class="data-grid-filter-cell" data-on:change="@post('${endpoint}/filter')">${input}</div>""",
+                "endpoint", endpoint,
+                "input", TextInput.textInput(this.id + ".filter." + column.getName(), filters.get(column.getName()))));
+
+        return html("""
+                <div class="data-grid-filter-row">${actionCell}${cells}</div>""",
+                "actionCell", filterActionCell,
+                "cells", filterCells);
+    }
+
+    private List<TRow> filterRows(List<TRow> rows) {
+        if (filters.isEmpty()) {
+            return rows;
+        }
+
+        var predicate = filters.entrySet().stream()
+                .map(entry -> getColumnByName(entry.getKey())
+                        .<Predicate<TRow>>map(column -> {
+                            var filterText = entry.getValue();
+                            return row -> GridFilter.matches(column.getValue.apply(row), filterText);
+                        })
+                        .orElse(_ -> true))
+                .reduce(Predicate::and)
+                .orElse(_ -> true);
+
+        return rows.stream().filter(predicate).toList();
     }
 
     private EscapedHtml getSortIndicator(DataGridColumn<TRow> column) {
@@ -132,25 +269,10 @@ public class DataGrid<TRow> {
         return displayRows.stream().sorted(comparator).toList();
     }
 
-    private @Nullable DataGridColumn<TRow> getSortColumn() {
-        if(sortColumnName == null) {
-            return null;
-        }
-
-        return columns.stream()
-                .filter(c -> Objects.equals(c.getName(), sortColumnName))
-                .findFirst()
-                .orElse(null);
-    }
-
     private @NotNull String getColumnStyleTemplate() {
         return hasActionColumn()
                 ? "40px repeat(" + getVisibleColumns().size() + ", minmax(150px, 1fr))"
                 : "repeat(" + getVisibleColumns().size() + ", minmax(150px, 1fr))";
-    }
-
-    private boolean hasActionColumn() {
-        return addRowAction != null || getDeleteAction != null || showColumnPicker;
     }
 
     private EscapedHtml getActionHeaderCell() {
@@ -220,6 +342,27 @@ public class DataGrid<TRow> {
                 "tooltip", deleteRowTooltip);
     }
 
+    private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {
+        Object displayValue = getDisplayValue(row, column);
+        return html("""
+                <div id="${cellID}" class="data-grid-cell">${value}</div>""",
+                "cellID", getRowID.apply(row) + "-" + column.getName(),
+                "value", displayValue);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object getDisplayValue(TRow row, DataGridColumn<TRow> column) {
+        Object displayValue;
+        if (column.renderer != null) {
+            displayValue = column.renderer.apply(row);
+        } else {
+            var rawValue = column.getValue.apply(row);
+            displayValue = column.format.apply(rawValue);
+        }
+
+        return displayValue;
+    }
+
     private @NotNull EscapedHtml getIdSignalAttr(TRow row, Object id) {
         var idSignal = rowIDSignal.apply(row);
 
@@ -228,32 +371,45 @@ public class DataGrid<TRow> {
                 : html("data-signals:${signal}=\"${rowID}\"", "signal", Util.toKebabCase(idSignal), "rowID", Util.toJson(id));
     }
 
-    @SuppressWarnings("unchecked")
-    private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {
-        Object displayValue;
-        if (column.renderer != null) {
-            displayValue = column.renderer.apply(row);
-        } else {
-            var rawValue = column.getValue.apply(row);
-            displayValue = column.format != null ? column.format.apply(rawValue) : rawValue;
+    private @Nullable DataGridColumn<TRow> getSortColumn() {
+        if (sortColumnName == null) {
+            return null;
         }
-        return html("""
-                <div id="${cellID}" class="data-grid-cell">${value}</div>""",
-                "cellID", getRowID.apply(row) + "-" + column.getName(),
-                "value", displayValue);
+
+        return getColumnByName(sortColumnName).orElse(null);
     }
 
-    public List<DataGridColumn<TRow>> getColumns() {
-        return this.columns;
+    private boolean hasActionColumn() {
+        return addRowAction != null || getDeleteAction != null || showColumnPicker;
     }
 
     private List<DataGridColumn<TRow>> getVisibleColumns() {
         return columns.stream().filter(c -> c.visible).toList();
     }
 
-    @SafeVarargs
-    public static <T> DataGrid<T> withColumns(DataGridColumn<T>... columns) {
-        return new DataGrid<>(new ArrayList<>(List.of(columns)));
+    private Optional<DataGridColumn<TRow>> getColumnByName(String columnName) {
+        return columns.stream()
+                .filter(c -> c.getName().equalsIgnoreCase(columnName))
+                .findFirst();
+    }
+
+    private void clearSort() {
+        sortColumnName = null;
+        sortDirection = null;
+    }
+
+    private void reRender() {
+        var updateChannel = getUpdateChannel.get();
+
+        if (updateChannel == null) {
+            throw new RuntimeException("Grid update channel not set.");
+        }
+
+        updateChannel.updateFragment(this.render());
+    }
+
+    public List<DataGridColumn<TRow>> getColumns() {
+        return this.columns;
     }
 
     public DataGrid<TRow> columns(List<DataGridColumn<TRow>> additionalColumns) {
@@ -331,81 +487,9 @@ public class DataGrid<TRow> {
         return this;
     }
 
-    private ServerResponse openColumnPicker() {
-        if (endpoint == null) {
-            throw new RuntimeException("DataGrid endpoint not set.");
-        }
-        var allHeaders = this.columns.stream().map(c -> c.header).toList();
-        var visibleHeaders = getVisibleColumns().stream().map(c -> c.header).toList();
-        var pickerPath = endpoint + "/column-picker";
-        var content = Popup.popup()
-                .withTitle("Visible Columns")
-                .withContent(html("""
-                        <div class="column-picker-content">${multiselect}</div>
-                        """, "multiselect", MultiselectInput.multiselectInput("visibleColumns", allHeaders, visibleHeaders).render()))
-                .withActions(html("""
-                        <button class="btn-primary" data-on:click="@post('${path}')">OK</button>
-                        <button data-on:click="@delete('${path}')">Cancel</button>
-                        """, "path", pickerPath))
-                .render();
-        return Popup.open(content);
-    }
-
-    @SuppressWarnings("unchecked")
-    private ServerResponse applyColumnPicker(ServerRequest request) throws Exception {
-        var body = request.body(new ParameterizedTypeReference<Map<String, Object>>() {});
-        var visibleColumns = (List<String>) body.getOrDefault("visibleColumns", List.of());
-        this.columns.forEach(c -> c.withVisible(visibleColumns.contains(c.header)));
-
-        var sortColumn = getSortColumn();
-        if (sortColumn != null && !sortColumn.visible) {
-            clearSort();
-        }
-
-        this.reRender();
-        return Popup.close();
-    }
-
-    private void clearSort() {
-        sortColumnName = null;
-        sortDirection = null;
-    }
-
-    private ServerResponse cancelColumnPicker() {
-        return Popup.close();
-    }
-
-    private ServerResponse applySort(String columnName) {
-        var matchingColumn = columns.stream()
-                .filter(c -> Objects.equals(c.getName(), columnName))
-                .findFirst()
-                .orElse(null);
-
-        if (matchingColumn == null) {
-            return ServerResponse.ok().build();
-        }
-
-        if (!Objects.equals(sortColumnName, columnName)) {
-            sortColumnName = columnName;
-            sortDirection = SortDirection.Ascending;
-        } else if (sortDirection == SortDirection.Ascending) {
-            sortDirection = SortDirection.Descending;
-        } else {
-            clearSort();
-        }
-
-        reRender();
-        return ServerResponse.ok().build();
-    }
-
-    private void reRender() {
-        var updateChannel = getUpdateChannel.get();
-
-        if(updateChannel == null) {
-            throw new RuntimeException("Grid update channel not set.");
-        }
-
-        updateChannel.updateFragment(this.render());
+    public DataGrid<TRow> filterable() {
+        this.filterable = true;
+        return this;
     }
 
 }

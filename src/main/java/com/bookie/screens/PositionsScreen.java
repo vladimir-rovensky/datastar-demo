@@ -64,6 +64,7 @@ public class PositionsScreen extends BaseScreen {
                 .withStripedRows()
                 .withEndpoint("/positions/grid")
                 .withColumnPicker()
+                .filterable()
                 .withUpdateChannel(this::getChannel);
 
         this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));

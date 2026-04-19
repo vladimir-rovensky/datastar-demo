@@ -255,6 +255,18 @@ input.loading { opacity: 0; }
     &.sortable { cursor: pointer; }
 }
 
+.data-grid-filter-row {
+    display: grid;
+    grid-template-columns: var(--cols);
+    min-height: var(--row-height);
+    background-color: var(--clr-surface);
+    border-bottom: 1px solid var(--clr-border-dim);
+}
+
+.data-grid-filter-cell {
+    border-right: 1px solid var(--clr-border-dim);
+}
+
 .data-grid-sort-indicator {
     margin-left: auto;
     padding-left: var(--sp-xs);
@@ -269,6 +281,7 @@ input.loading { opacity: 0; }
     background-color: var(--clr-surface);
     border-right: 1px solid var(--clr-border-dim);
     z-index: 1;
+    justify-content: center;
 
     button.btn-no-bg {
         width: 100%;
@@ -308,18 +321,22 @@ input.loading { opacity: 0; }
     .striped-rows &:nth-child(even):hover { background-color: var(--clr-surface-hi); }
 }
 
-.data-grid-cell {
+.data-grid-cell,
+.data-grid-filter-cell {
     display: flex;
     align-items: center;
     padding: 0 var(--sp-md);
+    --number-input-bg: transparent;
+    --input-border-color: transparent;
+    input, select { width: 100%; height: 100%; background-color: transparent; border-color: transparent; }
+}
+
+.data-grid-cell {
     border-bottom: 1px solid var(--clr-surface-hi);
     border-right: 1px solid var(--clr-surface-hi);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: clip;
-    --number-input-bg: transparent;
-    --input-border-color: transparent;
-    input, select { width: 100%; height: 100%; background-color: transparent; border-color: transparent; }
 }
 
 /* Toolbar */

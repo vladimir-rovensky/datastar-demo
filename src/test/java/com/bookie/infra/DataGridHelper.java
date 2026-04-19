@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.AriaRole;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -92,6 +93,10 @@ public class DataGridHelper {
 
         public void verifyText(String text) {
             assertThat(this.root).containsText(text);
+        }
+
+        public void verifyText(Pattern regex) {
+            assertThat(this.root).containsText(regex);
         }
     }
 }

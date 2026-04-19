@@ -29,7 +29,7 @@ public class NumberInput extends BaseInput {
     @Override
     public EscapedHtml render() {
         return html("""
-            <number-input name="${name}" format="${format}" decimals="${decimals}" ${binding} value="${value}" ${attrs}></number-input>
+            <number-input role="textbox" name="${name}" format="${format}" decimals="${decimals}" ${binding} value="${value}" ${attrs}></number-input>
         """,
                 "name", this.name,
                 "format", this.format != null ? this.format : "",

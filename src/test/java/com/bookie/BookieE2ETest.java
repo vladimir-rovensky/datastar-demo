@@ -45,6 +45,7 @@ public abstract class BookieE2ETest {
         getTradeDAO().clear();
         browserContext = PlaywrightManager.getBrowser().newContext();
         page = browserContext.newPage();
+        page.setDefaultTimeout(5000);
     }
 
     @AfterEach
@@ -112,7 +113,7 @@ public abstract class BookieE2ETest {
     }
 
     @NonNull
-    protected static Trade aTrade(long id, String cusip, TradeDirection tradeDirection, int quantity) {
+    protected static Trade aTrade(Long id, String cusip, TradeDirection tradeDirection, int quantity) {
         Trade trade = new Trade();
         trade.setId(id);
         trade.setCusip(cusip);

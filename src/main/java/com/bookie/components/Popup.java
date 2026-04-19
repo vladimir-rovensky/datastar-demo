@@ -46,7 +46,7 @@ public class Popup {
         var styleClass = style == Style.WARNING ? "popup popup--warning" : "popup";
         return html("""
                 <div id="popup" class="popup-overlay" data-show="$popupVisible">
-                    <div class="${styleClass}"
+                    <div role="dialog" aria-label="${title}" class="${styleClass}"
                          data-signals:_dx__ifmissing="0"
                          data-signals:_dy__ifmissing="0"
                          data-signals:_dragging__ifmissing="false"

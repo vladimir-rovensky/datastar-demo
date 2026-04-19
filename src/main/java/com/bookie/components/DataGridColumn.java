@@ -3,6 +3,7 @@ package com.bookie.components;
 import com.bookie.infra.Format;
 import com.bookie.infra.Renderable;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.function.Function;
@@ -43,6 +44,7 @@ public class DataGridColumn<TRow> {
     private static String defaultFormat(Object value) {
         return switch (value) {
             case null -> "";
+            case BigDecimal decimal -> Format.decimal(decimal);
             case LocalDate date -> Format.usDate(date);
             case Date date -> Format.usDate(date);
             case Boolean bool -> Format.bool(bool);

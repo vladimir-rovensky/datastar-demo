@@ -80,14 +80,14 @@ public class DataGrid<TRow> {
         var headerCells = EscapedHtml.concat(visibleColumns, c -> {
             if (endpoint != null) {
                 return html("""
-                        <div class="data-grid-th sortable" data-on:click="@post('${endpoint}/sort/${columnName}')">${h}${indicator}</div>""",
+                        <div class="data-grid-th sortable" role="columnheader" data-on:click="@post('${endpoint}/sort/${columnName}')">${h}${indicator}</div>""",
                         "endpoint", endpoint,
                         "columnName", c.getName(),
                         "h", c.header,
                         "indicator", getSortIndicator(c));
             }
             return html("""
-                    <div class="data-grid-th">${h}</div>""", "h", c.header);
+                    <div class="data-grid-th" role="columnheader">${h}</div>""", "h", c.header);
         });
 
         var filterRow = getFilterRow(visibleColumns);
@@ -104,7 +104,7 @@ public class DataGrid<TRow> {
 
         return html("""
                 <!--suppress CssInvalidFunction -->
-                <div id="${id}" class="data-grid fill-height${stripedClass}" style="--cols: ${columnTemplate}">
+                <div id="${id}" class="data-grid fill-height${stripedClass}" role="grid" style="--cols: ${columnTemplate}">
                     <div class="data-grid-header-wrapper">
                         <div class="data-grid-header">${actionHeader}${headers}</div>
                         ${filterRow}
@@ -208,7 +208,7 @@ public class DataGrid<TRow> {
 
         var filterActionCell = hasActionColumn()
                 ? html("""
-                        <div class="data-grid-th data-grid-action-th">🔍</div>""")
+                        <div class="data-grid-th data-grid-action-th">&#x2315;</div>""")
                 : EscapedHtml.blank();
 
         var filterCells = EscapedHtml.concat(visibleColumns, column -> html("""
@@ -282,7 +282,7 @@ public class DataGrid<TRow> {
 
         if (addRowAction != null) {
             return html("""
-                    <div class="data-grid-th data-grid-action-th">
+                    <div class="data-grid-th data-grid-action-th" role="columnheader">
                         <button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>+</button>
                     </div>""",
                     "action", addRowAction,
@@ -294,14 +294,14 @@ public class DataGrid<TRow> {
                 throw new RuntimeException("DataGrid endpoint not set.");
             }
             return html("""
-                    <div class="data-grid-th data-grid-action-th">
+                    <div class="data-grid-th data-grid-action-th" role="columnheader">
                         <button class="column-picker-btn btn-no-bg" data-on:click="@get('${path}/column-picker')" data-tooltip="Pick columns">≡</button>
                     </div>""",
                     "path", endpoint);
         }
 
         return html("""
-                <div class="data-grid-th data-grid-action-th"></div>""");
+                <div class="data-grid-th data-grid-action-th" role="columnheader"></div>""");
     }
 
     private EscapedHtml renderRow(TRow row) {
@@ -309,7 +309,7 @@ public class DataGrid<TRow> {
                 ? (getDeleteAction != null
                    ? renderDeleteCell(row)
                     : html("""
-                        <div id="${cellID}" class="data-grid-cell data-grid-action-cell"></div>""",
+                        <div id="${cellID}" class="data-grid-cell data-grid-action-cell" role="gridcell"></div>""",
                         "cellID", getRowID.apply(row) + "-actionCell"))
                 : EscapedHtml.blank();
 
@@ -325,7 +325,7 @@ public class DataGrid<TRow> {
         var idSignalAttr = getIdSignalAttr(row, id);
 
         return html("""
-                <div class="data-grid-row" id="${rowID}" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
+                <div class="data-grid-row" id="${rowID}" role="row" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
                 "rowID", id,
                 "dblClick", dblClick,
                 "rowIDSignal", idSignalAttr,
@@ -336,7 +336,7 @@ public class DataGrid<TRow> {
 
     private EscapedHtml renderDeleteCell(TRow row) {
         return html("""
-                <div id="${cellID}" class="data-grid-cell data-grid-action-cell"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>✕</button></div>""",
+                <div id="${cellID}" class="data-grid-cell data-grid-action-cell" role="gridcell"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>✕</button></div>""",
                 "cellID", getRowID.apply(row) + "-deleteRowBtn",
                 "action", getDeleteAction.apply(row),
                 "tooltip", deleteRowTooltip);
@@ -345,7 +345,7 @@ public class DataGrid<TRow> {
     private @NotNull EscapedHtml renderCell(TRow row, DataGridColumn<TRow> column) {
         Object displayValue = getDisplayValue(row, column);
         return html("""
-                <div id="${cellID}" class="data-grid-cell">${value}</div>""",
+                <div id="${cellID}" class="data-grid-cell" role="gridcell">${value}</div>""",
                 "cellID", getRowID.apply(row) + "-" + column.getName(),
                 "value", displayValue);
     }

@@ -282,6 +282,8 @@ input.loading { opacity: 0; }
     border-right: 1px solid var(--clr-border-dim);
     z-index: 1;
     justify-content: center;
+    color: var(--clr-text-faint);
+    font-size: var(--fs-lg);
 
     button.btn-no-bg {
         width: 100%;
@@ -543,9 +545,7 @@ input.loading { opacity: 0; }
 }
 
 /* Screens */
-.trades-screen,
-.positions-screen,
-#securities-screen {
+[role="main"] {
     display: flex;
     flex-direction: column;
     overflow: hidden;

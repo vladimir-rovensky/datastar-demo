@@ -12,13 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static com.bookie.infra.Util.sleep;
 
@@ -27,13 +21,16 @@ public class TradeRepository {
 
     private static final int TRADE_COUNT = 1000;
 
-    private Map<Long, Trade> trades;
     private long nextId = 1001;
+    private final TradeDAO dao;
     private final EventBus eventBus;
     private final BondRepository bondRepository;
     private final ReferenceDataRepository referenceDataRepository;
 
-    public TradeRepository(BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, EventBus eventBus) {
+    private boolean generateFakeData = true;
+
+    public TradeRepository(TradeDAO dao, BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, EventBus eventBus) {
+        this.dao = dao;
         this.eventBus = eventBus;
         this.bondRepository = bondRepository;
         this.referenceDataRepository = referenceDataRepository;
@@ -45,32 +42,30 @@ public class TradeRepository {
     }
 
     public synchronized List<Trade> getAllTrades() {
-        if (trades == null) {
-            return Collections.emptyList();
-        }
-
-        return new ArrayList<>(trades.values());
+        return dao.findAll();
     }
 
     public synchronized Trade findById(Long id) {
-        return trades.get(id);
+        return dao.findById(id);
     }
 
     public synchronized void deleteTrade(Long id) {
-        Trade deletedTrade = trades.remove(id);
+        Trade deletedTrade = dao.delete(id);
         if (deletedTrade == null) {
             return;
         }
+
         eventBus.publish(new TradeDeletedEvent(deletedTrade));
     }
 
     public synchronized Trade modifyTrade(Trade trade) {
-        Trade originalTrade = trades.get(trade.getId());
+        Trade originalTrade = dao.findById(trade.getId());
         if (originalTrade == null) {
             return null;
         }
+
         trade.setExecutionTime(new Date());
-        trades.put(trade.getId(), trade);
+        dao.save(trade);
         eventBus.publish(new TradeModifiedEvent(originalTrade, trade));
         return trade;
     }
@@ -81,11 +76,8 @@ public class TradeRepository {
         }
 
         trade.setExecutionTime(new Date());
-
-        trades.put(trade.getId(), trade);
-
+        dao.save(trade);
         eventBus.publish(new TradeBookedEvent(trade));
-
         return trade;
     }
 
@@ -136,7 +128,15 @@ public class TradeRepository {
         return null;
     }
 
-    private static List<Trade> generate(BondRepository bondRepo, ReferenceDataRepository refData) {
+    public void setGenerateFakeData(boolean generateFakeData) {
+        this.generateFakeData = generateFakeData;
+    }
+
+    private List<Trade> generate(BondRepository bondRepo, ReferenceDataRepository refData) {
+        if(!generateFakeData) {
+            return Collections.emptyList();
+        }
+
         List<Bond> bonds = bondRepo.getAllBonds();
         List<String> books = refData.getAllBooks();
         List<String> counterparties = refData.getAllCounterparties();
@@ -174,11 +174,9 @@ public class TradeRepository {
     private void loadTradesFromDB() {
         //Slow DB here.
         sleep(1000L);
-        Map<Long, Trade> loaded = new HashMap<>();
-        generate(bondRepository, referenceDataRepository).forEach(t -> loaded.put(t.getId(), t));
-        synchronized (this) {
-            this.trades = loaded;
-        }
-        eventBus.publish(new TradesLoadedEvent(new ArrayList<>(loaded.values())));
+        var trades = generate(bondRepository, referenceDataRepository);
+        this.dao.saveAll(trades);
+
+        eventBus.publish(new TradesLoadedEvent(new ArrayList<>(trades)));
     }
 }

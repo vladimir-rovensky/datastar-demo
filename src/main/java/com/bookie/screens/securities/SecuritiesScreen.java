@@ -138,7 +138,7 @@ public class SecuritiesScreen extends BaseScreen {
                 : secondaryToolbar;
 
         return html("""
-                <div id="securities-screen" class="fill-height">
+                <div id="securities-screen" role="main" class="fill-height">
                     ${styles}
                     ${topBar}
                     ${body}

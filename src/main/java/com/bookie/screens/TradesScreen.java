@@ -56,7 +56,6 @@ public class TradesScreen extends BaseScreen {
         this.bondRepository = bondRepository;
 
         this.trades = new ArrayList<>(tradeRepository.getAllTrades());
-        loadBondsFor(this.trades);
 
         this.tradeGrid = DataGrid.withColumns(
                         column("ID", Trade::getId),
@@ -82,6 +81,8 @@ public class TradesScreen extends BaseScreen {
                 .withColumnPicker()
                 .filterable()
                 .withUpdateChannel(this::getChannel);
+
+        loadBondsFor(this.trades);
 
         this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
@@ -161,7 +162,7 @@ public class TradesScreen extends BaseScreen {
         var grid = this.tradeGrid.withRows(this.trades.reversed()).render();
 
         return html("""
-                    <div id="trades-screen" class="trades-screen fill-height">
+                    <div id="trades-screen" role="main" class="fill-height">
                     ${grid}
                     </div>
                 """,

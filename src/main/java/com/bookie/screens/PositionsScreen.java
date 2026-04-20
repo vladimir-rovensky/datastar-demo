@@ -101,6 +101,7 @@ public class PositionsScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse initialRender(ServerRequest request) {
+        positionGrid.handleInitialRender();
         return handleInitialRender(request, this::render);
     }
 

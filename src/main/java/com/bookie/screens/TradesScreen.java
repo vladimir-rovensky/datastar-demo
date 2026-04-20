@@ -123,6 +123,7 @@ public class TradesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse initialRender(ServerRequest request) {
+        tradeGrid.handleInitialRender();
         return handleInitialRender(request, this::render);
     }
 

@@ -18,6 +18,11 @@ public class VirtualScrollManager {
         this.viewportHeight = viewportHeight;
     }
 
+    public void reset() {
+        this.scrollTop = 0;
+        this.viewportHeight = 0;
+    }
+
     public int[] computeWindow(int totalRows) {
         if (viewportHeight == 0) {
             return new int[]{0, Math.min(DEFAULT_INITIAL_WINDOW, totalRows)};

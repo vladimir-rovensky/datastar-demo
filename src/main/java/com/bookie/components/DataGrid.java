@@ -231,16 +231,16 @@ public class DataGrid<TRow> {
         if (endpoint == null) {
             return EscapedHtml.blank();
         }
+
         return html("""
                 <script>
                 (function() {
-                    var scrollBody = document.currentScript.parentElement;
-                    var scrollContainer = scrollBody.parentElement;
+                    let scrollBody = document.currentScript.parentElement;
+                    let scrollContainer = scrollBody.parentElement;
                     if (scrollContainer.resizeObserverInitialized) return;
                     scrollContainer.resizeObserverInitialized = true;
-                    new ResizeObserver(function() {
-                        scrollContainer.dispatchEvent(new CustomEvent('data-grid-viewport-resize'));
-                    }).observe(scrollContainer);
+                    new ResizeObserver(() => { scrollContainer.dispatchEvent(new CustomEvent('data-grid-viewport-resize')); })
+                        .observe(scrollContainer);
                 })();
                 </script>""");
     }
@@ -477,6 +477,11 @@ public class DataGrid<TRow> {
         }
 
         updateChannel.updateFragment(this.render());
+    }
+
+    public DataGrid<TRow> handleInitialRender() {
+        virtualScrollManager.reset();
+        return this;
     }
 
     public List<DataGridColumn<TRow>> getColumns() {

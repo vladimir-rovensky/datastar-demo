@@ -72,6 +72,7 @@ public class TradesScreen extends BaseScreen {
                         column("Trade Date", Trade::getTradeDate),
                         column("Settle Date", Trade::getSettleDate))
                 .columns(CommonColumns.bondColumns(t -> getBond(t.getCusip())))
+                .withDefaultSort("id", DataGrid.SortDirection.Descending)
                 .withRowID(r -> "trade-" + r.getId())
                 .onRowDoubleClick(t -> html("@post('/trades/modify/${id}')", "id", t.getId()))
                 .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
@@ -159,7 +160,7 @@ public class TradesScreen extends BaseScreen {
 
     @Override
     protected synchronized EscapedHtml getContent() {
-        var grid = this.tradeGrid.withRows(this.trades.reversed()).render();
+        var grid = this.tradeGrid.withRows(this.trades).render();
 
         return html("""
                     <div id="trades-screen" role="main" class="fill-height">

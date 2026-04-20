@@ -563,4 +563,10 @@ public class DataGrid<TRow> {
         return this;
     }
 
+    public DataGrid<TRow> withDefaultSort(String sortColumnName, SortDirection direction) {
+        this.sortColumnName = sortColumnName;
+        this.sortDirection = direction;
+        return this;
+    }
+
 }

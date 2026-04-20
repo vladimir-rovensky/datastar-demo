@@ -18,7 +18,6 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +59,7 @@ public class PositionsScreen extends BaseScreen {
                         column("Last Activity", Position::getLastActivity)
                                 .withFormat(Format::dateTime))
                 .columns(CommonColumns.bondColumns(p -> getBond(p.getCusip())))
+                .withDefaultSort("last_activity", DataGrid.SortDirection.Descending)
                 .withRowID(p -> p.getCusip() + "-" + p.getBook())
                 .withStripedRows()
                 .withEndpoint("/positions/grid")
@@ -118,7 +118,6 @@ public class PositionsScreen extends BaseScreen {
 
     private synchronized void onPositionsLoaded(PositionsLoadedEvent event) {
         this.positions = new ArrayList<>(event.positions());
-        this.positions.sort(Comparator.comparing(Position::getLastActivity).reversed());
         loadBondsFor(this.positions);
         this.triggerUpdate();
     }
@@ -127,7 +126,6 @@ public class PositionsScreen extends BaseScreen {
         Position changedPosition = event.position();
         this.positions.removeIf(p -> p.getKey().equals(changedPosition.getKey()));
         this.positions.add(changedPosition);
-        this.positions.sort(Comparator.comparing(Position::getLastActivity).reversed());
         loadBondsFor(List.of(changedPosition));
         this.triggerUpdate();
     }

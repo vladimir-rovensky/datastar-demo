@@ -45,22 +45,6 @@ public class SecuritiesScreen extends BaseScreen {
     private boolean isLoading = false;
     private boolean isModifiedBySomeoneElse = false;
 
-    private boolean isEditing() { return editingBond != null; }
-
-    private Bond getActiveBond() { return isEditing() ? editingBond : currentBond; }
-
-    public SecuritiesScreen(BondRepository bondRepository, EventBus eventBus) {
-        super("Securities");
-        this.bondRepository = bondRepository;
-        this.currentSection = BondSection.GENERAL;
-        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
-    }
-
-    @Override
-    public void dispose() {
-        this.eventSubscriptions.reversed().forEach(Runnable::run);
-    }
-
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
                 .GET("", _ -> ServerResponse.temporaryRedirect(
@@ -87,6 +71,22 @@ public class SecuritiesScreen extends BaseScreen {
                 .DELETE("sinkingFundSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteSinkingFundEntry(request))
                 .POST("input/{field}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleInput(request))
                 .build();
+    }
+
+    private boolean isEditing() { return editingBond != null; }
+
+    private Bond getActiveBond() { return isEditing() ? editingBond : currentBond; }
+
+    public SecuritiesScreen(BondRepository bondRepository, EventBus eventBus) {
+        super("Securities");
+        this.bondRepository = bondRepository;
+        this.currentSection = BondSection.GENERAL;
+        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
+    }
+
+    @Override
+    public void dispose() {
+        this.eventSubscriptions.reversed().forEach(Runnable::run);
     }
 
     public synchronized ServerResponse initialRender(ServerRequest request) {

@@ -47,6 +47,26 @@ public class TradesScreen extends BaseScreen {
 
     public static final String RoutePrefix = "/trades";
 
+    public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
+        return RouterFunctions.route()
+                .GET("", request -> sessionRegistry
+                        .getOrCreateSession(TradesScreen.class, request)
+                        .getScreen(TradesScreen.class)
+                        .initialRender(request))
+                .POST("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
+                .POST("modify/{id}", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .openModifyTicket(request))
+                .GET("delete/{id}", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .openDeleteConfirmation(request))
+                .POST("delete/{id}", request -> sessionRegistry
+                        .getScreen(request, TradesScreen.class)
+                        .deleteTradeById(request))
+                .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, TradesScreen.class).tradeGrid))
+                .build();
+    }
+
     public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
                         BondRepository bondRepository, EventBus eventBus) {
         super("Trades");
@@ -95,26 +115,6 @@ public class TradesScreen extends BaseScreen {
     @Override
     public void dispose() {
         this.eventSubscriptions.reversed().forEach(Runnable::run);
-    }
-
-    public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
-        return RouterFunctions.route()
-                .GET("", request -> sessionRegistry
-                        .getOrCreateSession(TradesScreen.class, request)
-                        .getScreen(TradesScreen.class)
-                        .initialRender(request))
-                .POST("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
-                .POST("modify/{id}", request -> sessionRegistry
-                        .getScreen(request, TradesScreen.class)
-                        .openModifyTicket(request))
-                .GET("delete/{id}", request -> sessionRegistry
-                        .getScreen(request, TradesScreen.class)
-                        .openDeleteConfirmation(request))
-                .POST("delete/{id}", request -> sessionRegistry
-                        .getScreen(request, TradesScreen.class)
-                        .deleteTradeById(request))
-                .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, TradesScreen.class).tradeGrid))
-                .build();
     }
 
     @Override

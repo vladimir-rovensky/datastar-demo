@@ -42,6 +42,17 @@ public class PositionsScreen extends BaseScreen {
 
     public static final String RoutePrefix = "/positions";
 
+    public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
+        return RouterFunctions.route()
+                .GET("", request -> sessionRegistry
+                        .getOrCreateSession(PositionsScreen.class, request)
+                        .getScreen(PositionsScreen.class)
+                        .initialRender(request))
+                .POST("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
+                .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, PositionsScreen.class).positionGrid))
+                .build();
+    }
+
     public PositionsScreen(PositionService positionService, BondRepository bondRepository, EventBus eventBus) {
         super("Positions");
 
@@ -82,17 +93,6 @@ public class PositionsScreen extends BaseScreen {
     @Override
     public void dispose() {
         this.eventSubscriptions.reversed().forEach(Runnable::run);
-    }
-
-    public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
-        return RouterFunctions.route()
-                .GET("", request -> sessionRegistry
-                        .getOrCreateSession(PositionsScreen.class, request)
-                        .getScreen(PositionsScreen.class)
-                        .initialRender(request))
-                .POST("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
-                .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, PositionsScreen.class).positionGrid))
-                .build();
     }
 
     @Override

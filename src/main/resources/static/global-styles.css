@@ -582,3 +582,16 @@ input.loading { opacity: 0; }
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
+
+.health-indicator {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: var(--clr-text-faint);
+    align-self: center;
+    flex-shrink: 0;
+
+    &.ok    { background-color: var(--clr-success-border); }
+    &.warn  { background-color: var(--clr-warning-border); }
+    &.error { background-color: var(--clr-error); }
+}

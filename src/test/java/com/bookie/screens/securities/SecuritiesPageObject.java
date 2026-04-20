@@ -10,15 +10,17 @@ import java.time.LocalDate;
 
 public class SecuritiesPageObject {
     private final Page page;
+    private final HealthIndicatorHelper healthIndicator;
 
-    public SecuritiesPageObject(Page page) {
+    public SecuritiesPageObject(Page page, HealthIndicatorHelper healthIndicator) {
         this.page = page;
+        this.healthIndicator = healthIndicator;
     }
 
     public SecuritiesPageObject loadCusip(String cusip) {
         page.getByPlaceholder("CUSIP").fill(cusip);
         ButtonHelper.getByLabel(getToolbar(), "Load").click();
-        page.waitForLoadState();
+        healthIndicator.waitUntilHealthy();
         return this;
     }
 
@@ -29,7 +31,7 @@ public class SecuritiesPageObject {
 
     public SecuritiesPageObject switchToRedemption() {
         LinkHelper.getByLabel(getToolbar(), "Redemption").click();
-        page.waitForLoadState();
+        healthIndicator.waitUntilHealthy();
         return this;
     }
 

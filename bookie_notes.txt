@@ -6,6 +6,7 @@ Open
 * Update channel needs retry: always, otherwise doesn't work
 * Including all signals when fetching feels wierd, every get gets all of them serialized
 * Attributes only processed if different - gotcha with Cancel
+* v1.0 bug with number-input binding (Redemption -> keep refresing while changing Issue Size)
 
 Solved
 * Code reuse - everything is on the server (e.g. validation)

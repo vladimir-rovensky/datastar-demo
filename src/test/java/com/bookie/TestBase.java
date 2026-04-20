@@ -129,23 +129,33 @@ public abstract class TestBase {
 
     protected TradesScreenPageObject switchToTrades() {
         getSectionLink("Trades").click();
-        page.navigate(baseUrl() + "/trades");
+        waitForUpdatesToConnect();
         return new TradesScreenPageObject(page);
     }
 
     protected PositionsScreenPageObject switchToPositions() {
         getSectionLink("Positions").click();
+        waitForUpdatesToConnect();
         return new PositionsScreenPageObject(page);
     }
 
     protected SecuritiesPageObject switchToSecurities() {
         getSectionLink("Securities").click();
-        return new SecuritiesPageObject(page);
+        waitForUpdatesToConnect();
+        return new SecuritiesPageObject(page, getHealthIndicator());
+    }
+
+    private void waitForUpdatesToConnect() {
+        getHealthIndicator().waitUntilHealthy();
     }
 
     @NonNull
     private LinkHelper getSectionLink(String Trades) {
         return LinkHelper.getByLabel(getMainToolbar(), Trades);
+    }
+
+    private HealthIndicatorHelper getHealthIndicator() {
+        return new HealthIndicatorHelper(getMainToolbar());
     }
 
     private Locator getMainToolbar() {

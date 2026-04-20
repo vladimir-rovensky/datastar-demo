@@ -82,17 +82,29 @@ public class Shell {
                         history.replaceState(null, '', _tabUrl);
                     </script>
 
-                    <script type="module" src="/datastar1.0.0.js"></script>
+                    <script type="module" src="/datastar1.0.0.RC8.js"></script>
                     <script type="module" src="/number-input.js"></script>
                 </head>
 
-                <body ${updateRequest}>
+                <body   data-signals:_update-status="'pending'"
+                        data-on:datastar-fetch="
+                            if(evt.detail.el === document.body) {
+                                switch(evt.detail.type) {
+                                    case 'started': $_updateStatus = 'ok'; break;
+                                    case 'error': $_updateStatus = 'error'; break;
+                                    case 'retrying': $_updateStatus = 'warn'; break;
+                                    case 'retries-failed': $_updateStatus = 'error'; break;
+                                }
+                            }"
+                        ${updateRequest}>
 
                     <div class="toolbar" role="toolbar" aria-label="Main Sections">
                         ${toolbarContent}
                         <div class="toolbar-separator"></div>
                         ${nav}
                         <span class="toolbar-title">${title}</span>
+                        <div class="toolbar-separator"></div>
+                        ${healthIndicator}
                     </div>
 
                     ${content}
@@ -108,6 +120,7 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
+                "healthIndicator", getHealthIndicator(),
                 "prerenderURLs", prerenderURLs,
                 "updateRequest", getUpdateRequestAttribute(),
                 "nav", nav,
@@ -123,5 +136,14 @@ public class Shell {
         return html("""
                 data-init="@post('${url}', {openWhenHidden: true, retry: 'always'})"
         """, "url", this.updateURL);
+    }
+
+    private EscapedHtml getHealthIndicator() {
+        return html("""
+            <span class="health-indicator" role="meter" aria-label="Connection Health"
+                  data-tooltip="Connecting"
+                  data-attr:data-tooltip="$_updateStatus === 'ok' ? 'Connected' : $_updateStatus === 'warn' ? 'Reconnecting' : $_updateStatus === 'error' ? 'Connection Error' : 'Connecting'"
+                  data-class="{ok: $_updateStatus === 'ok', warn: $_updateStatus === 'warn', error: $_updateStatus === 'error'}">
+            </span>""");
     }
 }

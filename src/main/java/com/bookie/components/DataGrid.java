@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 public class DataGrid<TRow> {
 
     private static final AtomicInteger idCounter = new AtomicInteger(0);
+    public static final int ROW_HEIGHT_PX = 36;
 
     public enum SortDirection { Ascending, Descending }
 
@@ -51,6 +52,7 @@ public class DataGrid<TRow> {
     private final String id = "grid" + idCounter.getAndIncrement();
     private boolean filterable = false;
     private final Map<String, String> filters = new HashMap<>();
+    private final VirtualScrollManager virtualScrollManager = new VirtualScrollManager(ROW_HEIGHT_PX);
 
     private DataGrid(List<DataGridColumn<TRow>> columns) {
         this.columns = columns;
@@ -71,7 +73,8 @@ public class DataGrid<TRow> {
                 .POST("column-picker", request -> getGrid.apply(request).applyColumnPicker(request))
                 .DELETE("column-picker", request -> getGrid.apply(request).cancelColumnPicker())
                 .POST("sort/{columnName}", request -> getGrid.apply(request).applySort(request.pathVariable("columnName")))
-                .POST("filter", request -> getGrid.apply(request).applyFilter(request));
+                .POST("filter", request -> getGrid.apply(request).applyFilter(request))
+                .POST("viewport", request -> getGrid.apply(request).applyViewport(request));
     }
 
     public EscapedHtml render() {
@@ -94,30 +97,44 @@ public class DataGrid<TRow> {
 
         var displayRows = sortRows(filterRows(this.rows));
 
-        var bodyRows = displayRows.isEmpty()
-                ? html("""
-                        <p class="centered-message">${message}</p>""", "message", noRowsMessage)
-                : EscapedHtml.concat(displayRows, this::renderRow);
+        var bodyRows = buildBodyRows(displayRows);
         var columnTemplate = getColumnStyleTemplate();
 
         var stripedClass = stripedRows ? " striped-rows" : "";
+        var scrollHandler = endpoint != null
+                ? html("""
+                        data-on:scroll__debounce_150="@post('${endpoint}/viewport', {payload: {scrollTop: el.scrollTop, viewportHeight: el.clientHeight}})"
+                        """,
+                        "endpoint", endpoint)
+                : EscapedHtml.blank();
+        var resizeHandler = endpoint != null
+                ? html("""
+                        data-on:data-grid-viewport-resize__debounce_150="@post('${endpoint}/viewport', {payload: {scrollTop: el.scrollTop, viewportHeight: el.clientHeight}})"
+                        """,
+                        "endpoint", endpoint)
+                : EscapedHtml.blank();
+        var resizeScript = getResizeObserverScript();
 
         return html("""
                 <!--suppress CssInvalidFunction -->
-                <div id="${id}" class="data-grid fill-height${stripedClass}" role="grid" style="--cols: ${columnTemplate}">
+                <div id="${id}" class="data-grid fill-height${stripedClass}" role="grid" style="--cols: ${columnTemplate}" ${scrollHandler} ${resizeHandler}>
                     <div class="data-grid-header-wrapper">
                         <div class="data-grid-header">${actionHeader}${headers}</div>
                         ${filterRow}
                     </div>
-                    <div class="data-grid-body fill-height">${rows}</div>
+                    <div id="${bodyId}" class="data-grid-body fill-height">${resizeScript}${rows}</div>
                 </div>
                 """,
                 "id", this.id,
+                "bodyId", this.id + "-body",
                 "stripedClass", stripedClass,
                 "columnTemplate", columnTemplate,
+                "scrollHandler", scrollHandler,
+                "resizeHandler", resizeHandler,
                 "actionHeader", actionHeaderCell,
                 "headers", headerCells,
                 "filterRow", filterRow,
+                "resizeScript", resizeScript,
                 "rows", bodyRows);
     }
 
@@ -199,6 +216,33 @@ public class DataGrid<TRow> {
 
         this.reRender();
         return ServerResponse.ok().build();
+    }
+
+    private ServerResponse applyViewport(ServerRequest request) throws Exception {
+        var body = request.body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        virtualScrollManager.updateViewport(
+                ((Number) body.getOrDefault("scrollTop", 0)).intValue(),
+                ((Number) body.getOrDefault("viewportHeight", 0)).intValue());
+        this.reRender();
+        return ServerResponse.ok().build();
+    }
+
+    private EscapedHtml getResizeObserverScript() {
+        if (endpoint == null) {
+            return EscapedHtml.blank();
+        }
+        return html("""
+                <script>
+                (function() {
+                    var scrollBody = document.currentScript.parentElement;
+                    var scrollContainer = scrollBody.parentElement;
+                    if (scrollContainer.resizeObserverInitialized) return;
+                    scrollContainer.resizeObserverInitialized = true;
+                    new ResizeObserver(function() {
+                        scrollContainer.dispatchEvent(new CustomEvent('data-grid-viewport-resize'));
+                    }).observe(scrollContainer);
+                })();
+                </script>""");
     }
 
     private EscapedHtml getFilterRow(List<DataGridColumn<TRow>> visibleColumns) {
@@ -304,7 +348,31 @@ public class DataGrid<TRow> {
                 <div class="data-grid-th data-grid-action-th" role="columnheader"></div>""");
     }
 
-    private EscapedHtml renderRow(TRow row) {
+    private EscapedHtml buildBodyRows(List<TRow> allRows) {
+        var window = endpoint == null
+                ? new int[]{0, allRows.size()}
+                : virtualScrollManager.computeWindow(allRows.size());
+        return buildBodyRows(allRows, window[0], window[1]);
+    }
+
+    private EscapedHtml buildBodyRows(List<TRow> allRows, int startIndex, int endIndex) {
+        if (allRows.isEmpty() || startIndex >= endIndex) {
+            return html("""
+                    <p class="centered-message">${message}</p>""", "message", noRowsMessage);
+        }
+
+        var rowIndex = new AtomicInteger(startIndex);
+        var rowsHtml = EscapedHtml.concat(allRows.subList(startIndex, endIndex), row -> renderRow(row, rowIndex.getAndIncrement()));
+
+        //noinspection CssInvalidPropertyValue
+        return html("""
+                <div id="${contentId}" class="data-grid-body-content" style="height: ${height}px">${rows}</div>""",
+                "contentId", this.id + "-body-content",
+                "height", allRows.size() * ROW_HEIGHT_PX,
+                "rows", rowsHtml);
+    }
+
+    private EscapedHtml renderRow(TRow row, int rowIndex) {
         var actionCell = hasActionColumn()
                 ? (getDeleteAction != null
                    ? renderDeleteCell(row)
@@ -324,9 +392,12 @@ public class DataGrid<TRow> {
         var id = getRowID.apply(row);
         var idSignalAttr = getIdSignalAttr(row, id);
 
+        //noinspection CssInvalidPropertyValue,CssInvalidFunction
         return html("""
-                <div class="data-grid-row" id="${rowID}" role="row" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
+                <div class="data-grid-row" id="${rowID}" role="row" style="position: absolute; top: 0; width: 100%; height: ${rowHeight}px; transform: translateY(${translateY}px)" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
                 "rowID", id,
+                "rowHeight", ROW_HEIGHT_PX,
+                "translateY", rowIndex * ROW_HEIGHT_PX,
                 "dblClick", dblClick,
                 "rowIDSignal", idSignalAttr,
                 "attrs", attrs,

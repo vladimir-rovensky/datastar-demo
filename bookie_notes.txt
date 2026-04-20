@@ -19,7 +19,6 @@ Solved
 * Possible DataStar bug in data-indicator? Fixed in v1
 
 TODO
-* Grid virtual scrolling
 * Boost links / fix mixing state between tabs
 * Simulated updates (perf stress test)
 * commands / ordering

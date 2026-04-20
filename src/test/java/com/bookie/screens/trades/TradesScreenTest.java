@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static com.bookie.infra.builders.BondBuilder.aBond;
+import static com.bookie.infra.builders.TradeBuilder.aTrade;
+
 public class TradesScreenTest extends TestBase {
 
     @Test

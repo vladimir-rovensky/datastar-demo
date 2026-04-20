@@ -97,6 +97,10 @@ public class DataGridHelper {
         }
     }
 
+    public void addRow() {
+        ButtonHelper.getByLabel(root, "+").click();
+    }
+
     public static class GridCellHelper {
         private final Locator root;
 
@@ -110,6 +114,14 @@ public class DataGridHelper {
 
         public void verifyText(Pattern regex) {
             assertThat(this.root).containsText(regex);
+        }
+
+        public DateInputHelper getDateInput() {
+            return new DateInputHelper(root.locator("input"));
+        }
+
+        public NumberInputHelper getNumberInput() {
+            return new NumberInputHelper(root.locator("number-input"));
         }
     }
 }

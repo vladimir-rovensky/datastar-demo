@@ -2,14 +2,15 @@ package com.bookie;
 
 import com.bookie.domain.entity.*;
 import com.bookie.domain.service.PositionService;
-import com.bookie.infra.JettyBootstrap;
-import com.bookie.infra.PlaywrightManager;
-import com.bookie.infra.SessionRegistry;
+import com.bookie.infra.*;
 import com.bookie.screens.positions.PositionsScreenPageObject;
+import com.bookie.screens.securities.SecuritiesPageObject;
 import com.bookie.screens.trades.TradesScreenPageObject;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.AriaRole;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -17,10 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.lang.NonNull;
 
-import java.math.BigDecimal;
 import java.net.http.HttpClient;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -28,7 +27,7 @@ public abstract class TestBase {
 
     private JettyBootstrap server;
     private BrowserContext browserContext;
-    protected Page page;
+    private Page page;
 
     @BeforeAll
     void startServer() throws Exception {
@@ -49,11 +48,16 @@ public abstract class TestBase {
         browserContext = PlaywrightManager.getBrowser().newContext();
         page = browserContext.newPage();
         page.setDefaultTimeout(5000);
+        page.navigate(baseUrl());
     }
 
     @AfterEach
     void closeBrowserContext() {
         browserContext.close();
+    }
+
+    protected void reloadPage() {
+        this.page.reload();
     }
 
     protected HttpClient getHttpClient() {
@@ -123,43 +127,28 @@ public abstract class TestBase {
         getBondDAO().saveAll(bonds);
     }
 
-    @NonNull
-    protected static Trade aTrade(Long id, String cusip, TradeDirection tradeDirection, int quantity) {
-        Trade trade = new Trade();
-        trade.setId(id);
-        trade.setCusip(cusip);
-        trade.setDirection(tradeDirection);
-        trade.setQuantity(BigDecimal.valueOf(quantity));
-        trade.setBook("CREDIT-NY");
-        trade.setCounterparty("GOLDMAN");
-        trade.setTradeDate(LocalDate.of(2026, 1, 15));
-        trade.setSettleDate(LocalDate.of(2026, 1, 17));
-        return trade;
-    }
-
-    @NonNull
-    protected static Bond aBond(String cusip) {
-        Bond bond = new Bond();
-        bond.setCusip(cusip);
-        bond.setDescription("US Treasury 2.5% 2030");
-        return bond;
-    }
-
     protected TradesScreenPageObject switchToTrades() {
+        getSectionLink("Trades").click();
         page.navigate(baseUrl() + "/trades");
         return new TradesScreenPageObject(page);
     }
 
     protected PositionsScreenPageObject switchToPositions() {
-        page.navigate(baseUrl() + "/positions");
+        getSectionLink("Positions").click();
         return new PositionsScreenPageObject(page);
     }
 
+    protected SecuritiesPageObject switchToSecurities() {
+        getSectionLink("Securities").click();
+        return new SecuritiesPageObject(page);
+    }
+
     @NonNull
-    protected static Position aPosition(String cusip, String book, int currentPosition) {
-        Position position = new Position(new PositionKey(cusip, book));
-        position.setCurrentPosition(BigDecimal.valueOf(currentPosition));
-        position.setSettledPosition(BigDecimal.valueOf(currentPosition));
-        return position;
+    private LinkHelper getSectionLink(String Trades) {
+        return LinkHelper.getByLabel(getMainToolbar(), Trades);
+    }
+
+    private Locator getMainToolbar() {
+        return page.getByRole(AriaRole.TOOLBAR, new Page.GetByRoleOptions().setName("Main Sections")).first();
     }
 }

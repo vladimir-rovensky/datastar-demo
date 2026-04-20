@@ -181,101 +181,101 @@ public class Bond implements Cloneable {
     }
 
     public int getVersion() { return version; }
-    public void setVersion(int version) { this.version = version; }
+    public Bond setVersion(int version) { this.version = version; return this; }
 
     public String getCusip() { return cusip; }
-    public void setCusip(String cusip) { this.cusip = cusip; }
+    public Bond setCusip(String cusip) { this.cusip = cusip; return this; }
 
     public String getIsin() { return isin; }
-    public void setIsin(String isin) { this.isin = isin; }
+    public Bond setIsin(String isin) { this.isin = isin; return this; }
 
     public String getTicker() { return ticker; }
-    public void setTicker(String ticker) { this.ticker = ticker; }
+    public Bond setTicker(String ticker) { this.ticker = ticker; return this; }
 
     public String getIssuerName() { return issuerName; }
-    public void setIssuerName(String issuerName) { this.issuerName = issuerName; }
+    public Bond setIssuerName(String issuerName) { this.issuerName = issuerName; return this; }
 
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public Bond setDescription(String description) { this.description = description; return this; }
 
     public BondType getBondType() { return bondType; }
-    public void setBondType(BondType bondType) { this.bondType = bondType; }
+    public Bond setBondType(BondType bondType) { this.bondType = bondType; return this; }
 
     public String getSector() { return sector; }
-    public void setSector(String sector) { this.sector = sector; }
+    public Bond setSector(String sector) { this.sector = sector; return this; }
 
     public String getCurrency() { return currency; }
-    public void setCurrency(String currency) { this.currency = currency; }
+    public Bond setCurrency(String currency) { this.currency = currency; return this; }
 
     public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
+    public Bond setCountry(String country) { this.country = country; return this; }
 
     public LocalDate getIssueDate() { return issueDate; }
-    public void setIssueDate(LocalDate issueDate) { this.issueDate = issueDate; }
+    public Bond setIssueDate(LocalDate issueDate) { this.issueDate = issueDate; return this; }
 
     public LocalDate getDatedDate() { return datedDate; }
-    public void setDatedDate(LocalDate datedDate) { this.datedDate = datedDate; }
+    public Bond setDatedDate(LocalDate datedDate) { this.datedDate = datedDate; return this; }
 
     public LocalDate getMaturityDate() { return maturityDate; }
-    public void setMaturityDate(LocalDate maturityDate) { this.maturityDate = maturityDate; }
+    public Bond setMaturityDate(LocalDate maturityDate) { this.maturityDate = maturityDate; return this; }
 
     public LocalDate getFirstCouponDate() { return firstCouponDate; }
-    public void setFirstCouponDate(LocalDate firstCouponDate) { this.firstCouponDate = firstCouponDate; }
+    public Bond setFirstCouponDate(LocalDate firstCouponDate) { this.firstCouponDate = firstCouponDate; return this; }
 
     public LocalDate getLastCouponDate() { return lastCouponDate; }
-    public void setLastCouponDate(LocalDate lastCouponDate) { this.lastCouponDate = lastCouponDate; }
+    public Bond setLastCouponDate(LocalDate lastCouponDate) { this.lastCouponDate = lastCouponDate; return this; }
 
     public BigDecimal getIssueSize() { return issueSize; }
-    public void setIssueSize(BigDecimal issueSize) { this.issueSize = issueSize; }
+    public Bond setIssueSize(BigDecimal issueSize) { this.issueSize = issueSize; return this; }
 
     public BigDecimal getFaceValue() { return faceValue; }
-    public void setFaceValue(BigDecimal faceValue) { this.faceValue = faceValue; }
+    public Bond setFaceValue(BigDecimal faceValue) { this.faceValue = faceValue; return this; }
 
     public BigDecimal getIssuePrice() { return issuePrice; }
-    public void setIssuePrice(BigDecimal issuePrice) { this.issuePrice = issuePrice; }
+    public Bond setIssuePrice(BigDecimal issuePrice) { this.issuePrice = issuePrice; return this; }
 
     public CouponType getCouponType() { return couponType; }
-    public void setCouponType(CouponType couponType) { this.couponType = couponType; }
+    public Bond setCouponType(CouponType couponType) { this.couponType = couponType; return this; }
 
     public BigDecimal getCoupon() { return coupon; }
-    public void setCoupon(BigDecimal coupon) { this.coupon = coupon; }
+    public Bond setCoupon(BigDecimal coupon) { this.coupon = coupon; return this; }
 
     public int getCouponFrequency() { return couponFrequency; }
-    public void setCouponFrequency(int couponFrequency) { this.couponFrequency = couponFrequency; }
+    public Bond setCouponFrequency(int couponFrequency) { this.couponFrequency = couponFrequency; return this; }
 
     public DayCountConvention getDayCount() { return dayCount; }
-    public void setDayCount(DayCountConvention dayCount) { this.dayCount = dayCount; }
+    public Bond setDayCount(DayCountConvention dayCount) { this.dayCount = dayCount; return this; }
 
     public String getFloatingIndex() { return floatingIndex; }
-    public void setFloatingIndex(String floatingIndex) { this.floatingIndex = floatingIndex; }
+    public Bond setFloatingIndex(String floatingIndex) { this.floatingIndex = floatingIndex; return this; }
 
     public BigDecimal getSpread() { return spread; }
-    public void setSpread(BigDecimal spread) { this.spread = spread; }
+    public Bond setSpread(BigDecimal spread) { this.spread = spread; return this; }
 
     public List<ResetEntry> getResetSchedule() { return resetSchedule; }
-    public void setResetSchedule(List<ResetEntry> resetSchedule) { this.resetSchedule = resetSchedule; }
+    public Bond setResetSchedule(List<ResetEntry> resetSchedule) { this.resetSchedule = resetSchedule; return this; }
 
     public List<CallEntry> getCallSchedule() { return callSchedule; }
-    public void setCallSchedule(List<CallEntry> callSchedule) { this.callSchedule = callSchedule; }
+    public Bond setCallSchedule(List<CallEntry> callSchedule) { this.callSchedule = callSchedule; return this; }
 
     public List<PutEntry> getPutSchedule() { return putSchedule; }
-    public void setPutSchedule(List<PutEntry> putSchedule) { this.putSchedule = putSchedule; }
+    public Bond setPutSchedule(List<PutEntry> putSchedule) { this.putSchedule = putSchedule; return this; }
 
     public List<SinkingFundEntry> getSinkingFundSchedule() { return sinkingFundSchedule; }
-    public void setSinkingFundSchedule(List<SinkingFundEntry> sinkingFundSchedule) { this.sinkingFundSchedule = sinkingFundSchedule; }
+    public Bond setSinkingFundSchedule(List<SinkingFundEntry> sinkingFundSchedule) { this.sinkingFundSchedule = sinkingFundSchedule; return this; }
 
     public String getMoodysRating() { return moodysRating; }
-    public void setMoodysRating(String moodysRating) { this.moodysRating = moodysRating; }
+    public Bond setMoodysRating(String moodysRating) { this.moodysRating = moodysRating; return this; }
 
     public String getSpRating() { return spRating; }
-    public void setSpRating(String spRating) { this.spRating = spRating; }
+    public Bond setSpRating(String spRating) { this.spRating = spRating; return this; }
 
     public String getFitchRating() { return fitchRating; }
-    public void setFitchRating(String fitchRating) { this.fitchRating = fitchRating; }
+    public Bond setFitchRating(String fitchRating) { this.fitchRating = fitchRating; return this; }
 
     public boolean isSecured() { return secured; }
-    public void setSecured(boolean secured) { this.secured = secured; }
+    public Bond setSecured(boolean secured) { this.secured = secured; return this; }
 
     public String getSeniorityLevel() { return seniorityLevel; }
-    public void setSeniorityLevel(String seniorityLevel) { this.seniorityLevel = seniorityLevel; }
+    public Bond setSeniorityLevel(String seniorityLevel) { this.seniorityLevel = seniorityLevel; return this; }
 }

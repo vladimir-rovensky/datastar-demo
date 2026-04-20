@@ -88,7 +88,7 @@ public class Shell {
 
                 <body ${updateRequest}>
 
-                    <div class="toolbar">
+                    <div class="toolbar" role="toolbar" aria-label="Main Sections">
                         ${toolbarContent}
                         <div class="toolbar-separator"></div>
                         ${nav}

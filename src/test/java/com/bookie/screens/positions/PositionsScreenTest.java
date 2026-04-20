@@ -4,6 +4,10 @@ import com.bookie.TestBase;
 import com.bookie.domain.entity.TradeDirection;
 import org.junit.jupiter.api.Test;
 
+import static com.bookie.infra.builders.BondBuilder.aBond;
+import static com.bookie.infra.builders.PositionBuilder.aPosition;
+import static com.bookie.infra.builders.TradeBuilder.aTrade;
+
 public class PositionsScreenTest extends TestBase {
 
     @Test

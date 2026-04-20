@@ -170,7 +170,7 @@ public class SecuritiesScreen extends BaseScreen {
         var editActions = renderEditActions();
 
         return html("""
-                <div class="toolbar secondary" data-signals="{cusipLookup: '${cusipValue}'}">
+                <div class="toolbar secondary" role="toolbar" aria-label="Subsections" data-signals="{cusipLookup: '${cusipValue}'}">
                     <div class="cusip-lookup">
                         <input type="text" data-bind="cusipLookup" placeholder="CUSIP" data-on:keydown.enter="${navigateToCusip}">
                         <button data-on:click="${navigateToCusip}">Load</button>

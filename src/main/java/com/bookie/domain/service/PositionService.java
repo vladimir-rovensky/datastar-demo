@@ -66,20 +66,28 @@ public class PositionService {
     }
 
     private synchronized void onTradeBooked(TradeBookedEvent event) {
-        addTradeToPosition(event.getTrade());
-        eventBus.publish(new PositionChangedEvent(getPosition(event.getTrade().getPositionKey())));
+        raisePositionChangedEvent(event.getTrade().getPositionKey(), () -> addTradeToPosition(event.getTrade()));
     }
 
     private synchronized void onTradeModified(TradeModifiedEvent event) {
-        removeTradeFromPosition(event.originalTrade());
-        addTradeToPosition(event.updatedTrade());
-        eventBus.publish(new PositionChangedEvent(getPosition(event.updatedTrade().getPositionKey())));
+        raisePositionChangedEvent(event.updatedTrade().getPositionKey(), () -> {
+            removeTradeFromPosition(event.originalTrade());
+            addTradeToPosition(event.updatedTrade());
+        });
     }
 
     private synchronized void onTradeDeleted(TradeDeletedEvent event) {
-        removeTradeFromPosition(event.deletedTrade());
-        getPosition(event.deletedTrade().getPositionKey()).setLastActivity(new Date());
-        eventBus.publish(new PositionChangedEvent(getPosition(event.deletedTrade().getPositionKey())));
+        raisePositionChangedEvent(event.deletedTrade().getPositionKey(), () -> {
+            removeTradeFromPosition(event.deletedTrade());
+            getPosition(event.deletedTrade().getPositionKey()).setLastActivity(new Date());
+        });
+    }
+
+    private void raisePositionChangedEvent(PositionKey key, Runnable change) {
+        var existing = getPosition(key);
+        var previousPosition = existing != null ? new Position(existing) : new Position(key);
+        change.run();
+        eventBus.publish(new PositionChangedEvent(previousPosition, getPosition(key)));
     }
 
     private void addTradeToPosition(Trade trade) {

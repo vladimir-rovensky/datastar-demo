@@ -129,6 +129,20 @@ public class PositionsScreen extends BaseScreen {
         this.positions.add(changedPosition);
         loadBondsFor(List.of(changedPosition));
         this.triggerUpdate();
+        animateCurrentPositionIfChanged(event);
+    }
+
+    private void animateCurrentPositionIfChanged(PositionChangedEvent event) {
+        var previousCurrentPosition = event.previousPosition().getCurrentPosition();
+        var newCurrentPosition = event.position().getCurrentPosition();
+
+        if (newCurrentPosition.compareTo(previousCurrentPosition) == 0) {
+            return;
+        }
+
+        var increased = newCurrentPosition.compareTo(previousCurrentPosition) > 0;
+        var keyframes = increased ? "[{color:'var(--clr-success-border)'},{color:'inherit'}]" : "[{color:'var(--clr-error)'},{color:'inherit'}]";
+        this.positionGrid.animateCell(event.position(), "Current Position", keyframes, 750);
     }
 
     private synchronized void onBondSaved(BondSavedEvent event) {

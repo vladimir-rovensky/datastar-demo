@@ -18,6 +18,14 @@ public class Position {
         this.settledPosition = BigDecimal.ZERO;
     }
 
+    public Position(Position source) {
+        this.cusip = source.cusip;
+        this.book = source.book;
+        this.currentPosition = source.currentPosition;
+        this.settledPosition = source.settledPosition;
+        this.lastActivity = source.lastActivity;
+    }
+
     public PositionKey getKey() { return new PositionKey(cusip, book); }
 
     public String getCusip() { return cusip; }

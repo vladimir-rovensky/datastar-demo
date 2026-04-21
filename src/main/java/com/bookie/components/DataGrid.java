@@ -419,7 +419,7 @@ public class DataGrid<TRow> {
         Object displayValue = getDisplayValue(row, column);
         return html("""
                 <div id="${cellID}" class="data-grid-cell" role="gridcell">${value}</div>""",
-                "cellID", getRowID.apply(row) + "-" + column.getName(),
+                "cellID", getCellId(row, column),
                 "value", displayValue);
     }
 
@@ -466,6 +466,16 @@ public class DataGrid<TRow> {
                 .findFirst();
     }
 
+    private Optional<DataGridColumn<TRow>> getColumnByHeader(String header) {
+        return columns.stream()
+                .filter(c -> Objects.equals(c.header, header))
+                .findFirst();
+    }
+
+    private String getCellId(TRow row, DataGridColumn<TRow> column) {
+        return getRowID.apply(row) + "-" + column.getName();
+    }
+
     private void clearSort() {
         sortColumnName = null;
         sortDirection = null;
@@ -484,6 +494,31 @@ public class DataGrid<TRow> {
     public DataGrid<TRow> handleInitialRender() {
         virtualScrollManager.reset();
         return this;
+    }
+
+    public void animateCell(TRow row, String columnHeader, String keyframes, int duration) {
+        var channel = getUpdateChannel.get();
+        if (channel == null) {
+            return;
+        }
+
+        var column = getColumnByHeader(columnHeader)
+                .orElseThrow(() -> new IllegalArgumentException("Column not found: " + columnHeader));
+
+        var cellId = getCellId(row, column);
+
+        channel.executeScript(html("""
+                (function() {
+                    var el = document.getElementById('${cellId}');
+                    if (el) {
+                        el?.anim?.cancel?.();
+                        el.anim = el.animate(${keyframes}, {duration: ${duration}});
+                    }
+                })();
+                """,
+                "cellId", html(cellId),
+                "keyframes", html(keyframes),
+                "duration", duration).toString());
     }
 
     public List<DataGridColumn<TRow>> getColumns() {

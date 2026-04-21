@@ -11,8 +11,7 @@ public class ButtonHelper {
     }
 
     public static ButtonHelper getByLabel(Locator root, String label) {
-        return new ButtonHelper(root.getByRole(AriaRole.BUTTON)
-                .filter(new Locator.FilterOptions().setHasText(label))
+        return new ButtonHelper(root.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(label))
                 .first());
     }
 

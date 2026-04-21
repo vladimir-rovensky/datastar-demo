@@ -2,6 +2,7 @@ package com.bookie.screens.trades;
 
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.Trade;
+import com.bookie.infra.ButtonHelper;
 import com.bookie.infra.DataGridHelper;
 import com.bookie.infra.Format;
 import com.bookie.infra.FormHelper;
@@ -25,16 +26,40 @@ public class TradesScreenPageObject {
     public void bookBuyTrade(Trade trade) {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("B")).click();
 
-        FormHelper form = new FormHelper(page.getByRole(AriaRole.DIALOG));
+        enterTradeInPopup(getPopup(), trade);
+
+        ButtonHelper.getByLabel(getPopup(), trade.getDirection().getLabel()).click();
+    }
+
+    public void modifyTrade(Trade trade) {
+        getGrid().getRowByCellValue("ID", trade.getId().toString()).dblclick();
+
+        enterTradeInPopup(getPopup(), trade);
+
+        ButtonHelper.getByLabel(getPopup(), "OK").click();
+    }
+
+    public void cancelTrade(Long tradeId) {
+        getGrid().getRowByCellValue("ID", tradeId.toString()).delete();
+
+        ButtonHelper.getByLabel(getPopup(), "Confirm").click();
+    }
+
+    public void verifyNoTradesDisplayed() {
+        getGrid().assertNoRows();
+    }
+
+    private Locator getPopup() {
+        return page.getByRole(AriaRole.DIALOG);
+    }
+
+    private void enterTradeInPopup(Locator popup, Trade trade) {
+        FormHelper form = new FormHelper(popup);
         form.getTextField("CUSIP").setValue(trade.getCusip());
         form.getSelectField("Book").setValue(trade.getBook());
         form.getSelectField("Counterparty").setValue(trade.getCounterparty());
         form.getNumericField("Quantity ($)").setValue(trade.getQuantity());
         form.getDateField("Settle Date").setValue(trade.getSettleDate());
-
-        page.getByRole(AriaRole.DIALOG)
-            .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(trade.getDirection().getLabel()))
-            .click();
     }
 
     public void verifyTradeDisplayed(int rowIndex, Trade trade, Bond bond) {

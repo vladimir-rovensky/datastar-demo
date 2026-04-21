@@ -30,6 +30,7 @@ public class TestAppConfig {
         sources.addFirst(new MapPropertySource("testProperties", Map.of(
             "bookie.version", "test",
             "bookie.cache.enabled", "false",
+            "bookie.open-when-hidden", "true",
             "bookie.session.timeout-seconds", "60"
         )));
         configurer.setPropertySources(sources);

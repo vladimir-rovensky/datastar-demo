@@ -71,6 +71,11 @@ public class DataGridHelper {
         return new GridRowHelper(row, this);
     }
 
+    public void assertNoRows() {
+        assertThat(this.root.getByRole(AriaRole.ROW)).hasCount(0);
+        assertThat(this.root).containsText("Nothing here...");
+    }
+
     public static class GridRowHelper {
         private final Locator root;
         private final DataGridHelper grid;
@@ -95,10 +100,18 @@ public class DataGridHelper {
                     .map(GridCellHelper::new)
                     .toList();
         }
+
+        public void dblclick() {
+            this.root.dblclick();
+        }
+
+        public void delete() {
+            ButtonHelper.getByLabel(this.root, "Delete Row").click();
+        }
     }
 
     public void addRow() {
-        ButtonHelper.getByLabel(root, "+").click();
+        ButtonHelper.getByLabel(this.root, "Add Row").click();
     }
 
     public static class GridCellHelper {

@@ -327,7 +327,7 @@ public class DataGrid<TRow> {
         if (addRowAction != null) {
             return html("""
                     <div class="data-grid-th data-grid-action-th" role="columnheader">
-                        <button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>+</button>
+                        <button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}' aria-label='Add Row'>+</button>
                     </div>""",
                     "action", addRowAction,
                     "tooltip", addRowTooltip);
@@ -407,7 +407,9 @@ public class DataGrid<TRow> {
 
     private EscapedHtml renderDeleteCell(TRow row) {
         return html("""
-                <div id="${cellID}" class="data-grid-cell data-grid-action-cell" role="gridcell"><button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}'>✕</button></div>""",
+                <div id="${cellID}" class="data-grid-cell data-grid-action-cell" role="gridcell">
+                    <button class="btn-no-bg" data-on:click="${action}" data-tooltip='${tooltip}' aria-label="Delete Row">✕</button>
+                </div>""",
                 "cellID", getRowID.apply(row) + "-deleteRowBtn",
                 "action", getDeleteAction.apply(row),
                 "tooltip", deleteRowTooltip);

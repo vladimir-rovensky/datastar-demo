@@ -11,6 +11,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.WaitUntilState;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,7 +41,7 @@ public abstract class TestBase {
     }
 
     @BeforeEach
-    void resetState() {
+    void setup() {
         getSessionRegistry().clearAll();
         getBondDAO().clear();
         getTradeDAO().clear();
@@ -48,7 +49,7 @@ public abstract class TestBase {
         browserContext = PlaywrightManager.getBrowser().newContext();
         page = browserContext.newPage();
         page.setDefaultTimeout(5000);
-        page.navigate(baseUrl());
+        navigateToBookie();
     }
 
     @AfterEach
@@ -69,6 +70,7 @@ public abstract class TestBase {
     protected void trace(Runnable test) {
         try {
             startTracing();
+            navigateToBookie();
             test.run();
         } finally {
             stopTracing();
@@ -160,5 +162,10 @@ public abstract class TestBase {
 
     private Locator getMainToolbar() {
         return page.getByRole(AriaRole.TOOLBAR, new Page.GetByRoleOptions().setName("Main Sections")).first();
+    }
+
+    private void navigateToBookie() {
+        page.navigate(baseUrl());
+        waitForUpdatesToConnect();
     }
 }

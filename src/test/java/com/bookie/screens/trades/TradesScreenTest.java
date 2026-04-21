@@ -6,7 +6,6 @@ import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static com.bookie.infra.builders.BondBuilder.aBond;
@@ -35,7 +34,6 @@ public class TradesScreenTest extends TestBase {
         Trade trade = aTrade(null, "912828ZT5", TradeDirection.BUY, 1_000_000);
         trade.setTradeDate(LocalDate.now());
         trade.setSettleDate(LocalDate.now().plusDays(2));
-        trade.setAccruedInterest(new BigDecimal(100_000));
 
         var page = switchToTrades();
 
@@ -43,4 +41,33 @@ public class TradesScreenTest extends TestBase {
 
         page.verifyTradeDisplayed(0, trade, bond);
     }
+
+    @Test
+    public void modifiesExistingTrade() {
+        Bond bond = aBond("912828ZT5");
+        Trade trade = aTrade(1L, "912828ZT5", TradeDirection.BUY, 1_000_000);
+
+        givenExistingBonds(bond);
+        givenExistingTrades(trade);
+
+        var page = switchToTrades();
+
+        trade.setDirection(TradeDirection.SELL);
+        page.modifyTrade(trade);
+
+        page.verifyTradeDisplayed(0, trade, bond);
+    }
+
+    @Test
+    public void cancelsTrade() {
+        givenExistingBonds(aBond("912828ZT5"));
+        givenExistingTrades(aTrade(1L, "912828ZT5", TradeDirection.BUY, 1_000_000));
+
+        var page = switchToTrades();
+
+        page.cancelTrade(1L);
+
+        page.verifyNoTradesDisplayed();
+    }
+
 }

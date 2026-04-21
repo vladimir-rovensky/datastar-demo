@@ -16,6 +16,7 @@ public class TradeBuilder {
         trade.setCusip(cusip);
         trade.setDirection(tradeDirection);
         trade.setQuantity(BigDecimal.valueOf(quantity));
+        trade.setAccruedInterest(BigDecimal.valueOf(quantity).multiply(BigDecimal.valueOf(0.1)));
         trade.setBook("CREDIT-NY");
         trade.setCounterparty("GOLDMAN");
         trade.setTradeDate(LocalDate.of(2026, 1, 15));

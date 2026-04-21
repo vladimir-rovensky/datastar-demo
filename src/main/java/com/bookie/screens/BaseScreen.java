@@ -19,6 +19,9 @@ public abstract class BaseScreen {
     @Value("${bookie.cache.enabled:true}")
     private boolean cacheEnabled;
 
+    @Value("${bookie.open-when-hidden:false}")
+    private boolean openWhenHidden;
+
     private AtomicReference<RouteInfo> routeInfo;
     private ClientChannel channel;
     private final String title;
@@ -53,6 +56,7 @@ public abstract class BaseScreen {
         return shell(info)
                 .withTitle(title)
                 .withUpdateURL(getUpdateURL())
+                .withOpenWhenHidden(openWhenHidden)
                 .withToolbar(getToolbarContent())
                 .withContent(getContent())
                 .render();

@@ -69,7 +69,7 @@ public class ClientChannel {
         forAllStreams(stream -> stream
                 .id(String.valueOf(this.eventIdCounter++))
                 .comment(comment)
-                .send());
+                .send(), true);
     }
 
     public synchronized ClientChannel executeScript(String script) {
@@ -133,11 +133,18 @@ public class ClientChannel {
     }
 
     private void forAllStreams(StreamAction action) {
+        forAllStreams(action, false);
+    }
+
+    private void forAllStreams(StreamAction action, boolean clearOnError) {
         for (ServerResponse.SseBuilder stream : List.copyOf(streams)) {
             try {
                 action.accept(stream);
             } catch (Exception e) {
                 logger.debug("Exception on channel {}", this.name, e);
+                if(clearOnError) {
+                    removeStream(stream);
+                }
             }
         }
     }

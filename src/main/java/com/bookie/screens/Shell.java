@@ -11,6 +11,7 @@ public class Shell {
     private RouteInfo routeInfo;
     private String title = "";
     private String updateURL;
+    private boolean openWhenHidden;
     private EscapedHtml content = EscapedHtml.blank();
     private EscapedHtml toolbarContent = EscapedHtml.blank();
 
@@ -37,6 +38,11 @@ public class Shell {
 
     public Shell withUpdateURL(String updateURL) {
         this.updateURL = updateURL;
+        return this;
+    }
+
+    public Shell withOpenWhenHidden(boolean openWhenHidden) {
+        this.openWhenHidden = openWhenHidden;
         return this;
     }
 
@@ -118,8 +124,8 @@ public class Shell {
         }
 
         return html("""
-                data-init="@post('${url}', {openWhenHidden: true, retry: 'always'})"
-        """, "url", this.updateURL);
+                data-init="@post('${url}', {openWhenHidden: ${openWhenHidden}, retry: 'always'})"
+        """, "url", this.updateURL, "openWhenHidden", this.openWhenHidden);
     }
 
     private EscapedHtml getHealthIndicator() {

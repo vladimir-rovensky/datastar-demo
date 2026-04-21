@@ -45,18 +45,15 @@ public class MainNav implements Renderable {
     }
 
     public Link getTradesLink() {
-        var tabId = routeInfo.tabId().localID();
-        return link("trades", "Trades", tabId).withActive("Trades".equals(activeTitle));
+        return link("trades", "Trades").withActive("Trades".equals(activeTitle));
     }
 
     public Link getPositionsLink() {
-        var tabId = routeInfo.tabId().localID();
-        return link("positions", "Positions", tabId).withActive("Positions".equals(activeTitle));
+        return link("positions", "Positions").withActive("Positions".equals(activeTitle));
     }
 
     public Link getSecuritiesLink() {
-        var tabId = routeInfo.tabId().localID();
         var securitiesPath = "securities/" + routeInfo.activeCusip() + "/" + routeInfo.activeSection();
-        return link(securitiesPath, "Securities", tabId).withActive("Securities".equals(activeTitle));
+        return link(securitiesPath, "Securities").withActive("Securities".equals(activeTitle));
     }
 }

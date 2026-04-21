@@ -2,9 +2,6 @@ package com.bookie.screens;
 
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.RouteInfo;
-import com.bookie.infra.Util;
-
-import java.util.List;
 
 import static com.bookie.components.MainNav.mainNav;
 import static com.bookie.infra.TemplatingEngine.html;
@@ -49,8 +46,6 @@ public class Shell {
                 .withRouteInfo(routeInfo)
                 .withActiveTitle(title);
 
-        var prerenderURLs = html(Util.toJson(List.of(nav.getTradesLink().getHref(), nav.getPositionsLink().getHref(), nav.getSecuritiesLink().getHref())));
-
         return html("""
                 <!DOCTYPE html>
                 <html lang="en-US">
@@ -59,14 +54,6 @@ public class Shell {
                     <title>Bookie - ${title}</title>
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
-
-                    <script type="speculationrules" data-ignore-morph>
-                      {
-                        "prerender": [{
-                          "urls": ${prerenderURLs}
-                        }]
-                      }
-                    </script>
 
                     <script>
                         //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this.        \s
@@ -77,9 +64,6 @@ public class Shell {
                             }
                             return _fetch(url, opts);
                         };
-                        const _tabUrl = new URL(window.location);
-                        _tabUrl.searchParams.set('tabID', '${tabId}');
-                        history.replaceState(null, '', _tabUrl);
                     </script>
 
                     <script type="module" src="/datastar1.0.0.RC8.js"></script>
@@ -87,6 +71,7 @@ public class Shell {
                 </head>
 
                 <body   data-signals:_update-status="'pending'"
+                        data-on:popstate__window="@get(window.location.pathname + window.location.search, {filterSignals: {exclude: /.*/}})"
                         data-on:datastar-fetch="
                             if(evt.detail.el === document.body) {
                                 switch(evt.detail.type) {
@@ -121,7 +106,6 @@ public class Shell {
                 "title", title,
                 "tabId", tabId,
                 "healthIndicator", getHealthIndicator(),
-                "prerenderURLs", prerenderURLs,
                 "updateRequest", getUpdateRequestAttribute(),
                 "nav", nav,
                 "content", content,

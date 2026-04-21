@@ -19,6 +19,5 @@ Solved
 * Possible DataStar bug in data-indicator? Fixed in v1
 
 TODO
-* Boost links / fix mixing state between tabs
 * Simulated updates (perf stress test)
 * commands / ordering

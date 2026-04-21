@@ -80,7 +80,7 @@ public class TradesScreen extends BaseScreen {
         this.tradeGrid = DataGrid.withColumns(
                         column("ID", Trade::getId),
                         column("CUSIP", Trade::getCusip)
-                                .withRenderer(t -> link("securities/" + t.getCusip() + "/general", t.getCusip(), getRouteInfo().tabId().localID())),
+                                .withRenderer(t -> link("securities/" + t.getCusip() + "/general", t.getCusip())),
                         column("Description", t -> getBond(t.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Book", Trade::getBook),
                         column("Type", Trade::getDirection),

@@ -34,16 +34,17 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized <T extends BaseScreen> ClientSession getOrCreateSession(Class<T> screenType, ServerRequest request) {
-        if (request.param("tabID").isPresent()) {
-            var tabID = TabID.forExisting(request);
-            var existing = sessions.get(tabID);
-            if (existing != null) {
-                existing.touch();
-                if (existing.getScreen(screenType) == null) {
-                    addScreenToSession(existing, screenType);
-                }
-                return existing;
+        var tabID = TabID.forExisting(request);
+        var existing = sessions.get(tabID);
+
+        if (existing != null) {
+            existing.touch();
+
+            if (existing.getScreen(screenType) == null) {
+                addScreenToSession(existing, screenType);
             }
+
+            return existing;
         }
 
         return createSession(request, screenType);

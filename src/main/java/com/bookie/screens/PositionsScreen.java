@@ -60,7 +60,7 @@ public class PositionsScreen extends BaseScreen {
 
         this.positionGrid = DataGrid.withColumns(
                         column("CUSIP", Position::getCusip)
-                                .withRenderer(p -> link("securities/" + p.getCusip() + "/general", p.getCusip(), getRouteInfo().tabId().localID())),
+                                .withRenderer(p -> link("securities/" + p.getCusip() + "/general", p.getCusip())),
                         column("Book", Position::getBook),
                         column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Current Position", Position::getCurrentPosition)

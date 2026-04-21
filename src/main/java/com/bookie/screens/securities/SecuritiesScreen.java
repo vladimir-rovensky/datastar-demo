@@ -160,13 +160,12 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     private EscapedHtml renderSecondaryToolbar() {
-        var tabId = getRouteInfo().tabId().localID();
         var currentCusip = getCurrentCusip();
         var cusipValue = NO_CUSIP.equals(currentCusip) ? "" : currentCusip;
-        var generalLink = link("securities/" + currentCusip + "/" + BondSection.GENERAL.getPath(), BondSection.GENERAL.getLabel(), tabId).withActive(currentSection == BondSection.GENERAL);
-        var incomeLink = link("securities/" + currentCusip + "/" + BondSection.INCOME.getPath(), BondSection.INCOME.getLabel(), tabId).withActive(currentSection == BondSection.INCOME);
-        var redemptionLink = link("securities/" + currentCusip + "/" + BondSection.REDEMPTION.getPath(), BondSection.REDEMPTION.getLabel(), tabId).withActive(currentSection == BondSection.REDEMPTION);
-        var navigateToCusip = "if($cusipLookup.trim()) window.location.href='/securities/'+$cusipLookup.trim()+'/" + currentSection.getPath() + "?tabID=" + tabId + "'";
+        var generalLink = link("securities/" + currentCusip + "/" + BondSection.GENERAL.getPath(), BondSection.GENERAL.getLabel()).withActive(currentSection == BondSection.GENERAL);
+        var incomeLink = link("securities/" + currentCusip + "/" + BondSection.INCOME.getPath(), BondSection.INCOME.getLabel()).withActive(currentSection == BondSection.INCOME);
+        var redemptionLink = link("securities/" + currentCusip + "/" + BondSection.REDEMPTION.getPath(), BondSection.REDEMPTION.getLabel()).withActive(currentSection == BondSection.REDEMPTION);
+        var navigateToCusip = "if($cusipLookup.trim()) window.location.href='/securities/'+$cusipLookup.trim()+'/" + currentSection.getPath() + "'";
         var editActions = renderEditActions();
 
         return html("""

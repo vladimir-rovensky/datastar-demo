@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Bookie" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+  <configuration default="false" name="BookieDev" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="dev" />
     <additionalParameters>
       <param>

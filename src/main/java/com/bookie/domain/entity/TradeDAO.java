@@ -7,6 +7,8 @@ public interface TradeDAO {
 
     List<Trade> findAll();
 
+    int getTotalCount();
+
     Trade findById(Long id);
 
     void saveAll(List<Trade> trades);

@@ -12,7 +12,6 @@ import com.bookie.infra.events.BondSavedEvent;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
-import com.bookie.infra.events.TradesLoadedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -40,7 +39,7 @@ public class TradesScreen extends BaseScreen {
     private final TradeTicketPopup tradeTicketPopup;
     private final BondRepository bondRepository;
 
-    private List<Trade> trades;
+    private List<Trade> trades = new ArrayList<>();
     private final Map<String, Bond> bondByCusip = new HashMap<>();
     private final List<Runnable> eventSubscriptions = new ArrayList<>();
     private final DataGrid<Trade> tradeGrid;
@@ -75,7 +74,12 @@ public class TradesScreen extends BaseScreen {
         this.tradeTicketPopup = tradeTicketPopup;
         this.bondRepository = bondRepository;
 
-        this.trades = new ArrayList<>(tradeRepository.getAllTrades());
+        this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
+        this.eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
+        this.eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
+
+        loadTrades(tradeRepository);
 
         this.tradeGrid = DataGrid.withColumns(
                         column("ID", Trade::getId),
@@ -104,12 +108,10 @@ public class TradesScreen extends BaseScreen {
                 .withUpdateChannel(this::getChannel);
 
         loadBondsFor(this.trades);
+    }
 
-        this.eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
-        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
+    private synchronized void loadTrades(TradeRepository tradeRepository) {
+        this.trades = new ArrayList<>(tradeRepository.getAllTrades());
     }
 
     @Override
@@ -171,15 +173,11 @@ public class TradesScreen extends BaseScreen {
                 "grid", grid);
     }
 
-    private synchronized void onTradesLoaded(TradesLoadedEvent event) {
-        this.trades = new ArrayList<>(event.getTrades());
-        loadBondsFor(this.trades);
-        triggerUpdate();
-    }
-
     private synchronized void onTradeBooked(TradeBookedEvent event) {
-        this.trades.add(event.getTrade());
-        loadBondsFor(List.of(event.getTrade()));
+        Trade bookedTrade = event.getTrade();
+        this.trades.removeIf(t -> t.getId().equals(bookedTrade.getId()));
+        this.trades.add(bookedTrade);
+        loadBondsFor(List.of(bookedTrade));
         triggerUpdate();
     }
 

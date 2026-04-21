@@ -19,6 +19,11 @@ public class FakeTradeDAO implements TradeDAO {
     }
 
     @Override
+    public int getTotalCount() {
+        return trades.size();
+    }
+
+    @Override
     public Trade findById(Long id) {
         return trades.get(id);
     }

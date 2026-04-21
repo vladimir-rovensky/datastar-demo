@@ -6,6 +6,7 @@ import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static com.bookie.infra.builders.BondBuilder.aBond;
@@ -16,7 +17,7 @@ public class TradesScreenTest extends TestBase {
     @Test
     public void tradeRowRendersWithCusipAndDescription() {
         Bond bond = aBond("912828ZT5");
-        Trade trade = aTrade(1L, "912828ZT5", TradeDirection.BUY, 1_000_000);
+        Trade trade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
 
         givenExistingBonds(bond);
         givenExistingTrades(trade);
@@ -31,13 +32,13 @@ public class TradesScreenTest extends TestBase {
         Bond bond = aBond("912828ZT5");
         givenExistingBonds(bond);
 
-        Trade trade = aTrade(null, "912828ZT5", TradeDirection.BUY, 1_000_000);
+        Trade trade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
         trade.setTradeDate(LocalDate.now());
         trade.setSettleDate(LocalDate.now().plusDays(2));
 
         var page = switchToTrades();
 
-        page.bookBuyTrade(trade);
+        page.bookTrade(trade);
 
         page.verifyTradeDisplayed(0, trade, bond);
     }
@@ -45,14 +46,15 @@ public class TradesScreenTest extends TestBase {
     @Test
     public void modifiesExistingTrade() {
         Bond bond = aBond("912828ZT5");
-        Trade trade = aTrade(1L, "912828ZT5", TradeDirection.BUY, 1_000_000);
+        Trade trade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
 
         givenExistingBonds(bond);
         givenExistingTrades(trade);
 
         var page = switchToTrades();
 
-        trade.setDirection(TradeDirection.SELL);
+        var modifiedTrade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
+        modifiedTrade.setQuantity(BigDecimal.valueOf(2_000_000));
         page.modifyTrade(trade);
 
         page.verifyTradeDisplayed(0, trade, bond);
@@ -61,11 +63,12 @@ public class TradesScreenTest extends TestBase {
     @Test
     public void cancelsTrade() {
         givenExistingBonds(aBond("912828ZT5"));
-        givenExistingTrades(aTrade(1L, "912828ZT5", TradeDirection.BUY, 1_000_000));
+        Trade trade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
+        givenExistingTrades(trade);
 
         var page = switchToTrades();
 
-        page.cancelTrade(1L);
+        page.cancelTrade(trade.getId());
 
         page.verifyNoTradesDisplayed();
     }

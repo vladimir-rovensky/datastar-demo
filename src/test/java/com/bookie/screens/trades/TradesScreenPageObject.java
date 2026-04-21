@@ -2,10 +2,10 @@ package com.bookie.screens.trades;
 
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.Trade;
+import com.bookie.domain.entity.TradeDirection;
 import com.bookie.infra.ButtonHelper;
 import com.bookie.infra.DataGridHelper;
 import com.bookie.infra.Format;
-import com.bookie.infra.FormHelper;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -23,20 +23,32 @@ public class TradesScreenPageObject {
         return DataGridHelper.find(getRoot());
     }
 
-    public void bookBuyTrade(Trade trade) {
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("B")).click();
+    public void bookTrade(Trade trade) {
+        bookTrade(trade, () -> {});
+    }
 
-        enterTradeInPopup(getPopup(), trade);
+    public TradesScreenPageObject bookTrade(Trade trade, Runnable beforeConfirm) {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(trade.getDirection() == TradeDirection.BUY ? "B" : "S")).click();
 
-        ButtonHelper.getByLabel(getPopup(), trade.getDirection().getLabel()).click();
+        var ticket = getTradeTicket()
+                .enterTrade(trade)
+                .waitForAccruedInterest();
+
+        beforeConfirm.run();
+
+        ticket.confirm(trade);
+
+        return this;
     }
 
     public void modifyTrade(Trade trade) {
         getGrid().getRowByCellValue("ID", trade.getId().toString()).dblclick();
 
-        enterTradeInPopup(getPopup(), trade);
+        getTradeTicket().enterTrade(trade).confirm(trade);
+    }
 
-        ButtonHelper.getByLabel(getPopup(), "OK").click();
+    public TradeTicketPageObject getTradeTicket() {
+        return new TradeTicketPageObject(getPopup());
     }
 
     public void cancelTrade(Long tradeId) {
@@ -51,15 +63,6 @@ public class TradesScreenPageObject {
 
     private Locator getPopup() {
         return page.getByRole(AriaRole.DIALOG);
-    }
-
-    private void enterTradeInPopup(Locator popup, Trade trade) {
-        FormHelper form = new FormHelper(popup);
-        form.getTextField("CUSIP").setValue(trade.getCusip());
-        form.getSelectField("Book").setValue(trade.getBook());
-        form.getSelectField("Counterparty").setValue(trade.getCounterparty());
-        form.getNumericField("Quantity ($)").setValue(trade.getQuantity());
-        form.getDateField("Settle Date").setValue(trade.getSettleDate());
     }
 
     public void verifyTradeDisplayed(int rowIndex, Trade trade, Bond bond) {

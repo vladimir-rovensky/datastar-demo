@@ -15,7 +15,7 @@ public class SecuritiesScreenTest extends TestBase {
     @Test
     public void editsSecurity() {
         givenExistingBonds(aBond("CSP1").setDescription("Old Description"));
-        givenExistingTrades(aTrade(1L, "CSP1", TradeDirection.BUY, 10_000));
+        givenExistingTrades(aTrade("CSP1", TradeDirection.BUY, 10_000));
 
         var screen = switchToSecurities();
         screen.loadCusip("CSP1")
@@ -26,7 +26,7 @@ public class SecuritiesScreenTest extends TestBase {
 
         switchToTrades()
                 .verifyTradeDisplayed(0,
-                        aTrade(1L, "CSP1", TradeDirection.BUY, 10_000),
+                        aTrade("CSP1", TradeDirection.BUY, 10_000),
                         aBond("CSP1").setDescription("New Description"));
     }
 

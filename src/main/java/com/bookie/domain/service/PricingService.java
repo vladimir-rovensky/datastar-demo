@@ -10,11 +10,17 @@ import static com.bookie.infra.Util.sleep;
 @Service
 public class PricingService {
 
-    private final java.util.concurrent.ExecutorService executor =
-            Executors.newVirtualThreadPerTaskExecutor();
+    private long calculationDuration = 1000L;
 
-    public BigDecimal calculateAccruedInterest(String cusip, BigDecimal quantity) {
-        sleep(1000);
+    public PricingService() {
+    }
+
+    public PricingService(long calculationDuration) {
+        this.calculationDuration = calculationDuration;
+    }
+
+    public BigDecimal calculateAccruedInterest(String _cusip, BigDecimal quantity) {
+        sleep(this.calculationDuration);
         return quantity.multiply(BigDecimal.valueOf(0.10));
     }
 }

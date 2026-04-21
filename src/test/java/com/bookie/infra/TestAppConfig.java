@@ -71,20 +71,23 @@ public class TestAppConfig {
 
     @Bean
     public PricingService pricingService() {
-        return new PricingService();
+        return new PricingService(5);
     }
 
     @Bean
     public TradeRepository tradeRepository(FakeTradeDAO fakeTradeDAO, BondRepository bondRepository,
-                                           ReferenceDataRepository referenceDataRepository, EventBus eventBus) {
-        TradeRepository tradeRepository = new TradeRepository(fakeTradeDAO, bondRepository, referenceDataRepository, eventBus);
+                                           ReferenceDataRepository referenceDataRepository, EventBus eventBus,
+                                           PositionService positionService) {
+
+        TradeRepository tradeRepository = new TradeRepository(fakeTradeDAO, bondRepository, referenceDataRepository, eventBus, positionService);
         tradeRepository.setGenerateFakeData(false);
+
         return tradeRepository;
     }
 
     @Bean
-    public PositionService positionService(TradeRepository tradeRepository, EventBus eventBus) {
-        return new PositionService(tradeRepository, eventBus);
+    public PositionService positionService(EventBus eventBus) {
+        return new PositionService(eventBus);
     }
 
     @Bean

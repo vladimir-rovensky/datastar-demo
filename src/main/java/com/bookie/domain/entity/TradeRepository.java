@@ -1,15 +1,14 @@
 package com.bookie.domain.entity;
 
+import com.bookie.domain.service.PositionService;
 import com.bookie.infra.EventBus;
 import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
-import com.bookie.infra.events.TradesLoadedEvent;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -21,19 +20,23 @@ public class TradeRepository {
 
     private static final int TRADE_COUNT = 1000;
 
-    private long nextId = 1001;
+    private long nextId = 1;
     private final TradeDAO dao;
     private final EventBus eventBus;
     private final BondRepository bondRepository;
     private final ReferenceDataRepository referenceDataRepository;
+    private final PositionService positionService;
 
     private boolean generateFakeData = true;
 
-    public TradeRepository(TradeDAO dao, BondRepository bondRepository, ReferenceDataRepository referenceDataRepository, EventBus eventBus) {
+    public TradeRepository(TradeDAO dao, BondRepository bondRepository,
+                           ReferenceDataRepository referenceDataRepository, EventBus eventBus,
+                           PositionService positionService) {
         this.dao = dao;
         this.eventBus = eventBus;
         this.bondRepository = bondRepository;
         this.referenceDataRepository = referenceDataRepository;
+        this.positionService = positionService;
     }
 
     @PostConstruct
@@ -49,16 +52,35 @@ public class TradeRepository {
         return dao.findById(id);
     }
 
-    public synchronized void deleteTrade(Long id) {
-        Trade deletedTrade = dao.delete(id);
-        if (deletedTrade == null) {
-            return;
+    public synchronized boolean bookTrade(Trade trade) {
+        trade.setExecutionTime(new Date());
+
+        if (!isValid(trade)) {
+            return false;
         }
 
-        eventBus.publish(new TradeDeletedEvent(deletedTrade));
+        if (trade.getId() != null) {
+            modifyExistingTrade(trade);
+        } else {
+            bookNewTrade(trade);
+        }
+
+        return true;
     }
 
-    public synchronized Trade modifyTrade(Trade trade) {
+    private synchronized Trade bookNewTrade(Trade trade) {
+        if (trade.getId() == null) {
+            trade.setId(nextId++);
+        }
+
+        trade.setExecutionTime(new Date());
+        dao.save(trade);
+        positionService.onTradeBooked(trade);
+        eventBus.publish(new TradeBookedEvent(trade));
+        return trade;
+    }
+
+    private synchronized Trade modifyExistingTrade(Trade trade) {
         Trade originalTrade = dao.findById(trade.getId());
         if (originalTrade == null) {
             return null;
@@ -66,24 +88,24 @@ public class TradeRepository {
 
         trade.setExecutionTime(new Date());
         dao.save(trade);
+        positionService.onTradeModified(originalTrade, trade);
         eventBus.publish(new TradeModifiedEvent(originalTrade, trade));
         return trade;
     }
 
-    public synchronized Trade bookTrade(Trade trade) {
-        if (trade.getId() == null) {
-            trade.setId(nextId++);
+    public synchronized void deleteTrade(Long id) {
+        Trade deletedTrade = dao.delete(id);
+        if (deletedTrade == null) {
+            return;
         }
 
-        trade.setExecutionTime(new Date());
-        dao.save(trade);
-        eventBus.publish(new TradeBookedEvent(trade));
-        return trade;
+        positionService.onTradeDeleted(deletedTrade);
+        eventBus.publish(new TradeDeletedEvent(deletedTrade));
     }
 
     public boolean isValid(Trade trade) {
         return validateCusip(trade.getCusip()) == null
-                && validateQuantity(trade.getQuantity()) == null
+                && validateQuantity(trade) == null
                 && validateBook(trade.getBook()) == null
                 && validateCounterparty(trade.getCounterparty()) == null;
     }
@@ -118,13 +140,36 @@ public class TradeRepository {
         return null;
     }
 
-    public String validateQuantity(BigDecimal quantity) {
-        if (quantity == null) {
+    public String validateQuantity(Trade trade) {
+        if (trade.getQuantity() == null) {
             return "This field is required";
         }
-        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+
+        if (trade.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
             return "Quantity has to be > 0";
         }
+
+        return validateNoShortPosition(trade);
+    }
+
+    private String validateNoShortPosition(Trade trade) {
+        if (trade.getCusip() == null || trade.getBook() == null || trade.getDirection() == null
+                || trade.getTradeDate() == null || trade.getSettleDate() == null) {
+            return null;
+        }
+
+        var originalTrade = dao.findById(trade.getId());
+        var currentPosition = positionService.getPosition(trade.getPositionKey());
+        var newPosition = positionService.getUpdatedPosition(currentPosition, originalTrade, trade);
+
+        if (newPosition.getCurrentPosition().compareTo(BigDecimal.ZERO) < 0) {
+            return "Trade would result in negative Current Position";
+        }
+
+        if (newPosition.getSettledPosition().compareTo(BigDecimal.ZERO) < 0) {
+            return "Trade would result in negative settled position";
+        }
+
         return null;
     }
 
@@ -132,51 +177,44 @@ public class TradeRepository {
         this.generateFakeData = generateFakeData;
     }
 
-    private List<Trade> generate(BondRepository bondRepo, ReferenceDataRepository refData) {
-        if(!generateFakeData) {
-            return Collections.emptyList();
+    private void generate(BondRepository bondRepo, ReferenceDataRepository refData) {
+        if (!generateFakeData) {
+            return;
         }
 
         List<Bond> bonds = bondRepo.getAllBonds();
         List<String> books = refData.getAllBooks();
         List<String> counterparties = refData.getAllCounterparties();
-        List<Trade> list = new ArrayList<>();
         Random rng = new Random(42);
         LocalDate today = LocalDate.of(2026, 4, 3);
 
-        for (int i = 0; i < TRADE_COUNT; i++) {
+        while (this.dao.getTotalCount() < TRADE_COUNT) {
             Bond bond = bonds.get(rng.nextInt(bonds.size()));
-            TradeDirection dir = rng.nextInt(10) < 7 ? TradeDirection.BUY : TradeDirection.SELL;
+            TradeDirection direction = rng.nextInt(10) < 7 ? TradeDirection.BUY : TradeDirection.SELL;
             LocalDate tradeDate = today.minusDays(rng.nextInt(730));
             BigDecimal quantity = BigDecimal.valueOf((rng.nextInt(200) + 1) * 100_000L);
-            BigDecimal accrued = bond.getCoupon() != null ? bond.getCoupon()
-                                                            .divide(BigDecimal.valueOf(200), 6, RoundingMode.HALF_UP)
-                                                            .multiply(quantity)
-                                                            .setScale(2, RoundingMode.HALF_UP)
-                    : BigDecimal.ZERO;
+            BigDecimal accrued = quantity.multiply(BigDecimal.valueOf(0.1));
 
-            Trade t = new Trade();
-            t.setId((long) (i + 1));
-            t.setCusip(bond.getCusip());
-            t.setDirection(dir);
-            t.setTradeDate(tradeDate);
-            t.setSettleDate(tradeDate.plusDays(2));
-            t.setExecutionTime(Date.from(tradeDate.atStartOfDay(ZoneOffset.UTC).plusSeconds(rng.nextInt(86400)).toInstant()));
-            t.setQuantity(quantity);
-            t.setAccruedInterest(accrued);
-            t.setBook(books.get(rng.nextInt(books.size())));
-            t.setCounterparty(counterparties.get(rng.nextInt(counterparties.size())));
-            list.add(t);
+            Trade trade = new Trade();
+            trade.setCusip(bond.getCusip());
+            trade.setDirection(direction);
+            trade.setTradeDate(tradeDate);
+            trade.setSettleDate(tradeDate.plusDays(2));
+            trade.setExecutionTime(Date.from(tradeDate.atStartOfDay(ZoneOffset.UTC).plusSeconds(rng.nextInt(86400)).toInstant()));
+            trade.setQuantity(quantity);
+            trade.setAccruedInterest(accrued);
+            trade.setBook(books.get(rng.nextInt(books.size())));
+            trade.setCounterparty(counterparties.get(rng.nextInt(counterparties.size())));
+
+            if (this.isValid(trade)) {
+                bookNewTrade(trade);
+            }
         }
-        return list;
     }
 
     private void loadTradesFromDB() {
         //Slow DB here.
         sleep(1000L);
-        var trades = generate(bondRepository, referenceDataRepository);
-        this.dao.saveAll(trades);
-
-        eventBus.publish(new TradesLoadedEvent(new ArrayList<>(trades)));
+        generate(bondRepository, referenceDataRepository);
     }
 }

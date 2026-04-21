@@ -70,8 +70,12 @@ public class TradeTicketPopup {
     }
 
     public ServerResponse onBookTrade(ServerRequest request) throws ServletException, IOException {
-        var ticket = request.body(Trade.class);
-        bookTicket(ticket);
+        var trade = request.body(Trade.class);
+
+        if (!tradeRepository.bookTrade(trade)) {
+            return sse(channel -> channel.updateFragment(render(trade)));
+        }
+
         return close();
     }
 
@@ -96,6 +100,7 @@ public class TradeTicketPopup {
         var btnLabel = isModify ? "OK" : ticket.getDirection().getLabel();
         var title = isModify ? "Modify Trade" : "Book a Trade";
         var directionName = ticket.getDirection() != null ? ticket.getDirection().name() : null;
+        var isValid = tradeRepository.isValid(ticket);
 
         var content = html("""
                 <div class="form-fields" data-indicator:_fetching data-signals="{id: ${tradeId}}" data-on:change="@post('/tradeTicket/input')">
@@ -130,7 +135,7 @@ public class TradeTicketPopup {
                 "quantity", formField("Quantity ($)")
                         .withInput(numberInput("quantity", ticket.getQuantity())
                                 .withFormat("currency"))
-                        .withError(tradeRepository.validateQuantity(ticket.getQuantity())),
+                        .withError(tradeRepository.validateQuantity(ticket)),
 
                 "accruedInterestField", formField("Accrued Interest ($)")
                         .withInput(numberInput("accruedInterest", ticket.getAccruedInterest())
@@ -146,9 +151,10 @@ public class TradeTicketPopup {
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
 
         var actions = html("""
-                <button class="btn-large ${btnClass}" data-on:click="@post('/tradeTicket/book')" data-attr:disabled="$_fetching">${btnLabel}</button>
+                <button class="btn-large ${btnClass}" data-on:click="@post('/tradeTicket/book')" data-attr:disabled="$_fetching || !${valid}">${btnLabel}</button>
                 <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
                 """,
+                "valid", isValid,
                 "btnClass", btnClass,
                 "btnLabel", btnLabel);
 
@@ -159,15 +165,4 @@ public class TradeTicketPopup {
                 .render();
     }
 
-    private void bookTicket(Trade ticket) {
-        if (!tradeRepository.isValid(ticket)) {
-            throw new RuntimeException("Tried to book an invalid ticket.");
-        }
-
-        if (ticket.getId() != null) {
-            tradeRepository.modifyTrade(ticket);
-        } else {
-            tradeRepository.bookTrade(ticket);
-        }
-    }
 }

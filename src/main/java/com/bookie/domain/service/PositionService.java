@@ -3,42 +3,21 @@ package com.bookie.domain.service;
 import com.bookie.domain.entity.*;
 import com.bookie.infra.EventBus;
 import com.bookie.infra.events.PositionChangedEvent;
-import com.bookie.infra.events.PositionsLoadedEvent;
-import com.bookie.infra.events.TradeBookedEvent;
-import com.bookie.infra.events.TradeDeletedEvent;
-import com.bookie.infra.events.TradeModifiedEvent;
-import com.bookie.infra.events.TradesLoadedEvent;
-import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
 @Component
 public class PositionService {
 
     private final EventBus eventBus;
     private final Map<PositionKey, Position> positions = new HashMap<>();
-    private final List<Runnable> eventSubscriptions = new ArrayList<>();
 
-    public PositionService(TradeRepository tradeRepository, EventBus eventBus) {
+    public PositionService(EventBus eventBus) {
         this.eventBus = eventBus;
-        eventSubscriptions.add(eventBus.subscribe(TradesLoadedEvent.class, this::onTradesLoaded));
-        eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
-        eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
-        eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
-
-        processTrades(tradeRepository.getAllTrades());
-    }
-
-    @PreDestroy
-    public void dispose() {
-        eventSubscriptions.reversed().forEach(Runnable::run);
     }
 
     public synchronized List<Position> getPositions() {
@@ -49,58 +28,64 @@ public class PositionService {
         positions.clear();
     }
 
-    private synchronized Position getPosition(PositionKey key) {
-        return positions.get(key);
+    public synchronized void onTradeBooked(Trade trade) {
+        updatePosition(trade.getPositionKey(), position ->
+                getUpdatedPosition(position, null, trade));
     }
 
-    private synchronized void onTradesLoaded(TradesLoadedEvent event) {
-        processTrades(event.getTrades());
-    }
+    public synchronized void onTradeModified(Trade originalTrade, Trade updateTrade) {
+        PositionKey originalKey = originalTrade.getPositionKey();
+        PositionKey newKey = updateTrade.getPositionKey();
 
-    private void processTrades(List<Trade> trades) {
-        positions.clear();
-        for (Trade trade : trades) {
-            addTradeToPosition(trade);
+        if (Objects.equals(originalKey, newKey)) {
+            updatePosition(newKey, position ->
+                    getUpdatedPosition(position, originalTrade, updateTrade));
+        } else {
+            updatePosition(originalKey, position ->
+                    getUpdatedPosition(position, originalTrade, null));
+            updatePosition(newKey, position ->
+                    getUpdatedPosition(position, null, updateTrade));
         }
-        eventBus.publish(new PositionsLoadedEvent(List.copyOf(positions.values())));
     }
 
-    private synchronized void onTradeBooked(TradeBookedEvent event) {
-        raisePositionChangedEvent(event.getTrade().getPositionKey(), () -> addTradeToPosition(event.getTrade()));
+    public synchronized void onTradeDeleted(Trade trade) {
+        updatePosition(trade.getPositionKey(), position ->
+                getUpdatedPosition(position, trade, null));
     }
 
-    private synchronized void onTradeModified(TradeModifiedEvent event) {
-        raisePositionChangedEvent(event.updatedTrade().getPositionKey(), () -> {
-            removeTradeFromPosition(event.originalTrade());
-            addTradeToPosition(event.updatedTrade());
-        });
+    private void updatePosition(PositionKey key, Function<Position, Position> change) {
+        var currentPosition = getPosition(key);
+        var newPosition = change.apply(currentPosition);
+
+        this.positions.put(newPosition.getKey(), newPosition);
+
+        eventBus.publish(new PositionChangedEvent(currentPosition, newPosition));
     }
 
-    private synchronized void onTradeDeleted(TradeDeletedEvent event) {
-        raisePositionChangedEvent(event.deletedTrade().getPositionKey(), () -> {
-            removeTradeFromPosition(event.deletedTrade());
-            getPosition(event.deletedTrade().getPositionKey()).setLastActivity(new Date());
-        });
+    public Position getUpdatedPosition(Position position, Trade originalTrade, Trade currentTrade) {
+        if(originalTrade != null) {
+            position = removeTradeFromPosition(position, originalTrade);
+        }
+
+        if(currentTrade != null) {
+            position = addTradeToPosition(position, currentTrade);
+        }
+
+        position.setLastActivity(new Date());
+
+        return position;
     }
 
-    private void raisePositionChangedEvent(PositionKey key, Runnable change) {
-        var existing = getPosition(key);
-        var previousPosition = existing != null ? new Position(existing) : new Position(key);
-        change.run();
-        eventBus.publish(new PositionChangedEvent(previousPosition, getPosition(key)));
+    private Position addTradeToPosition(Position position, Trade trade) {
+        return applyDeltaToPosition(position, trade, 1);
     }
 
-    private void addTradeToPosition(Trade trade) {
-        applyDeltaToPosition(trade, 1);
+    private Position removeTradeFromPosition(Position position, Trade trade) {
+        return applyDeltaToPosition(position, trade, -1);
     }
 
-    private void removeTradeFromPosition(Trade trade) {
-        applyDeltaToPosition(trade, -1);
-    }
-
-    private void applyDeltaToPosition(Trade trade, int sign) {
-        var key = trade.getPositionKey();
-        var position = positions.computeIfAbsent(key, Position::new);
+    private Position applyDeltaToPosition(Position position, Trade trade, int sign) {
+        position = new Position(position);
 
         var today = LocalDate.now();
         var signedQuantity = signedQuantity(trade).multiply(BigDecimal.valueOf(sign));
@@ -113,13 +98,15 @@ public class PositionService {
             position.setSettledPosition(position.getSettledPosition().add(signedQuantity));
         }
 
-        Date executionTime = trade.getExecutionTime();
-        if (position.getLastActivity() == null || executionTime.after(position.getLastActivity())) {
-            position.setLastActivity(executionTime);
-        }
+        return position;
     }
 
     private BigDecimal signedQuantity(Trade trade) {
         return trade.getDirection() == TradeDirection.BUY ? trade.getQuantity() : trade.getQuantity().negate();
+    }
+
+    public synchronized Position getPosition(PositionKey key) {
+        Position position = positions.get(key);
+        return Optional.ofNullable(position).orElse(new Position(key));
     }
 }

@@ -44,7 +44,7 @@ public class DataGridHelper {
         columnHeader.waitFor();
 
         return (int) this.root.getByRole(AriaRole.COLUMNHEADER).evaluateAll(
-                "elements => elements.findIndex(el => el.innerText.trim() === '" + header.toUpperCase() + "')"
+                "elements => elements.findIndex(el => el.innerText.startsWith('" + header.toUpperCase() + "'))"
         );
     }
 
@@ -74,6 +74,10 @@ public class DataGridHelper {
     public void assertNoRows() {
         assertThat(this.root.getByRole(AriaRole.ROW)).hasCount(0);
         assertThat(this.root).containsText("Nothing here...");
+    }
+
+    public void verifyRowCount(int count) {
+        assertThat(this.root.getByRole(AriaRole.ROW)).hasCount(count);
     }
 
     public static class GridRowHelper {

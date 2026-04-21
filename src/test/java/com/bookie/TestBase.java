@@ -11,17 +11,14 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.AriaRole;
-import com.microsoft.playwright.options.WaitUntilState;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.lang.NonNull;
 
 import java.net.http.HttpClient;
 import java.nio.file.Paths;
 import java.util.List;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class TestBase {
@@ -29,14 +26,23 @@ public abstract class TestBase {
     private JettyBootstrap server;
     private BrowserContext browserContext;
     private Page page;
+    private final boolean isolateTests = true; //False -> faster, but tests use the same tab/context
 
     @BeforeAll
     void startServer() throws Exception {
         server = JettyBootstrap.start();
+
+        if(!isolateTests) {
+            prepareTab();
+        }
     }
 
     @AfterAll
     void stopServer() throws Exception {
+        if(!isolateTests) {
+            cleanupTab();
+        }
+
         server.stop();
     }
 
@@ -46,15 +52,37 @@ public abstract class TestBase {
         getBondDAO().clear();
         getTradeDAO().clear();
         getPositionService().clear();
-        browserContext = PlaywrightManager.getBrowser().newContext();
-        page = browserContext.newPage();
-        page.setDefaultTimeout(5000);
+
+        if(isolateTests) {
+            prepareTab();
+        }
+
         navigateToBookie();
     }
 
     @AfterEach
-    void closeBrowserContext() {
+    void closeBrowserContext(TestInfo ignored) {
+        //takeScreenshot(ignored.getDisplayName());
+
+        if(isolateTests) {
+            cleanupTab();
+        }
+    }
+
+    private void prepareTab() {
+        browserContext = PlaywrightManager.getBrowser().newContext();
+        page = browserContext.newPage();
+        page.setDefaultTimeout(5000);
+    }
+
+    private void cleanupTab() {
         browserContext.close();
+    }
+
+    protected void takeScreenshot(String name) {
+        page.screenshot(new Page.ScreenshotOptions()
+                .setPath(Paths.get("screenshots/" + name + ".png"))
+                .setFullPage(true));
     }
 
     protected void reloadPage() {
@@ -113,12 +141,20 @@ public abstract class TestBase {
         return "http://localhost:" + server.getPort();
     }
 
+    protected void bookTrades(Trade... trades) {
+        givenExistingTrades(trades);
+    }
+
     protected void givenExistingTrades(Trade... trades) {
         givenExistingTrades(List.of(trades));
     }
 
     protected void givenExistingTrades(List<Trade> trades) {
-        trades.forEach(t -> getTradeRepository().bookTrade(t));
+        trades.forEach(t -> {
+            if(!getTradeRepository().bookTrade(t)) {
+                throw new RuntimeException("Failed to book an invalid trade: " + t);
+            }
+        });
     }
 
     protected void givenExistingBonds(Bond... bonds) {
@@ -132,19 +168,26 @@ public abstract class TestBase {
     protected TradesScreenPageObject switchToTrades() {
         getSectionLink("Trades").click();
         waitForUpdatesToConnect();
+        waitForMainSectionTitle("Trades");
         return new TradesScreenPageObject(page);
     }
 
     protected PositionsScreenPageObject switchToPositions() {
         getSectionLink("Positions").click();
         waitForUpdatesToConnect();
+        waitForMainSectionTitle("Positions");
         return new PositionsScreenPageObject(page);
     }
 
     protected SecuritiesPageObject switchToSecurities() {
         getSectionLink("Securities").click();
         waitForUpdatesToConnect();
+        waitForMainSectionTitle("Securities");
         return new SecuritiesPageObject(page, getHealthIndicator());
+    }
+
+    private void waitForMainSectionTitle(String title) {
+        assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setLevel(1))).hasText(title);
     }
 
     private void waitForUpdatesToConnect() {

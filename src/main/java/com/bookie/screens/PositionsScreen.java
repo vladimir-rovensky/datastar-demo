@@ -9,7 +9,6 @@ import com.bookie.domain.service.PositionService;
 import com.bookie.infra.*;
 import com.bookie.infra.events.BondSavedEvent;
 import com.bookie.infra.events.PositionChangedEvent;
-import com.bookie.infra.events.PositionsLoadedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -33,7 +32,7 @@ import static com.bookie.infra.TemplatingEngine.html;
 @Configuration
 public class PositionsScreen extends BaseScreen {
 
-    private List<Position> positions;
+    private List<Position> positions = new ArrayList<>();
     private final Map<String, Bond> bondByCusip = new HashMap<>();
     private final BondRepository bondRepository;
 
@@ -78,12 +77,15 @@ public class PositionsScreen extends BaseScreen {
                 .filterable()
                 .withUpdateChannel(this::getChannel);
 
-        this.eventSubscriptions.add(eventBus.subscribe(PositionsLoadedEvent.class, this::onPositionsLoaded));
         this.eventSubscriptions.add(eventBus.subscribe(PositionChangedEvent.class, this::onPositionChanged));
         this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
-        this.positions = new ArrayList<>(positionService.getPositions());
+        this.positions = loadPositions(positionService);
         loadBondsFor(this.positions);
+    }
+
+    private synchronized ArrayList<Position> loadPositions(PositionService positionService) {
+        return new ArrayList<>(positionService.getPositions());
     }
 
     public DataGrid<Position> getPositionGrid() {
@@ -115,12 +117,6 @@ public class PositionsScreen extends BaseScreen {
                     </div>
                 """,
                 "grid", grid);
-    }
-
-    private synchronized void onPositionsLoaded(PositionsLoadedEvent event) {
-        this.positions = new ArrayList<>(event.positions());
-        loadBondsFor(this.positions);
-        this.triggerUpdate();
     }
 
     private synchronized void onPositionChanged(PositionChangedEvent event) {

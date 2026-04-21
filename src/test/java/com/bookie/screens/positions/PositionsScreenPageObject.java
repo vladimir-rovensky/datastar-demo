@@ -17,7 +17,7 @@ public class PositionsScreenPageObject {
         return DataGridHelper.find(page.getByRole(AriaRole.MAIN));
     }
 
-    public void verifyPositionsDisplayed(Position... positions) {
+    public PositionsScreenPageObject verifyPositionsDisplayed(Position... positions) {
         var grid = getGrid();
         for (Position position : positions) {
             var row = grid.getRowByCellValues("CUSIP", position.getCusip(), "Book", position.getBook());
@@ -30,5 +30,12 @@ public class PositionsScreenPageObject {
                 row.getCell("Last Activity").verifyText(Format.dateTime(position.getLastActivity()));
             }
         }
+
+        return this;
+    }
+
+    public PositionsScreenPageObject verifyPositionCount(int count) {
+        this.getGrid().verifyRowCount(count);
+        return this;
     }
 }

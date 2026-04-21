@@ -93,7 +93,7 @@ public class Shell {
                         ${toolbarContent}
                         <div class="toolbar-separator"></div>
                         ${nav}
-                        <span class="toolbar-title">${title}</span>
+                        <span class="toolbar-title" role="heading" aria-level="1">${title}</span>
                         <div class="toolbar-separator"></div>
                         ${healthIndicator}
                     </div>

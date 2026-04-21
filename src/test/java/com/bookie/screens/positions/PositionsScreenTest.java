@@ -1,6 +1,7 @@
 package com.bookie.screens.positions;
 
 import com.bookie.TestBase;
+import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
 import org.junit.jupiter.api.Test;
 
@@ -14,10 +15,10 @@ public class PositionsScreenTest extends TestBase {
     public void showsPositions() {
         givenExistingBonds(aBond("CSP1"), aBond("CSP2"));
         givenExistingTrades(
-                aTrade(1L, "CSP1", TradeDirection.BUY, 300_000).setBook("CREDIT-NY"),
-                aTrade(2L, "CSP1", TradeDirection.SELL, 100_000).setBook("CREDIT-NY"),
-                aTrade(3L, "CSP1", TradeDirection.BUY, 100_000).setBook("MUNI-WEST"),
-                aTrade(3L, "CSP2", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
+                aTrade("CSP1", TradeDirection.BUY, 300_000).setBook("CREDIT-NY"),
+                aTrade("CSP1", TradeDirection.SELL, 100_000).setBook("CREDIT-NY"),
+                aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("MUNI-WEST"),
+                aTrade("CSP2", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
 
         var page = switchToPositions();
 
@@ -30,10 +31,45 @@ public class PositionsScreenTest extends TestBase {
     @Test
     public void bookingATradeUpdatesPosition() {
         givenExistingBonds(aBond("CSP1"));
-        givenExistingTrades(aTrade(1L, "CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
+        givenExistingTrades(aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
 
-        switchToTrades().bookBuyTrade(aTrade(null, "CSP1", TradeDirection.BUY, 200_000).setBook("CREDIT-NY"));
+        switchToTrades().bookTrade(aTrade(null, "CSP1", TradeDirection.BUY, 200_000).setBook("CREDIT-NY"));
 
         switchToPositions().verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 300_000));
+    }
+
+    @Test
+    public void preventsBookingShortPosition() {
+        givenExistingBonds(aBond("CSP1"));
+        givenExistingTrades(aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
+
+        var page = switchToTrades()
+                .bookTrade(
+                        aTrade(null, "CSP1", TradeDirection.SELL, 50_000).setBook("CREDIT-NY"),
+                        () -> bookTrades(aTrade("CSP1", TradeDirection.SELL, 60_000).setBook("CREDIT-NY")));
+
+        page.getTradeTicket().getQuantity().verifyError("Trade would result in negative Current Position");
+        page.getTradeTicket().cancel();
+
+        var positions = switchToPositions();
+
+        positions.verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 40_000));
+    }
+
+    @Test
+    public void handlesModifyTradeAffectingPositionKey() {
+        givenExistingBonds(aBond("CSP1"));
+        Trade trade = aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY");
+        givenExistingTrades(trade);
+
+        var modifiedTrade = aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("MUNI-WEST").setId(trade.getId());
+
+        switchToTrades().modifyTrade(modifiedTrade);
+
+        switchToPositions()
+                .verifyPositionsDisplayed(
+                        aPosition("CSP1", "MUNI-WEST", 100_000),
+                        aPosition("CSP1", "CREDIT-NY", 0))
+                .verifyPositionCount(2);
     }
 }

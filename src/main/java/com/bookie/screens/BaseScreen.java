@@ -110,7 +110,7 @@ public abstract class BaseScreen {
     }
 
     public void reRender() {
-        if(this.channel != null) {
+        if(this.channel != null && channel.isAlive()) {
             channel.updateFragment(this.getContent());
         }
     }

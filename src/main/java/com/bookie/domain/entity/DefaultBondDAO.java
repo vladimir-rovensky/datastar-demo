@@ -27,7 +27,7 @@ public class DefaultBondDAO implements BondDAO {
         var cusipSet = Set.copyOf(cusips);
         bonds.entrySet().stream()
                 .filter(e -> cusipSet.contains(e.getKey()))
-                .forEach(e -> result.put(e.getKey(), e.getValue()));
+                .forEach(e -> result.put(e.getKey(), e.getValue().clone()));
 
         return result;
     }

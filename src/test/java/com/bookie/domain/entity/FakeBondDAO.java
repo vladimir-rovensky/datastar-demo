@@ -24,7 +24,7 @@ public class FakeBondDAO implements BondDAO {
     public Map<String, Bond> findByCusips(Collection<String> cusips) {
         return cusips.stream()
             .filter(bonds::containsKey)
-            .collect(Collectors.toMap(cusip -> cusip, bonds::get));
+            .collect(Collectors.toMap(cusip -> cusip, cusip -> bonds.get(cusip).clone()));
     }
 
     @Override

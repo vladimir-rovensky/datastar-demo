@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
 
 import static com.bookie.infra.Validators.*;
 
@@ -48,7 +47,11 @@ public class BondRepository {
         return new Bond.SinkingFundEntry(String.valueOf(scheduleIdCounter.getAndIncrement()), null, null);
     }
 
-    public void saveBond(Bond bond) {
+    public synchronized void saveBond(Bond bond) {
+        if(!isValid(bond)) {
+            throw new RuntimeException("Tried to save an invalid bond.");
+        }
+
         bond.setVersion(bond.getVersion() + 1);
         dao.save(bond);
         eventBus.publish(new BondSavedEvent(bond));

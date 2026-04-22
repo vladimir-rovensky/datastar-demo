@@ -535,15 +535,36 @@ input.loading { opacity: 0; }
 }
 
 .notification {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     padding: var(--sp-xs) var(--sp-md);
     text-align: center;
     font-size: var(--fs-sm);
+}
+
+.notification--inline {
+    position: static;
 }
 
 .notification--warning {
     background-color: var(--clr-warning);
     border-bottom: 1px solid var(--clr-warning-border);
     color: var(--clr-text-bright);
+}
+
+.notification--info {
+    background-color: var(--clr-surface-hi);
+    border-bottom: 1px solid var(--clr-accent);
+    color: var(--clr-accent-hi);
+}
+
+.notification--error {
+    background-color: var(--clr-error-bg);
+    border-bottom: 1px solid var(--clr-error);
+    color: var(--clr-error);
 }
 
 .centered-message {

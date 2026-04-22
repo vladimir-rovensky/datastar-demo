@@ -1,6 +1,7 @@
 package com.bookie.screens.securities;
 
 import com.bookie.TestBase;
+import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.TradeDirection;
 import org.junit.jupiter.api.Test;
 
@@ -49,6 +50,21 @@ public class SecuritiesScreenTest extends TestBase {
 
         screen = switchToSecurities();
         screen.getOutstandingAmount().verifyValue(2_900_000);
+    }
+
+    @Test
+    public void notifiesWhenSecurityIsUpdatedBySomeoneElse() {
+        trace(()-> {
+        givenExistingBonds(aBond("CSP1").setDescription("Initial"));
+
+        var screen = switchToSecurities("CSP1");
+        screen.switchToEditMode();
+
+            Bond bond = getSavedBond("CSP1").setDescription("Changed");
+            saveBonds(bond);
+
+        assertWarningShown("This bond was modified by someone else");
+        });
     }
 
 }

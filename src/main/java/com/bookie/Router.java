@@ -1,5 +1,7 @@
 package com.bookie;
 
+import com.bookie.components.Notification;
+import com.bookie.infra.Response;
 import com.bookie.infra.SessionRegistry;
 import com.bookie.screens.PositionsScreen;
 import com.bookie.screens.securities.SecuritiesScreen;
@@ -20,6 +22,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import static com.bookie.infra.TemplatingEngine.html;
 import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
@@ -49,6 +52,7 @@ public class Router {
                 .nest(path(PositionsScreen.RoutePrefix), () -> PositionsScreen.setupRoutes(sessionRegistry))
                 .nest(path(SecuritiesScreen.RoutePrefix), () -> SecuritiesScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
+                .onError(Throwable.class, this::handleException)
                 .build();
     }
 
@@ -97,5 +101,11 @@ public class Router {
     private Resource globalStylesResource() {
         var fileResource = new FileSystemResource("src/main/resources/static/global-styles.css");
         return fileResource.exists() ? fileResource : new ClassPathResource("/static/global-styles.css");
+    }
+
+    private ServerResponse handleException(Throwable ex, ServerRequest request) {
+        String message = ex.getMessage() != null ? ex.getMessage() : ex.toString();
+        return Response.html(Notification.notification(html(message))
+                .withStyle(Notification.error));
     }
 }

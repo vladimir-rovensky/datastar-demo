@@ -125,6 +125,10 @@ public abstract class TestBase {
         return server.getBean(PositionService.class);
     }
 
+    protected BondRepository getBondRepository() {
+        return server.getBean(BondRepository.class);
+    }
+
     protected FakeBondDAO getBondDAO() {
         return server.getBean(FakeBondDAO.class);
     }
@@ -157,12 +161,20 @@ public abstract class TestBase {
         });
     }
 
+    protected Bond getSavedBond(String cusip) {
+        return getBondDAO().findByCusip(cusip);
+    }
+
+    protected void saveBonds(Bond... bonds) {
+        givenExistingBonds(bonds);
+    }
+
     protected void givenExistingBonds(Bond... bonds) {
         givenExistingBonds(List.of(bonds));
     }
 
     protected void givenExistingBonds(List<Bond> bonds) {
-        getBondDAO().saveAll(bonds);
+        bonds.forEach(b -> getBondRepository().saveBond(b));
     }
 
     protected TradesScreenPageObject switchToTrades() {
@@ -177,6 +189,11 @@ public abstract class TestBase {
         waitForUpdatesToConnect();
         waitForMainSectionTitle("Positions");
         return new PositionsScreenPageObject(page);
+    }
+
+    protected SecuritiesPageObject switchToSecurities(String cusip) {
+        return switchToSecurities()
+                .loadCusip(cusip);
     }
 
     protected SecuritiesPageObject switchToSecurities() {
@@ -205,6 +222,16 @@ public abstract class TestBase {
 
     private Locator getMainToolbar() {
         return page.getByRole(AriaRole.TOOLBAR, new Page.GetByRoleOptions().setName("Main Sections")).first();
+    }
+
+    protected void assertWarningShown(String error) {
+        NotificationHelper.findWarning(this.page.locator("body"))
+                .verifyText(error);
+    }
+
+    protected void assertErrorShown(String error) {
+        NotificationHelper.findError(this.page.locator("body"))
+                .verifyText(error);
     }
 
     private void navigateToBookie() {

@@ -7,12 +7,15 @@ import static com.bookie.infra.TemplatingEngine.html;
 
 public class Notification implements Renderable {
 
-    public enum NotificationStyle { WARNING }
+    public enum NotificationStyle { WARNING, INFO, ERROR }
 
     public static final NotificationStyle warning = NotificationStyle.WARNING;
+    public static final NotificationStyle info = NotificationStyle.INFO;
+    public static final NotificationStyle error = NotificationStyle.ERROR;
 
     private final EscapedHtml content;
     private NotificationStyle style;
+    private boolean inline = false;
 
     private Notification(EscapedHtml content) {
         this.content = content;
@@ -27,13 +30,26 @@ public class Notification implements Renderable {
         return this;
     }
 
+    public Notification inline() {
+        this.inline = true;
+        return this;
+    }
+
     @Override
     public EscapedHtml render() {
-        var styleClass = style == NotificationStyle.WARNING ? "notification--warning" : "";
+        var styleClass = style == null ? "" : switch (style) {
+            case WARNING -> "notification--warning";
+            case INFO    -> "notification--info";
+            case ERROR   -> "notification--error";
+        };
+
+        var positionClass = inline ? "notification--inline" : "";
+
         return html("""
-                <div class="notification ${styleClass}">${content}</div>
+                <div role="alert" class="notification ${styleClass} ${positionClass}">${content}</div>
                 """,
                 "styleClass", styleClass,
+                "positionClass", positionClass,
                 "content", content);
     }
 }

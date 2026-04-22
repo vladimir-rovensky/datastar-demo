@@ -41,6 +41,10 @@ public class Response {
         }, Duration.ZERO);
     }
 
+    public static ServerResponse html(Renderable renderable) {
+        return html(renderable.render());
+    }
+
     public static ServerResponse html(EscapedHtml content) {
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)

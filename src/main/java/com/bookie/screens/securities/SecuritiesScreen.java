@@ -134,7 +134,7 @@ public class SecuritiesScreen extends BaseScreen {
 
         var refreshLink = link("securities/" + getCurrentCusip() + "/" + currentSection.getPath(), "refresh");
         var topBar = isModifiedBySomeoneElse
-                ? notification(html("This bond was modified by someone else. Please ${refreshLink} the page.", "refreshLink", refreshLink)).withStyle(warning).render()
+                ? notification(html("This bond was modified by someone else. Please ${refreshLink} the page.", "refreshLink", refreshLink)).withStyle(warning).inline().render()
                 : secondaryToolbar;
 
         return html("""
@@ -240,9 +240,6 @@ public class SecuritiesScreen extends BaseScreen {
     }
 
     public synchronized ServerResponse saveEdit() {
-        if (!bondRepository.isValid(editingBond)) {
-            throw new RuntimeException("Tried to save an invalid bond.");
-        }
         bondRepository.saveBond(editingBond);
         currentBond = editingBond;
         editingBond = null;

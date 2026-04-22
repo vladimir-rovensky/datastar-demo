@@ -47,7 +47,7 @@ public class BondRepository {
         return new Bond.SinkingFundEntry(String.valueOf(scheduleIdCounter.getAndIncrement()), null, null);
     }
 
-    public synchronized void saveBond(Bond bond) {
+    public void saveBond(Bond bond) {
         if(!isValid(bond)) {
             throw new RuntimeException("Tried to save an invalid bond.");
         }
@@ -57,19 +57,19 @@ public class BondRepository {
         eventBus.publish(new BondSavedEvent(bond));
     }
 
-    public synchronized List<Bond> getAllBonds() {
+    public List<Bond> getAllBonds() {
         return dao.findAll();
     }
 
-    public synchronized Bond findBondByCusip(String cusip) {
+    public Bond findBondByCusip(String cusip) {
         return dao.findByCusip(cusip);
     }
 
-    public synchronized Map<String, Bond> findBondsByCusips(Collection<String> cusips) {
+    public Map<String, Bond> findBondsByCusips(Collection<String> cusips) {
         return dao.findByCusips(cusips);
     }
 
-    public synchronized boolean isValidCusip(String cusip) {
+    public boolean isValidCusip(String cusip) {
         //Pretend this is a bloom filter or something clever. Pretend to be impressed.
         return getAllBonds().stream().anyMatch(b -> Objects.equals(b.getCusip(), cusip));
     }

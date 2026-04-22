@@ -4,6 +4,7 @@ import com.bookie.infra.Util;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class DefaultBondDAO implements BondDAO {
@@ -11,7 +12,7 @@ public class DefaultBondDAO implements BondDAO {
     private final Map<String, Bond> bonds;
 
     public DefaultBondDAO() {
-        bonds = new LinkedHashMap<>();
+        bonds = new ConcurrentHashMap<>();
     }
 
     @Override

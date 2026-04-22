@@ -149,7 +149,7 @@ public class TradesScreen extends BaseScreen {
         var tradeId = Long.parseLong(request.pathVariable("id"));
 
         if(!tradeRepository.deleteTrade(tradeId)) {
-            throw new RuntimeException("Cancelling the trade would result in a short position");
+            throw new UserFacingException("Cancelling the trade would result in a short position");
         }
 
         return Popup.close();

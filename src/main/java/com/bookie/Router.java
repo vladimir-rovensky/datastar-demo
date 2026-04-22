@@ -3,6 +3,7 @@ package com.bookie;
 import com.bookie.components.Notification;
 import com.bookie.infra.Response;
 import com.bookie.infra.SessionRegistry;
+import com.bookie.infra.UserFacingException;
 import com.bookie.screens.PositionsScreen;
 import com.bookie.screens.securities.SecuritiesScreen;
 import com.bookie.screens.TradeTicketPopup;
@@ -52,7 +53,8 @@ public class Router {
                 .nest(path(PositionsScreen.RoutePrefix), () -> PositionsScreen.setupRoutes(sessionRegistry))
                 .nest(path(SecuritiesScreen.RoutePrefix), () -> SecuritiesScreen.setupRoutes(sessionRegistry))
                 .nest(path("/tradeTicket"), () -> beanFactory.createBean(TradeTicketPopup.class).setupRoutes())
-                .onError(Throwable.class, this::handleException)
+                .onError(UserFacingException.class, this::handleUserFacingException)
+                .onError(Throwable.class, this::handleGenericException)
                 .build();
     }
 
@@ -103,9 +105,14 @@ public class Router {
         return fileResource.exists() ? fileResource : new ClassPathResource("/static/global-styles.css");
     }
 
-    private ServerResponse handleException(Throwable ex, ServerRequest request) {
+    private ServerResponse handleUserFacingException(Throwable ex, ServerRequest request) {
         String message = ex.getMessage() != null ? ex.getMessage() : ex.toString();
         return Response.html(Notification.notification(html(message))
+                .withStyle(Notification.error));
+    }
+
+    private ServerResponse handleGenericException(Throwable throwable, ServerRequest request) {
+        return Response.html(Notification.notification(html("Unexpected Server Error - please refresh the page."))
                 .withStyle(Notification.error));
     }
 }

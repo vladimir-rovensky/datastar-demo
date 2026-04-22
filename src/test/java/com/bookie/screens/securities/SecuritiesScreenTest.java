@@ -54,7 +54,6 @@ public class SecuritiesScreenTest extends TestBase {
 
     @Test
     public void notifiesWhenSecurityIsUpdatedBySomeoneElse() {
-        trace(()-> {
         givenExistingBonds(aBond("CSP1").setDescription("Initial"));
 
         var screen = switchToSecurities("CSP1");
@@ -64,7 +63,6 @@ public class SecuritiesScreenTest extends TestBase {
             saveBonds(bond);
 
         assertWarningShown("This bond was modified by someone else");
-        });
     }
 
 }

@@ -3,7 +3,6 @@ package com.bookie.domain.service;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.concurrent.Executors;
 
 import static com.bookie.infra.Util.sleep;
 
@@ -19,7 +18,8 @@ public class PricingService {
         this.calculationDuration = calculationDuration;
     }
 
-    public BigDecimal calculateAccruedInterest(String _cusip, BigDecimal quantity) {
+    @SuppressWarnings("unused")
+    public BigDecimal calculateAccruedInterest(String cusip, BigDecimal quantity) {
         sleep(this.calculationDuration);
         return quantity.multiply(BigDecimal.valueOf(0.10));
     }

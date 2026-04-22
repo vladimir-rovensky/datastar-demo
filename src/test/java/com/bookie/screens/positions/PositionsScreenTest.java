@@ -72,4 +72,25 @@ public class PositionsScreenTest extends TestBase {
                         aPosition("CSP1", "CREDIT-NY", 0))
                 .verifyPositionCount(2);
     }
+
+    @Test
+    public void preventsShortPositionByTradeCancel() {
+        givenExistingBonds(aBond("CSP1"));
+
+        var trade = aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY");
+
+        givenExistingTrades(
+                trade,
+                aTrade("CSP1", TradeDirection.SELL, 80_000).setBook("CREDIT-NY"));
+
+        var trades = switchToTrades();
+
+        trades.cancelTrade(trade.getId());
+
+        assertErrorShown("Cancelling the trade would result in a short position");
+        trades.cancelAction();
+
+        var positions = switchToPositions();
+        positions.verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 20_000));
+    }
 }

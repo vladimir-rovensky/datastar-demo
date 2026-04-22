@@ -26,7 +26,7 @@ public abstract class TestBase {
     private JettyBootstrap server;
     private BrowserContext browserContext;
     private Page page;
-    private final boolean isolateTests = true; //False -> faster, but tests use the same tab/context
+    private final boolean isolateTests = false; //False -> faster, but tests use the same tab/context
 
     @BeforeAll
     void startServer() throws Exception {

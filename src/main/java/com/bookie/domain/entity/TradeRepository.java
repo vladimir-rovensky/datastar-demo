@@ -93,14 +93,20 @@ public class TradeRepository {
         return trade;
     }
 
-    public synchronized void deleteTrade(Long id) {
-        Trade deletedTrade = dao.delete(id);
-        if (deletedTrade == null) {
-            return;
+    public synchronized boolean deleteTrade(Long id) {
+
+        var trade = dao.findById(id);
+        var currentPosition = positionService.getPosition(trade.getPositionKey());
+        var newPosition = positionService.getUpdatedPosition(currentPosition, trade, null);
+        if (validatePosition(newPosition) != null) {
+            return false;
         }
 
-        positionService.onTradeDeleted(deletedTrade);
-        eventBus.publish(new TradeDeletedEvent(deletedTrade));
+        dao.delete(id);
+
+        positionService.onTradeDeleted(trade);
+        eventBus.publish(new TradeDeletedEvent(trade));
+        return true;
     }
 
     public boolean isValid(Trade trade) {
@@ -162,6 +168,10 @@ public class TradeRepository {
         var currentPosition = positionService.getPosition(trade.getPositionKey());
         var newPosition = positionService.getUpdatedPosition(currentPosition, originalTrade, trade);
 
+        return validatePosition(newPosition);
+    }
+
+    private static String validatePosition(Position newPosition) {
         if (newPosition.getCurrentPosition().compareTo(BigDecimal.ZERO) < 0) {
             return "Trade would result in negative Current Position";
         }

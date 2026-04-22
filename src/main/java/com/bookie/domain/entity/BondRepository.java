@@ -57,19 +57,19 @@ public class BondRepository {
         eventBus.publish(new BondSavedEvent(bond));
     }
 
-    public List<Bond> getAllBonds() {
+    public synchronized List<Bond> getAllBonds() {
         return dao.findAll();
     }
 
-    public Bond findBondByCusip(String cusip) {
+    public synchronized Bond findBondByCusip(String cusip) {
         return dao.findByCusip(cusip);
     }
 
-    public Map<String, Bond> findBondsByCusips(Collection<String> cusips) {
+    public synchronized Map<String, Bond> findBondsByCusips(Collection<String> cusips) {
         return dao.findByCusips(cusips);
     }
 
-    public boolean isValidCusip(String cusip) {
+    public synchronized boolean isValidCusip(String cusip) {
         //Pretend this is a bloom filter or something clever. Pretend to be impressed.
         return getAllBonds().stream().anyMatch(b -> Objects.equals(b.getCusip(), cusip));
     }

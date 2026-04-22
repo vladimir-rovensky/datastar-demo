@@ -543,6 +543,7 @@ input.loading { opacity: 0; }
     padding: var(--sp-xs) var(--sp-md);
     text-align: center;
     font-size: var(--fs-sm);
+    cursor: pointer;
 }
 
 .notification--inline {

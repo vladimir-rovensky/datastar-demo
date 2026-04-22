@@ -102,6 +102,9 @@ public class Shell {
 
                 <div id="popup" data-signals__ifmissing="{popupVisible: false}">
                 </div>
+                
+                <div id="global-notification">
+                </div>
 
                 <script id="script-runner">
                 </script>

@@ -57,6 +57,10 @@ public class TradesScreenPageObject {
         ButtonHelper.getByLabel(getPopup(), "Confirm").click();
     }
 
+    public void cancelAction() {
+        ButtonHelper.getByLabel(getPopup(), "Cancel").click();
+    }
+
     public void verifyNoTradesDisplayed() {
         getGrid().assertNoRows();
     }

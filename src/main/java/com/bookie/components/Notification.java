@@ -46,7 +46,7 @@ public class Notification implements Renderable {
         var positionClass = inline ? "notification--inline" : "";
 
         return html("""
-                <div role="alert" class="notification ${styleClass} ${positionClass}">${content}</div>
+                <div id='global-notification' role="alert" class="notification ${styleClass} ${positionClass}" data-on:click="el.hidden=true">${content}</div>
                 """,
                 "styleClass", styleClass,
                 "positionClass", positionClass,

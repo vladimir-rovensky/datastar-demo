@@ -34,9 +34,7 @@ public class DefaultBondDAO implements BondDAO {
 
     @Override
     public void saveAll(List<Bond> bonds) {
-        bonds.forEach(bond -> {
-            this.bonds.put(bond.getCusip(), bond);
-        });
+        bonds.forEach(bond -> this.bonds.put(bond.getCusip(), bond));
     }
 
 }

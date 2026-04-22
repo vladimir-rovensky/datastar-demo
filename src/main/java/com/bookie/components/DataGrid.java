@@ -10,6 +10,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.TemplatingEngine.html;
 
 import java.util.ArrayList;
@@ -83,9 +84,8 @@ public class DataGrid<TRow> {
         var headerCells = EscapedHtml.concat(visibleColumns, c -> {
             if (endpoint != null) {
                 return html("""
-                        <div class="data-grid-th sortable" role="columnheader" data-on:click="@post('${endpoint}/sort/${columnName}')">${h}${indicator}</div>""",
-                        "endpoint", endpoint,
-                        "columnName", c.getName(),
+                        <div class="data-grid-th sortable" role="columnheader" data-on:click="${sortAction}">${h}${indicator}</div>""",
+                        "sortAction", X.post(endpoint + "/sort/" + c.getName()),
                         "h", c.header,
                         "indicator", getSortIndicator(c));
             }
@@ -103,15 +103,17 @@ public class DataGrid<TRow> {
         var stripedClass = stripedRows ? " striped-rows" : "";
         var scrollHandler = endpoint != null
                 ? html("""
-                        data-on:scroll__debounce_150="@post('${endpoint}/viewport', {payload: {scrollTop: el.scrollTop, viewportHeight: el.clientHeight}})"
+                        data-on:scroll__debounce_150="${scrollAction}"
                         """,
-                        "endpoint", endpoint)
+                        "scrollAction", X.post(endpoint + "/viewport")
+                                .withPayload("{scrollTop: el.scrollTop, viewportHeight: el.clientHeight}"))
                 : EscapedHtml.blank();
         var resizeHandler = endpoint != null
                 ? html("""
-                        data-on:data-grid-viewport-resize__debounce_150="@post('${endpoint}/viewport', {payload: {scrollTop: el.scrollTop, viewportHeight: el.clientHeight}})"
+                        data-on:data-grid-viewport-resize__debounce_150="${resizeAction}"
                         """,
-                        "endpoint", endpoint)
+                        "resizeAction", X.post(endpoint + "/viewport")
+                                .withPayload("{scrollTop: el.scrollTop, viewportHeight: el.clientHeight}"))
                 : EscapedHtml.blank();
         var resizeScript = getResizeObserverScript();
 
@@ -151,9 +153,11 @@ public class DataGrid<TRow> {
                         <div class="column-picker-content">${multiselect}</div>
                         """, "multiselect", MultiselectInput.multiselectInput("visibleColumns", allHeaders, visibleHeaders).render()))
                 .withActions(html("""
-                        <button class="btn-primary" data-on:click="@post('${path}')">OK</button>
-                        <button data-on:click="@delete('${path}')">Cancel</button>
-                        """, "path", pickerPath))
+                        <button class="btn-primary" data-on:click="${okAction}">OK</button>
+                        <button data-on:click="${cancelAction}">Cancel</button>
+                        """,
+                        "okAction", X.post(pickerPath),
+                        "cancelAction", X.delete(pickerPath)))
                 .render();
         return Popup.open(content);
     }
@@ -256,8 +260,8 @@ public class DataGrid<TRow> {
                 : EscapedHtml.blank();
 
         var filterCells = EscapedHtml.concat(visibleColumns, column -> html("""
-                <div class="data-grid-filter-cell" data-on:change="@post('${endpoint}/filter')">${input}</div>""",
-                "endpoint", endpoint,
+                <div class="data-grid-filter-cell" data-on:change="${filterAction}">${input}</div>""",
+                "filterAction", X.post(endpoint + "/filter"),
                 "input", TextInput.textInput(this.id + ".filter." + column.getName(), filters.get(column.getName()))));
 
         return html("""
@@ -339,9 +343,9 @@ public class DataGrid<TRow> {
             }
             return html("""
                     <div class="data-grid-th data-grid-action-th" role="columnheader">
-                        <button class="column-picker-btn btn-no-bg" data-on:click="@get('${path}/column-picker')" data-tooltip="Pick columns">≡</button>
+                        <button class="column-picker-btn btn-no-bg" data-on:click="${pickerAction}" data-tooltip="Pick columns">≡</button>
                     </div>""",
-                    "path", endpoint);
+                    "pickerAction", X.get(endpoint + "/column-picker"));
         }
 
         return html("""
@@ -384,8 +388,10 @@ public class DataGrid<TRow> {
         var cells = EscapedHtml.concat(getVisibleColumns(), c -> renderCell(row, c));
 
         var dblClick = onRowDoubleClick != null
-                ? " data-on:dblclick=" + onRowDoubleClick.apply(row)
-                : "";
+                ? html("""
+                     data-on:dblclick="${handler}"
+                     """, "handler", onRowDoubleClick.apply(row))
+                : EscapedHtml.blank();
 
         var attrs = getRowAttrs.apply(row);
 

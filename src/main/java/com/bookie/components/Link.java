@@ -3,6 +3,7 @@ package com.bookie.components;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.Renderable;
 
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class Link implements Renderable {
@@ -40,8 +41,10 @@ public class Link implements Renderable {
 
     private EscapedHtml getClickHandler(String href) {
         return html("""
-                if(!evt.ctrlKey && !evt.metaKey && !evt.shiftKey && !evt.altKey && evt.button===0) { evt.preventDefault(); history.pushState(null,'','${href}'); @get('${href}', {filterSignals: {exclude: /.*/} }); }
-                """, "href", href);
+                if(!evt.ctrlKey && !evt.metaKey && !evt.shiftKey && !evt.altKey && evt.button===0) { evt.preventDefault(); history.pushState(null,'','${href}'); ${getAction}; }
+                """,
+                "href", href,
+                "getAction", X.get(href).withExcludeAllSignals());
     }
 
 }

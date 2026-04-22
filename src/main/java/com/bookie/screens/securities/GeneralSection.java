@@ -11,6 +11,7 @@ import static com.bookie.components.FormField.formField;
 import static com.bookie.components.NumberInput.numberInput;
 import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class GeneralSection {
@@ -20,7 +21,7 @@ public class GeneralSection {
 
         return html("""
                 <div class="bond-general">
-                    <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
+                    <div class="form-fields" data-on:change="${inputAction}">
                         <label>CUSIP<span class="cusip-display">${cusip}</span></label>
                         ${isin}
                         ${ticker}
@@ -62,6 +63,9 @@ public class GeneralSection {
                     </style>
                 </div>
                 """,
+                "inputAction", X.post(html("'/securities/input/' + evt.target.name"))
+                        .withRequestCancellation(false)
+                        .withIncludeSignals(html("new RegExp(evt.target.name)")),
                 "cusip", bond.getCusip(),
                 "isin", formField("ISIN").withInput(textInput("isin", bond.getIsin()).withDisabled(disabled))
                         .withError(bondRepository.validateIsin(bond.getIsin())),

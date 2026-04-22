@@ -2,9 +2,11 @@ package com.bookie.screens;
 
 import com.bookie.components.Notification;
 import com.bookie.infra.EscapedHtml;
+import com.bookie.infra.FetchBuilder.Retry;
 import com.bookie.infra.RouteInfo;
 
 import static com.bookie.components.MainNav.mainNav;
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class Shell {
@@ -79,8 +81,9 @@ public class Shell {
 
                 <body   data-signals:_update-status="'pending'"
                         data-signals:_failed-request="false"
-                        data-on:popstate__window="@get(window.location.pathname + window.location.search, {filterSignals: {exclude: /.*/}})"
+                        data-on:popstate__window="${popstateAction}"
                         data-on:datastar-fetch="
+                        console.log(evt.detail.el !== document.body, evt.detail.type);
                             if(evt.detail.el === document.body) {
                                 switch(evt.detail.type) {
                                     case 'started': $_updateStatus = 'ok'; break;
@@ -89,8 +92,8 @@ public class Shell {
                                     case 'retries-failed': $_updateStatus = 'error'; break;
                                 }
                             }
-                            if(evt.detail.el !== document.body && evt.detail.type === 'error') {
-                                _failedRequest = true;
+                            if(evt.detail.el !== document.body && (evt.detail.type === 'error' || evt.detail.type === 'retries-failed')) {
+                                $_failedRequest = true;
                             }"
                         ${updateRequest}>
 
@@ -118,6 +121,8 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
+                "popstateAction", X.get(html("window.location.pathname + window.location.search"))
+                        .withExcludeAllSignals(),
                 "healthIndicator", getHealthIndicator(),
                 "updateRequest", getUpdateRequestAttribute(),
                 "nav", nav,
@@ -130,7 +135,8 @@ public class Shell {
         return Notification.notification(html("Lost connection to the server. Please refresh the page."))
                 .withStyle(Notification.error)
                 .withID("notification-connection-error")
-                .withAttributes(html("style='display:none' data-show='!!$_failedRequest'"));
+                .hideOnClick(false)
+                .withAttributes(html("style='display:none' data-show='!!$_failedRequest' data-on:click='$_failedRequest=false'"));
     }
 
     private EscapedHtml getUpdateRequestAttribute() {
@@ -139,8 +145,10 @@ public class Shell {
         }
 
         return html("""
-                data-init="@post('${url}', {openWhenHidden: ${openWhenHidden}, retry: 'always'})"
-        """, "url", this.updateURL, "openWhenHidden", this.openWhenHidden);
+                data-init="${action}"
+        """, "action", X.post(this.updateURL)
+                .withOpenWhenHidden(this.openWhenHidden)
+                .withRetry(Retry.ALWAYS));
     }
 
     private EscapedHtml getHealthIndicator() {

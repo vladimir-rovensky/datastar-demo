@@ -12,6 +12,7 @@ import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.DateInput.dateInput;
 import static com.bookie.components.FormField.formField;
 import static com.bookie.components.NumberInput.numberInput;
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.TemplatingEngine.html;
 
 public class RedemptionSection {
@@ -23,10 +24,12 @@ public class RedemptionSection {
 
         var callSchedule = bond.getCallSchedule();
         var callTable = html("""
-                        <div data-on:change="@post('/securities/callSchedule', {filterSignals: {include: /callSchedule.*/}})" class="flex fill-height">
+                        <div data-on:change="${callScheduleAction}" class="flex fill-height">
                             ${grid}
                         </div>
-                        """, "grid",
+                        """,
+                        "callScheduleAction", X.post("/securities/callSchedule").withIncludeSignals("callSchedule.*"),
+                        "grid",
                         DataGrid.withColumns(
                                 column("Call Date", Bond.CallEntry::getCallDate)
                                         .withRenderer(r -> formField()
@@ -41,17 +44,19 @@ public class RedemptionSection {
                                 .withRows(callSchedule)
                                 .withRowID(Bond.CallEntry::getId)
                                 .withRowIDSignal(r -> "callSchedule." + r.getId() + ".id")
-                                .onDeleteRow(!disabled ? r -> html("@delete('/securities/callSchedule/${id}')", "id", r.getId()) : null)
-                                .onAddRow(!disabled ? html("@put('/securities/callSchedule')") : null)
+                                .onDeleteRow(!disabled ? r -> X.delete("/securities/callSchedule/" + r.getId()).render() : null)
+                                .onAddRow(!disabled ? X.put("/securities/callSchedule").render() : null)
                                 .withNoRowsMessage("No Call Schedule")
                                 .render());
 
         var putSchedule = bond.getPutSchedule();
         var putTable = html("""
-                        <div data-on:change="@post('/securities/putSchedule', {filterSignals: {include: /putSchedule.*/}})" class="flex fill-height">
+                        <div data-on:change="${putScheduleAction}" class="flex fill-height">
                             ${grid}
                         </div>
-                        """, "grid",
+                        """,
+                        "putScheduleAction", X.post("/securities/putSchedule").withIncludeSignals("putSchedule.*"),
+                        "grid",
                         DataGrid.withColumns(
                                 column("Put Date", Bond.PutEntry::getPutDate)
                                         .withRenderer(r -> formField()
@@ -66,17 +71,19 @@ public class RedemptionSection {
                                 .withRows(putSchedule)
                                 .withRowID(Bond.PutEntry::getId)
                                 .withRowIDSignal(r -> "putSchedule." + r.getId() + ".id")
-                                .onDeleteRow(!disabled ? r -> html("@delete('/securities/putSchedule/${id}')", "id", r.getId()) : null)
-                                .onAddRow(!disabled ? html("@put('/securities/putSchedule')") : null)
+                                .onDeleteRow(!disabled ? r -> X.delete("/securities/putSchedule/" + r.getId()).render() : null)
+                                .onAddRow(!disabled ? X.put("/securities/putSchedule").render() : null)
                                 .withNoRowsMessage("No Put Schedule")
                                 .render());
 
         var sinkingFundSchedule = bond.getSinkingFundSchedule();
         var sinkingFundTable = html("""
-                        <div data-on:change="@post('/securities/sinkingFundSchedule', {filterSignals: {include: /sinkingFundSchedule.*/}})" class="flex fill-height">
+                        <div data-on:change="${sinkingFundScheduleAction}" class="flex fill-height">
                             ${grid}
                         </div>
-                        """, "grid",
+                        """,
+                        "sinkingFundScheduleAction", X.post("/securities/sinkingFundSchedule").withIncludeSignals("sinkingFundSchedule.*"),
+                        "grid",
                         DataGrid.withColumns(
                                 column("Sink Date", Bond.SinkingFundEntry::getSinkDate)
                                         .withRenderer(r -> formField()
@@ -91,14 +98,14 @@ public class RedemptionSection {
                                 .withRows(sinkingFundSchedule)
                                 .withRowID(Bond.SinkingFundEntry::getId)
                                 .withRowIDSignal(r -> "sinkingFundSchedule." + r.getId() + ".id")
-                                .onDeleteRow(!disabled ? r -> html("@delete('/securities/sinkingFundSchedule/${id}')", "id", r.getId()) : null)
-                                .onAddRow(!disabled ? html("@put('/securities/sinkingFundSchedule')") : null)
+                                .onDeleteRow(!disabled ? r -> X.delete("/securities/sinkingFundSchedule/" + r.getId()).render() : null)
+                                .onAddRow(!disabled ? X.put("/securities/sinkingFundSchedule").render() : null)
                                 .withNoRowsMessage("No Sinking Fund Schedule")
                                 .render());
 
         return html("""
                 <div class="bond-redemption fill-height">
-                    <div class="form-fields" data-on:change="@post('/securities/input/' + evt.target.name, {requestCancellation: 'disabled', filterSignals: {include: new RegExp(evt.target.name)}})">
+                    <div class="form-fields" data-on:change="${inputAction}">
                         ${issueSize}
                         ${outstandingAmount}
                     </div>
@@ -143,6 +150,9 @@ public class RedemptionSection {
                     </style>
                 </div>
                 """,
+                "inputAction", X.post(html("'/securities/input/' + evt.target.name"))
+                        .withRequestCancellation(false)
+                        .withIncludeSignals(html("new RegExp(evt.target.name)")),
                 "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withFormat("currency").withDisabled(disabled))
                         .withError(bondRepository.validateIssueSize(bond.getIssueSize())),
                 "outstandingAmount", formField("Outstanding Amount").withInput(numberInput("outstandingAmount", outstandingAmount).withFormat("currency").withDisabled(true)),

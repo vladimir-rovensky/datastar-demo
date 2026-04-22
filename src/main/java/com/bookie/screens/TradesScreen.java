@@ -29,6 +29,7 @@ import java.util.Optional;
 import static com.bookie.components.DataGrid.column;
 import static com.bookie.components.Link.link;
 import com.bookie.infra.Format;
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -98,8 +99,8 @@ public class TradesScreen extends BaseScreen {
                 .columns(CommonColumns.bondColumns(t -> getBond(t.getCusip())))
                 .withDefaultSort("id", DataGrid.SortDirection.Descending)
                 .withRowID(r -> "trade-" + r.getId())
-                .onRowDoubleClick(t -> html("@post('/trades/modify/${id}')", "id", t.getId()))
-                .onDeleteRow(t -> html("@get('/trades/delete/${id}')", "id", t.getId()))
+                .onRowDoubleClick(t -> X.post("/trades/modify/" + t.getId()).render())
+                .onDeleteRow(t -> X.get("/trades/delete/" + t.getId()).render())
                 .withDeleteRowTooltip("Cancel Trade")
                 .withStripedRows()
                 .withEndpoint("/trades/grid")
@@ -138,9 +139,11 @@ public class TradesScreen extends BaseScreen {
                         <p>Are you sure you want to cancel trade ${tradeId}?</p>
                         """, "tradeId", tradeId))
                 .withActions(html("""
-                        <button class="btn-primary" data-on:click="@post('/trades/delete/${tradeId}')">Confirm</button>
-                        <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
-                        """, "tradeId", tradeId))
+                        <button class="btn-primary" data-on:click="${confirmAction}">Confirm</button>
+                        <button data-on:click="${cancelAction}">Cancel</button>
+                        """,
+                        "confirmAction", X.post("/trades/delete/" + tradeId),
+                        "cancelAction", X.post("/tradeTicket/cancel")))
                 .render();
         return Popup.open(content);
     }

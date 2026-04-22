@@ -26,6 +26,7 @@ import static com.bookie.components.Link.link;
 import static com.bookie.components.Loader.loader;
 import static com.bookie.components.Notification.notification;
 import static com.bookie.components.Notification.warning;
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.Response.connectUpdates;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -198,16 +199,20 @@ public class SecuritiesScreen extends BaseScreen {
 
         if (!isEditing()) {
             return html("""
-                    <button data-on:click="@post('/securities/edit')">Edit</button>
-                    """);
+                    <button data-on:click="${editAction}">Edit</button>
+                    """,
+                    "editAction", X.post("/securities/edit"));
         }
 
         var saveDisabled = !bondRepository.isValid(editingBond);
         return html("""
-                <button class="btn-primary" ${saveDisabled} data-on:click="@post('/securities/save')">Save</button>
-                <button data-on:click="@post('/securities/cancel')">Cancel</button>
+                <button class="btn-primary" ${saveDisabled} data-on:click="${saveAction}">Save</button>
+                <button data-on:click="${cancelAction}">Cancel</button>
                 """,
-                "saveDisabled", saveDisabled ? html("disabled data-tooltip=\"Please fix any invalid values before saving.\"") : EscapedHtml.blank());
+                "saveAction", X.post("/securities/save"),
+                "cancelAction", X.post("/securities/cancel"),
+                "saveDisabled", saveDisabled ? html("""
+                        disabled data-tooltip="Please fix any invalid values before saving." """) : EscapedHtml.blank());
     }
 
     private EscapedHtml getStyles() {

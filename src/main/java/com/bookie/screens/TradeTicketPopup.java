@@ -24,6 +24,7 @@ import static com.bookie.components.SelectInput.selectInput;
 import static com.bookie.components.TextInput.textInput;
 import static com.bookie.components.Popup.popup;
 import com.bookie.infra.EscapedHtml;
+import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.Response.sse;
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -89,9 +90,11 @@ public class TradeTicketPopup {
 
     public static EscapedHtml getToolbarButtons() {
         return html("""
-                <button class="btn-large btn-buy" data-on:click="@post('/tradeTicket/buy')" data-tooltip='Book a new BUY Trade'>B</button>
-                <button class="btn-large btn-sell" data-on:click="@post('/tradeTicket/sell')" data-tooltip='Book a new SELL Trade'>S</button>
-                """);
+                <button class="btn-large btn-buy" data-on:click="${buyAction}" data-tooltip='Book a new BUY Trade'>B</button>
+                <button class="btn-large btn-sell" data-on:click="${sellAction}" data-tooltip='Book a new SELL Trade'>S</button>
+                """,
+                "buyAction", X.post("/tradeTicket/buy"),
+                "sellAction", X.post("/tradeTicket/sell"));
     }
 
     public EscapedHtml render(Trade ticket) {
@@ -103,7 +106,7 @@ public class TradeTicketPopup {
         var isValid = tradeRepository.isValid(ticket);
 
         var content = html("""
-                <div class="form-fields" data-indicator:_fetching data-signals="{id: ${tradeId}}" data-on:change="@post('/tradeTicket/input')">
+                <div class="form-fields" data-indicator:_fetching data-signals="{id: ${tradeId}}" data-on:change="${inputAction}">
                     ${cusip}
                     ${book}
                     ${type}
@@ -115,6 +118,7 @@ public class TradeTicketPopup {
                 </div>
                 """,
 
+                "inputAction", X.post("/tradeTicket/input"),
                 "tradeId", ticket.getId(),
 
                 "cusip", formField("CUSIP")
@@ -151,9 +155,11 @@ public class TradeTicketPopup {
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
 
         var actions = html("""
-                <button class="btn-large ${btnClass}" data-on:click="@post('/tradeTicket/book')" data-attr:disabled="$_fetching || !${valid}">${btnLabel}</button>
-                <button data-on:click="@post('/tradeTicket/cancel')">Cancel</button>
+                <button class="btn-large ${btnClass}" data-on:click="${bookAction}" data-attr:disabled="$_fetching || !${valid}">${btnLabel}</button>
+                <button data-on:click="${cancelAction}">Cancel</button>
                 """,
+                "bookAction", X.post("/tradeTicket/book"),
+                "cancelAction", X.post("/tradeTicket/cancel"),
                 "valid", isValid,
                 "btnClass", btnClass,
                 "btnLabel", btnLabel);

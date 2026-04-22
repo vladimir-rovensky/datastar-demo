@@ -18,6 +18,7 @@ public class Notification implements Renderable {
     private boolean inline = false;
     private String id = "global-notification";
     private EscapedHtml attributes = EscapedHtml.blank();
+    private boolean hideOnClick = true;
 
     private Notification(EscapedHtml content) {
         this.content = content;
@@ -47,6 +48,11 @@ public class Notification implements Renderable {
         return this;
     }
 
+    public Notification hideOnClick(boolean hideOnClick) {
+        this.hideOnClick = hideOnClick;
+        return this;
+    }
+
     @Override
     public EscapedHtml render() {
         var styleClass = style == null ? "" : switch (style) {
@@ -58,11 +64,12 @@ public class Notification implements Renderable {
         var positionClass = inline ? "notification--inline" : "";
 
         return html("""
-                <div id='${id}' role="alert" class="notification ${styleClass} ${positionClass}" data-on:click="el.hidden=true" ${attributes}>${content}</div>
+                <div id='${id}' role="alert" class="notification ${styleClass} ${positionClass}" ${hideOnClick} ${attributes}>${content}</div>
                 """,
                 "id", this.id,
                 "styleClass", styleClass,
                 "positionClass", positionClass,
+                "hideOnClick", hideOnClick ? html("data-on:click=\"el.hidden=true\"") : "",
                 "attributes", attributes,
                 "content", content);
     }

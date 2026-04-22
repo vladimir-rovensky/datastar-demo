@@ -1,5 +1,6 @@
 package com.bookie.screens;
 
+import com.bookie.components.Notification;
 import com.bookie.infra.EscapedHtml;
 import com.bookie.infra.RouteInfo;
 
@@ -77,6 +78,7 @@ public class Shell {
                 </head>
 
                 <body   data-signals:_update-status="'pending'"
+                        data-signals:_failed-request="false"
                         data-on:popstate__window="@get(window.location.pathname + window.location.search, {filterSignals: {exclude: /.*/}})"
                         data-on:datastar-fetch="
                             if(evt.detail.el === document.body) {
@@ -86,6 +88,9 @@ public class Shell {
                                     case 'retrying': $_updateStatus = 'warn'; break;
                                     case 'retries-failed': $_updateStatus = 'error'; break;
                                 }
+                            }
+                            if(evt.detail.el !== document.body && evt.detail.type === 'error') {
+                                _failedRequest = true;
                             }"
                         ${updateRequest}>
 
@@ -100,11 +105,10 @@ public class Shell {
 
                     ${content}
 
-                <div id="popup" data-signals__ifmissing="{popupVisible: false}">
-                </div>
+                <div id="popup" data-signals__ifmissing="{popupVisible: false}"></div>
                 
-                <div id="global-notification">
-                </div>
+                <div id="global-notification"></div>
+                ${failedRequestNotification}
 
                 <script id="script-runner">
                 </script>
@@ -118,7 +122,15 @@ public class Shell {
                 "updateRequest", getUpdateRequestAttribute(),
                 "nav", nav,
                 "content", content,
-                "toolbarContent", toolbarContent);
+                "toolbarContent", toolbarContent,
+                "failedRequestNotification", getFailedRequestNotification());
+    }
+
+    private static Notification getFailedRequestNotification() {
+        return Notification.notification(html("Lost connection to the server. Please refresh the page."))
+                .withStyle(Notification.error)
+                .withID("notification-connection-error")
+                .withAttributes(html("style='display:none' data-show='!!$_failedRequest'"));
     }
 
     private EscapedHtml getUpdateRequestAttribute() {

@@ -77,7 +77,10 @@ public class PositionsScreen extends BaseScreen {
                 .filterable()
                 .withUpdateChannel(this::getChannel);
 
-        this.eventSubscriptions.add(eventBus.subscribe(PositionChangedEvent.class, this::onPositionChanged));
+        this.eventSubscriptions.add(eventBus.subscribeBatched()
+                .on(PositionChangedEvent.class, this::onPositionChanged)
+                .afterBatchProcessed(this::triggerUpdate)
+                .subscribe());
         this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
         this.positions = loadPositions(positionService);
@@ -124,7 +127,6 @@ public class PositionsScreen extends BaseScreen {
         this.positions.removeIf(p -> p.getKey().equals(changedPosition.getKey()));
         this.positions.add(changedPosition);
         loadBondsFor(List.of(changedPosition));
-        this.triggerUpdate();
         animateCurrentPositionIfChanged(event);
     }
 

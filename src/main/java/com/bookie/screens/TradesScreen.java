@@ -75,9 +75,12 @@ public class TradesScreen extends BaseScreen {
         this.tradeTicketPopup = tradeTicketPopup;
         this.bondRepository = bondRepository;
 
-        this.eventSubscriptions.add(eventBus.subscribe(TradeBookedEvent.class, this::onTradeBooked));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeModifiedEvent.class, this::onTradeModified));
-        this.eventSubscriptions.add(eventBus.subscribe(TradeDeletedEvent.class, this::onTradeDeleted));
+        this.eventSubscriptions.add(eventBus.subscribeBatched()
+                .on(TradeBookedEvent.class, this::onTradeBooked)
+                .on(TradeModifiedEvent.class, this::onTradeModified)
+                .on(TradeDeletedEvent.class, this::onTradeDeleted)
+                .afterBatchProcessed(this::triggerUpdate)
+                .subscribe());
         this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
         loadTrades(tradeRepository);
@@ -185,18 +188,15 @@ public class TradesScreen extends BaseScreen {
         this.trades.removeIf(t -> t.getId().equals(bookedTrade.getId()));
         this.trades.add(bookedTrade);
         loadBondsFor(List.of(bookedTrade));
-        triggerUpdate();
     }
 
     private synchronized void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.updatedTrade().getId()) ? event.updatedTrade() : t);
         loadBondsFor(List.of(event.updatedTrade()));
-        triggerUpdate();
     }
 
     private synchronized void onTradeDeleted(TradeDeletedEvent event) {
         this.trades.removeIf(t -> t.getId().equals(event.deletedTrade().getId()));
-        triggerUpdate();
     }
 
     private synchronized void onBondSaved(BondSavedEvent event) {

@@ -16,6 +16,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,9 +80,12 @@ public class PositionsScreen extends BaseScreen {
 
         this.eventSubscriptions.add(eventBus.subscribeBatched()
                 .on(PositionChangedEvent.class, this::onPositionChanged)
-                .afterBatchProcessed(this::triggerUpdate)
+                .on(BondSavedEvent.class, this::onBondSaved)
+                .afterBatchProcessed(() -> {
+                    this.loadBondsFor(positions);
+                    this.triggerUpdate();
+                })
                 .subscribe());
-        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
         this.positions = loadPositions(positionService);
         loadBondsFor(this.positions);
@@ -126,28 +130,28 @@ public class PositionsScreen extends BaseScreen {
         Position changedPosition = event.position();
         this.positions.removeIf(p -> p.getKey().equals(changedPosition.getKey()));
         this.positions.add(changedPosition);
-        loadBondsFor(List.of(changedPosition));
-        animateCurrentPositionIfChanged(event);
+        animatePositionCellsIfChanged(event);
     }
 
-    private void animateCurrentPositionIfChanged(PositionChangedEvent event) {
-        var previousCurrentPosition = event.previousPosition().getCurrentPosition();
-        var newCurrentPosition = event.position().getCurrentPosition();
+    private void animatePositionCellsIfChanged(PositionChangedEvent event) {
+        animateCellIfChanged(event.position(), "Current Position", event.previousPosition().getCurrentPosition(), event.position().getCurrentPosition());
+        animateCellIfChanged(event.position(), "Settled Position", event.previousPosition().getSettledPosition(), event.position().getSettledPosition());
+    }
 
-        if (newCurrentPosition.compareTo(previousCurrentPosition) == 0) {
+    private void animateCellIfChanged(Position row, String header, BigDecimal previousValue, BigDecimal currentValue) {
+        if (currentValue.compareTo(previousValue) == 0) {
             return;
         }
 
-        var increased = newCurrentPosition.compareTo(previousCurrentPosition) > 0;
+        var increased = currentValue.compareTo(previousValue) > 0;
         var keyframes = increased ? "[{color:'var(--clr-success-border)'},{color:'inherit'}]" : "[{color:'var(--clr-error)'},{color:'inherit'}]";
-        this.positionGrid.animateCell(event.position(), "Current Position", keyframes, 750);
+        this.positionGrid.animateCell(row, header, keyframes, 750);
     }
 
     private synchronized void onBondSaved(BondSavedEvent event) {
         var bond = event.getBond();
         if (bondByCusip.containsKey(bond.getCusip())) {
             bondByCusip.put(bond.getCusip(), bond);
-            triggerUpdate();
         }
     }
 
@@ -155,7 +159,7 @@ public class PositionsScreen extends BaseScreen {
         return Optional.ofNullable(bondByCusip.get(cusip));
     }
 
-    private void loadBondsFor(List<Position> positionList) {
+    private synchronized void loadBondsFor(List<Position> positionList) {
         var missingCusips = new HashSet<String>();
         positionList.forEach(p -> missingCusips.add(p.getCusip()));
         missingCusips.removeAll(bondByCusip.keySet());

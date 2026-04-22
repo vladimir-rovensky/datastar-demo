@@ -83,7 +83,6 @@ public class Shell {
                         data-signals:_failed-request="false"
                         data-on:popstate__window="${popstateAction}"
                         data-on:datastar-fetch="
-                        console.log(evt.detail.el !== document.body, evt.detail.type);
                             if(evt.detail.el === document.body) {
                                 switch(evt.detail.type) {
                                     case 'started': $_updateStatus = 'ok'; break;

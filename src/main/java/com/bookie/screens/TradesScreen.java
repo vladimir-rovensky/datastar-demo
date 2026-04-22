@@ -79,9 +79,12 @@ public class TradesScreen extends BaseScreen {
                 .on(TradeBookedEvent.class, this::onTradeBooked)
                 .on(TradeModifiedEvent.class, this::onTradeModified)
                 .on(TradeDeletedEvent.class, this::onTradeDeleted)
-                .afterBatchProcessed(this::triggerUpdate)
+                .on(BondSavedEvent.class, this::onBondSaved)
+                .afterBatchProcessed(() -> {
+                    loadBondsFor(this.trades);
+                    this.triggerUpdate();
+                })
                 .subscribe());
-        this.eventSubscriptions.add(eventBus.subscribe(BondSavedEvent.class, this::onBondSaved));
 
         loadTrades(tradeRepository);
 
@@ -187,12 +190,10 @@ public class TradesScreen extends BaseScreen {
         Trade bookedTrade = event.getTrade();
         this.trades.removeIf(t -> t.getId().equals(bookedTrade.getId()));
         this.trades.add(bookedTrade);
-        loadBondsFor(List.of(bookedTrade));
     }
 
     private synchronized void onTradeModified(TradeModifiedEvent event) {
         this.trades.replaceAll(t -> t.getId().equals(event.updatedTrade().getId()) ? event.updatedTrade() : t);
-        loadBondsFor(List.of(event.updatedTrade()));
     }
 
     private synchronized void onTradeDeleted(TradeDeletedEvent event) {
@@ -203,7 +204,6 @@ public class TradesScreen extends BaseScreen {
         var bond = event.getBond();
         if (bondByCusip.containsKey(bond.getCusip())) {
             bondByCusip.put(bond.getCusip(), bond);
-            triggerUpdate();
         }
     }
 
@@ -211,7 +211,7 @@ public class TradesScreen extends BaseScreen {
         return Optional.ofNullable(bondByCusip.get(cusip));
     }
 
-    private void loadBondsFor(List<Trade> tradeList) {
+    private synchronized void loadBondsFor(List<Trade> tradeList) {
         var missingCusips = new HashSet<String>();
         tradeList.forEach(t -> missingCusips.add(t.getCusip()));
         missingCusips.removeAll(bondByCusip.keySet());

@@ -6,12 +6,14 @@ import com.bookie.infra.events.TradeBookedEvent;
 import com.bookie.infra.events.TradeDeletedEvent;
 import com.bookie.infra.events.TradeModifiedEvent;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.locks.LockSupport;
 
 import static com.bookie.infra.Util.sleep;
 
@@ -19,6 +21,12 @@ import static com.bookie.infra.Util.sleep;
 public class TradeRepository {
 
     private static final int TRADE_COUNT = 1000;
+
+    @Value("${bookie.stress.trades.per.second:0}")
+    private int stressTradesPerSecond;
+
+    @Value("${bookie.stress.restrict.bonds:10}")
+    private int stressRestrictBonds;
 
     private long nextId = 1;
     private final TradeDAO dao;
@@ -195,31 +203,61 @@ public class TradeRepository {
         List<Bond> bonds = bondRepo.getAllBonds();
         List<String> books = refData.getAllBooks();
         List<String> counterparties = refData.getAllCounterparties();
-        Random rng = new Random(42);
         LocalDate today = LocalDate.of(2026, 4, 3);
 
-        while (this.dao.getTotalCount() < TRADE_COUNT) {
-            Bond bond = bonds.get(rng.nextInt(bonds.size()));
-            TradeDirection direction = rng.nextInt(10) < 7 ? TradeDirection.BUY : TradeDirection.SELL;
-            LocalDate tradeDate = today.minusDays(rng.nextInt(730));
-            BigDecimal quantity = BigDecimal.valueOf((rng.nextInt(200) + 1) * 100_000L);
-            BigDecimal accrued = quantity.multiply(BigDecimal.valueOf(0.1));
+        if (stressTradesPerSecond > 0) {
+            List<Bond> stressBonds = stressRestrictBonds > 0 ? bonds.subList(0, stressRestrictBonds) : bonds;
+            runStressLoop(stressBonds, books, counterparties, today);
+            return;
+        }
 
-            Trade trade = new Trade();
-            trade.setCusip(bond.getCusip());
-            trade.setDirection(direction);
-            trade.setTradeDate(tradeDate);
-            trade.setSettleDate(tradeDate.plusDays(2));
-            trade.setExecutionTime(Date.from(tradeDate.atStartOfDay(ZoneOffset.UTC).plusSeconds(rng.nextInt(86400)).toInstant()));
-            trade.setQuantity(quantity);
-            trade.setAccruedInterest(accrued);
-            trade.setBook(books.get(rng.nextInt(books.size())));
-            trade.setCounterparty(counterparties.get(rng.nextInt(counterparties.size())));
+        Random rng = new Random(42);
+
+        while (this.dao.getTotalCount() < TRADE_COUNT) {
+            Trade trade = buildRandomTrade(rng, bonds, books, counterparties, today);
 
             if (this.isValid(trade)) {
                 bookNewTrade(trade);
             }
         }
+    }
+
+    private void runStressLoop(List<Bond> bonds, List<String> books, List<String> counterparties, LocalDate today) {
+        Random rng = new Random(42);
+        long delayNanos = 1_000_000_000L / stressTradesPerSecond;
+
+        //noinspection InfiniteLoopStatement
+        while (true) {
+            Trade trade;
+
+            do {
+                trade = buildRandomTrade(rng, bonds, books, counterparties, today);
+            } while (!isValid(trade));
+
+            bookNewTrade(trade);
+            LockSupport.parkNanos(delayNanos);
+        }
+    }
+
+    private Trade buildRandomTrade(Random rng, List<Bond> bonds, List<String> books, List<String> counterparties, LocalDate today) {
+        Bond bond = bonds.get(rng.nextInt(bonds.size()));
+        TradeDirection direction = rng.nextInt(10) < 7 ? TradeDirection.BUY : TradeDirection.SELL;
+        LocalDate tradeDate = today.minusDays(rng.nextInt(730));
+        BigDecimal quantity = BigDecimal.valueOf((rng.nextInt(200) + 1) * 100_000L);
+        BigDecimal accrued = quantity.multiply(BigDecimal.valueOf(0.1));
+
+        Trade trade = new Trade();
+        trade.setCusip(bond.getCusip());
+        trade.setDirection(direction);
+        trade.setTradeDate(tradeDate);
+        trade.setSettleDate(tradeDate.plusDays(2));
+        trade.setExecutionTime(Date.from(tradeDate.atStartOfDay(ZoneOffset.UTC).plusSeconds(rng.nextInt(86400)).toInstant()));
+        trade.setQuantity(quantity);
+        trade.setAccruedInterest(accrued);
+        trade.setBook(books.get(rng.nextInt(books.size())));
+        trade.setCounterparty(counterparties.get(rng.nextInt(counterparties.size())));
+
+        return trade;
     }
 
     private void loadTradesFromDB() {

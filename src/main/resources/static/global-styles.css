@@ -326,7 +326,7 @@ input.loading { opacity: 0; }
     display: grid;
     grid-template-columns: var(--cols);
     min-width: fit-content;
-    animation: data-grid-row-fadein 120ms ease-out;
+    //animation: data-grid-row-fadein 120ms ease-out;
     .striped-rows &:nth-child(even) { background-color: var(--clr-bg-alt); }
     &:hover { background-color: var(--clr-surface-hi); }
     .striped-rows &:nth-child(even):hover { background-color: var(--clr-surface-hi); }

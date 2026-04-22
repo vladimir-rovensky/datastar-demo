@@ -31,7 +31,7 @@ public class FakeTradeDAO implements TradeDAO {
     @Override
     public void saveAll(List<Trade> tradesToSave) {
         for (Trade trade : tradesToSave) {
-            trades.put(trade.getId(), trade);
+            trades.put(trade.getId(), trade.clone());
         }
     }
 

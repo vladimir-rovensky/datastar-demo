@@ -26,7 +26,7 @@ public class DefaultTradeDAO implements TradeDAO {
 
     @Override
     public void saveAll(List<Trade> trades) {
-        trades.forEach(trade -> this.trades.put(trade.getId(), trade));
+        trades.forEach(trade -> this.trades.put(trade.getId(), trade.clone()));
     }
 
     @Override

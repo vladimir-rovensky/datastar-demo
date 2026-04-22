@@ -8,6 +8,7 @@ The focus is on simplicity and minimalism. Do not add any dependencies unless I 
 
 - IDE: IntelliJ IDEA on Windows
 - Build: Gradle (use `./gradlew` or `gradlew.bat`)
+- Verify: gradlew test
 - JDK: 24
 
 ## HTML Templating

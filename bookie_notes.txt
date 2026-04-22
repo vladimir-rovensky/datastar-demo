@@ -13,6 +13,7 @@ Solved
 * Live reload - both server restart and hot reload work.
 * Editor support - language injections (Intellij plugin doesn't work for injected languages though)
 * XSS protection
+* HTTP caching
 * Encapsulation
     - scripts - IIFE + document.currentScript
     - styles - CSS scopes

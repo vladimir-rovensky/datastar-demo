@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
 
-public class Trade {
+public class Trade implements Cloneable {
 
     private Long id;
     private String cusip;
@@ -56,4 +56,18 @@ public class Trade {
     public Trade setExecutionTime(Date executionTime) { this.executionTime = executionTime; return this; }
 
     public PositionKey getPositionKey() { return new PositionKey(cusip, book); }
+
+    @Override
+    public Trade clone() {
+        try {
+            var clonedTrade = (Trade) super.clone();
+            if (executionTime != null) {
+                clonedTrade.executionTime = new Date(executionTime.getTime());
+            }
+            return clonedTrade;
+        }
+        catch (CloneNotSupportedException exception) {
+            throw new AssertionError(exception);
+        }
+    }
 }

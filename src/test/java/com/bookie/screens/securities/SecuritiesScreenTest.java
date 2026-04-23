@@ -18,14 +18,14 @@ public class SecuritiesScreenTest extends TestBase {
         givenExistingBonds(aBond("CSP1").setDescription("Old Description"));
         givenExistingTrades(aTrade("CSP1", TradeDirection.BUY, 10_000));
 
-        var screen = switchToSecurities();
-        screen.loadCusip("CSP1")
+        var securities = page.switchToSecurities();
+        securities.loadCusip("CSP1")
                 .switchToEditMode()
                 .getDescription().setValue("New Description");
 
-        screen.save();
+        securities.save();
 
-        switchToTrades()
+        page.switchToTrades()
                 .verifyTradeDisplayed(0,
                         aTrade("CSP1", TradeDirection.BUY, 10_000),
                         aBond("CSP1").setDescription("New Description"));
@@ -35,34 +35,34 @@ public class SecuritiesScreenTest extends TestBase {
     public void calculatesOutstandingSize() {
         givenExistingBonds(aBond("CSP1").setIssueSize(new BigDecimal(1_000_000)));
 
-        var screen = switchToSecurities();
-        screen.loadCusip("CSP1").switchToRedemption();
+        var securities = page.switchToSecurities();
+        securities.loadCusip("CSP1").switchToRedemption();
 
-        screen.getOutstandingAmount().verifyValue(1_000_000);
+        securities.getOutstandingAmount().verifyValue(1_000_000);
 
-        screen.switchToEditMode();
-        screen.getIssueSize().setValue(3_000_000);
-        screen.addSinkRow(LocalDate.of(2025, 1, 1), 100_000);
-        screen.getOutstandingAmount().verifyValue(2_900_000);
-        screen.save();
+        securities.switchToEditMode();
+        securities.getIssueSize().setValue(3_000_000);
+        securities.addSinkRow(LocalDate.of(2025, 1, 1), 100_000);
+        securities.getOutstandingAmount().verifyValue(2_900_000);
+        securities.save();
 
-        reloadPage();
+        page.reload();
 
-        screen = switchToSecurities();
-        screen.getOutstandingAmount().verifyValue(2_900_000);
+        securities = page.switchToSecurities();
+        securities.getOutstandingAmount().verifyValue(2_900_000);
     }
 
     @Test
     public void notifiesWhenSecurityIsUpdatedBySomeoneElse() {
         givenExistingBonds(aBond("CSP1").setDescription("Initial"));
 
-        var screen = switchToSecurities("CSP1");
-        screen.switchToEditMode();
+        var securities = page.switchToSecurities("CSP1");
+        securities.switchToEditMode();
 
-            Bond bond = getSavedBond("CSP1").setDescription("Changed");
-            saveBonds(bond);
+        Bond bond = getSavedBond("CSP1").setDescription("Changed");
+        saveBonds(bond);
 
-        assertWarningShown("This bond was modified by someone else");
+        page.assertWarningShown("This bond was modified by someone else");
     }
 
 }

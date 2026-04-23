@@ -22,9 +22,9 @@ public class TradesScreenTest extends TestBase {
         givenExistingBonds(bond);
         givenExistingTrades(trade);
 
-        var page = switchToTrades();
+        var trades = page.switchToTrades();
 
-        page.verifyTradeDisplayed(0, trade, bond);
+        trades.verifyTradeDisplayed(0, trade, bond);
     }
 
     @Test
@@ -36,11 +36,11 @@ public class TradesScreenTest extends TestBase {
         trade.setTradeDate(LocalDate.now());
         trade.setSettleDate(LocalDate.now().plusDays(2));
 
-        var page = switchToTrades();
+        var trades = page.switchToTrades();
 
-        page.bookTrade(trade);
+        trades.bookTrade(trade);
 
-        page.verifyTradeDisplayed(0, trade, bond);
+        trades.verifyTradeDisplayed(0, trade, bond);
     }
 
     @Test
@@ -51,13 +51,13 @@ public class TradesScreenTest extends TestBase {
         givenExistingBonds(bond);
         givenExistingTrades(trade);
 
-        var page = switchToTrades();
+        var trades = page.switchToTrades();
 
         var modifiedTrade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
         modifiedTrade.setQuantity(BigDecimal.valueOf(2_000_000));
-        page.modifyTrade(trade);
+        trades.modifyTrade(trade);
 
-        page.verifyTradeDisplayed(0, trade, bond);
+        trades.verifyTradeDisplayed(0, trade, bond);
     }
 
     @Test
@@ -66,11 +66,11 @@ public class TradesScreenTest extends TestBase {
         Trade trade = aTrade("912828ZT5", TradeDirection.BUY, 1_000_000);
         givenExistingTrades(trade);
 
-        var page = switchToTrades();
+        var trades = page.switchToTrades();
 
-        page.cancelTrade(trade.getId());
+        trades.cancelTrade(trade.getId());
 
-        page.verifyNoTradesDisplayed();
+        trades.verifyNoTradesDisplayed();
     }
 
 }

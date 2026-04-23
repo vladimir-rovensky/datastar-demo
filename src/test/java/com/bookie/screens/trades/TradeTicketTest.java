@@ -17,7 +17,7 @@ public class TradeTicketTest extends TestBase {
         givenExistingBonds(aBond("CSP1"));
         getTradeDAO().setBookDelay(10);
 
-        var trades = switchToTrades();
+        var trades = page.switchToTrades();
 
         var ticket = trades.openTradeTicket(TradeDirection.BUY);
 

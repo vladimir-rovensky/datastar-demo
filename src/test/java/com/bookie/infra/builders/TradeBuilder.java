@@ -24,8 +24,8 @@ public class TradeBuilder {
         trade.setAccruedInterest(BigDecimal.valueOf(quantity).multiply(BigDecimal.valueOf(0.1)));
         trade.setBook("CREDIT-NY");
         trade.setCounterparty("GOLDMAN");
-        trade.setTradeDate(LocalDate.of(2026, 1, 15));
-        trade.setSettleDate(LocalDate.of(2026, 1, 17));
+        trade.setTradeDate(LocalDate.now());
+        trade.setSettleDate(LocalDate.now());
         trade.setExecutionTime(new Date());
         return trade;
     }

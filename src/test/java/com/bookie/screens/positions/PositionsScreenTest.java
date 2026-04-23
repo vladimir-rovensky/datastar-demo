@@ -20,9 +20,9 @@ public class PositionsScreenTest extends TestBase {
                 aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("MUNI-WEST"),
                 aTrade("CSP2", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
 
-        var page = switchToPositions();
+        var positions = page.switchToPositions();
 
-        page.verifyPositionsDisplayed(
+        positions.verifyPositionsDisplayed(
                 aPosition("CSP1", "CREDIT-NY", 200_000),
                 aPosition("CSP1", "MUNI-WEST", 100_000),
                 aPosition("CSP2", "CREDIT-NY", 100_000));
@@ -33,9 +33,9 @@ public class PositionsScreenTest extends TestBase {
         givenExistingBonds(aBond("CSP1"));
         givenExistingTrades(aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
 
-        switchToTrades().bookTrade(aTrade(null, "CSP1", TradeDirection.BUY, 200_000).setBook("CREDIT-NY"));
+        page.switchToTrades().bookTrade(aTrade(null, "CSP1", TradeDirection.BUY, 200_000).setBook("CREDIT-NY"));
 
-        switchToPositions().verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 300_000));
+        page.switchToPositions().verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 300_000));
     }
 
     @Test
@@ -43,15 +43,15 @@ public class PositionsScreenTest extends TestBase {
         givenExistingBonds(aBond("CSP1"));
         givenExistingTrades(aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"));
 
-        var page = switchToTrades()
+        var trades = page.switchToTrades()
                 .bookTrade(
                         aTrade(null, "CSP1", TradeDirection.SELL, 50_000).setBook("CREDIT-NY"),
                         () -> bookTrades(aTrade("CSP1", TradeDirection.SELL, 60_000).setBook("CREDIT-NY")));
 
-        page.getTradeTicket().getQuantity().verifyError("Trade would result in negative Current Position");
-        page.getTradeTicket().cancel();
+        trades.getTradeTicket().getQuantity().verifyError("Trade would result in negative Current Position");
+        trades.getTradeTicket().cancel();
 
-        var positions = switchToPositions();
+        var positions = page.switchToPositions();
 
         positions.verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 40_000));
     }
@@ -64,9 +64,9 @@ public class PositionsScreenTest extends TestBase {
 
         var modifiedTrade = aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("MUNI-WEST").setId(trade.getId());
 
-        switchToTrades().modifyTrade(modifiedTrade);
+        page.switchToTrades().modifyTrade(modifiedTrade);
 
-        switchToPositions()
+        page.switchToPositions()
                 .verifyPositionsDisplayed(
                         aPosition("CSP1", "MUNI-WEST", 100_000),
                         aPosition("CSP1", "CREDIT-NY", 0))
@@ -83,14 +83,14 @@ public class PositionsScreenTest extends TestBase {
                 trade,
                 aTrade("CSP1", TradeDirection.SELL, 80_000).setBook("CREDIT-NY"));
 
-        var trades = switchToTrades();
+        var trades = page.switchToTrades();
 
         trades.cancelTrade(trade.getId());
 
-        assertErrorShown("Cancelling the trade would result in a short position");
+        page.assertErrorShown("Cancelling the trade would result in a short position");
         trades.cancelAction();
 
-        var positions = switchToPositions();
+        var positions = page.switchToPositions();
         positions.verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 20_000));
     }
 }

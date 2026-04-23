@@ -3,6 +3,7 @@ package com.bookie;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
@@ -13,7 +14,7 @@ public class SmokeTest extends TestBase {
     @Test
     void rootRedirectsToTrades() throws Exception {
         HttpResponse<String> response = getHttpClient().send(HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl() + "/"))
+                .uri(URI.create(getBaseUrl() + "/"))
                 .GET()
                 .build(), HttpResponse.BodyHandlers.ofString());
 
@@ -21,4 +22,9 @@ public class SmokeTest extends TestBase {
         assertThat(response.headers().firstValue("Location").orElse("")).endsWith("/trades");
     }
 
+    private HttpClient getHttpClient() {
+        return HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
+    }
 }

@@ -23,28 +23,32 @@ public class TradesScreenPageObject {
         return DataGridHelper.find(getRoot());
     }
 
-    public void bookTrade(Trade trade) {
-        bookTrade(trade, () -> {});
+    public TradesScreenPageObject bookTrade(Trade trade) {
+        return bookTrade(trade, () -> {});
     }
 
     public TradesScreenPageObject bookTrade(Trade trade, Runnable beforeConfirm) {
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(trade.getDirection() == TradeDirection.BUY ? "B" : "S")).click();
 
-        var ticket = getTradeTicket()
+        var ticket = openTradeTicket(trade.getDirection())
                 .enterTrade(trade)
                 .waitForAccruedInterest();
 
         beforeConfirm.run();
 
-        ticket.confirm(trade);
+        ticket.confirm();
 
         return this;
+    }
+
+    public TradeTicketPageObject openTradeTicket(TradeDirection direction) {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(direction == TradeDirection.BUY ? "B" : "S")).click();
+        return getTradeTicket();
     }
 
     public void modifyTrade(Trade trade) {
         getGrid().getRowByCellValue("ID", trade.getId().toString()).dblclick();
 
-        getTradeTicket().enterTrade(trade).confirm(trade);
+        getTradeTicket().enterTrade(trade).confirm();
     }
 
     public TradeTicketPageObject getTradeTicket() {

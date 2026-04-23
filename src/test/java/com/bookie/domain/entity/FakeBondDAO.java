@@ -11,7 +11,7 @@ public class FakeBondDAO implements BondDAO {
 
     private final Map<String, Bond> bonds = new LinkedHashMap<>();
 
-    public void clear() {
+    public void reset() {
         bonds.clear();
     }
 

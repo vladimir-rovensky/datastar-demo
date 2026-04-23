@@ -48,10 +48,10 @@ public abstract class TestBase {
 
     @BeforeEach
     void setup() {
-        getSessionRegistry().clearAll();
-        getBondDAO().clear();
-        getTradeDAO().clear();
-        getPositionService().clear();
+        getSessionRegistry().reset();
+        getBondDAO().reset();
+        getTradeDAO().reset();
+        getPositionService().reset();
 
         if(isolateTests) {
             prepareTab();

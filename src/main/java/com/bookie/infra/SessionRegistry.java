@@ -118,7 +118,7 @@ public class SessionRegistry implements SmartLifecycle {
         session.dispose();
     }
 
-    public synchronized void clearAll() {
+    public synchronized void reset() {
         sessions.values().forEach(ClientSession::dispose);
         sessions.clear();
     }

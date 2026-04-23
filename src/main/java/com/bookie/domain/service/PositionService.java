@@ -24,7 +24,7 @@ public class PositionService {
         return List.copyOf(positions.values());
     }
 
-    public synchronized void clear() {
+    public synchronized void reset() {
         positions.clear();
     }
 

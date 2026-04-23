@@ -155,7 +155,7 @@ public class TradeTicketPopup {
                         .withInput(dateInput("settleDate", ticket.getSettleDate())));
 
         var actions = html("""
-                <button class="btn-large ${btnClass}" data-on:click="${bookAction}" data-attr:disabled="$_fetching || !${valid}">${btnLabel}</button>
+                <button class="btn-large ${btnClass}" data-on:click="${bookAction}" data-indicator:_booking data-attr:disabled="$_fetching || $_booking || !${valid}">${btnLabel}</button>
                 <button data-on:click="${cancelAction}">Cancel</button>
                 """,
                 "bookAction", X.post("/tradeTicket/book"),

@@ -2,7 +2,7 @@ package com.bookie.components;
 
 public class VirtualScrollManager {
 
-    private static final int OVERSCAN_ROWS = 10;
+    private static final int OVERSCAN_ROWS = 15;
     private static final int DEFAULT_INITIAL_WINDOW = 100;
 
     private final int rowHeightPx;

@@ -78,7 +78,7 @@ public class DataGrid<TRow> {
                 .POST("viewport", request -> getGrid.apply(request).applyViewport(request));
     }
 
-    public EscapedHtml render() {
+    public synchronized EscapedHtml render() {
         var visibleColumns = getVisibleColumns();
         var actionHeaderCell = getActionHeaderCell();
         var headerCells = EscapedHtml.concat(visibleColumns, c -> {
@@ -95,7 +95,7 @@ public class DataGrid<TRow> {
 
         var filterRow = getFilterRow(visibleColumns);
 
-        var displayRows = sortRows(filterRows(this.rows));
+        var displayRows = sortRows(filterRows(List.copyOf(this.rows)));
 
         var bodyRows = buildBodyRows(displayRows);
         var columnTemplate = getColumnStyleTemplate();
@@ -103,11 +103,12 @@ public class DataGrid<TRow> {
         var stripedClass = stripedRows ? " striped-rows" : "";
         var scrollHandler = endpoint != null
                 ? html("""
-                        data-on:scroll__debounce_150="${scrollAction}"
+                        data-on:scroll__throttle.50ms.trailing="if(el.prevScrollTop !== undefined && el.prevScrollTop !== el.scrollTop) { ${scrollAction}; } el.prevScrollTop = el.scrollTop;"
                         """,
                         "scrollAction", X.post(endpoint + "/viewport")
                                 .withPayload("{scrollTop: el.scrollTop, viewportHeight: el.clientHeight}"))
                 : EscapedHtml.blank();
+
         var resizeHandler = endpoint != null
                 ? html("""
                         data-on:data-grid-viewport-resize__debounce_150="${resizeAction}"
@@ -115,6 +116,7 @@ public class DataGrid<TRow> {
                         "resizeAction", X.post(endpoint + "/viewport")
                                 .withPayload("{scrollTop: el.scrollTop, viewportHeight: el.clientHeight}"))
                 : EscapedHtml.blank();
+
         var resizeScript = getResizeObserverScript();
 
         return html("""

@@ -3,6 +3,8 @@ package com.bookie;
 import com.bookie.components.Notification;
 import com.bookie.infra.Response;
 import com.bookie.infra.SessionRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.bookie.infra.UserFacingException;
 import com.bookie.screens.PositionsScreen;
 import com.bookie.screens.securities.SecuritiesScreen;
@@ -18,16 +20,21 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
+
+import java.io.EOFException;
 
 import static com.bookie.infra.TemplatingEngine.html;
 import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
 public class Router {
+
+    private static final Logger logger = LoggerFactory.getLogger(Router.class);
 
     private final SessionRegistry sessionRegistry;
     private final AutowireCapableBeanFactory beanFactory;
@@ -112,7 +119,14 @@ public class Router {
     }
 
     private ServerResponse handleGenericException(Throwable throwable, ServerRequest request) {
-        return Response.html(Notification.notification(html("Unexpected Server Error - please refresh the page."))
-                .withStyle(Notification.error));
+        return switch (throwable) {
+            case EOFException ignored -> ServerResponse.ok().build();
+            case HttpMessageNotReadableException ignored -> ServerResponse.ok().build();
+            default -> {
+                logger.error("Unexpected Exception thrown", throwable);
+                yield Response.html(Notification.notification(html("Unexpected Server Error - please refresh the page."))
+                        .withStyle(Notification.error));
+            }
+        };
     }
 }

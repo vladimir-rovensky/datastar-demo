@@ -30,6 +30,8 @@ docker build -t bookie .
 docker run -p 8080:8080 bookie
 
 # hosting
+https://bookie-134905816864.us-central1.run.app - google
+
 https://datastar-demo-production.up.railway.app - railway
 
 https://datastar-demo.onrender.com - render

@@ -70,7 +70,7 @@ public class Shell {
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
 
-                    <script>window.__tabID = '${tabId}'; window.__orderRequests = ${orderRequests};</script>
+                    <script>window.__tabID = '${tabId}'; window.__orderRequests = ${orderRequests}</script>
                     <script src="/fetch-monkeypatch.js"></script>
 
                     <script type="module" src="/datastar1.0.0.RC8.js"></script>

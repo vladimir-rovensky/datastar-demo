@@ -40,6 +40,10 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized <T extends BaseScreen> ClientSession getOrCreateSession(Class<T> screenType, ServerRequest request) {
+        if (!running) {
+            throw new UserFacingException("Server is shutting down, please try again shortly.");
+        }
+
         var tabID = TabID.forExisting(request);
         var existing = sessions.get(tabID);
 
@@ -135,12 +139,10 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     @Override
-    public void stop() {
+    public synchronized void stop() {
         running = false;
-        synchronized (this) {
-            sessions.values().forEach(ClientSession::failAllChannels);
-            sessions.clear();
-        }
+        sessions.values().forEach(ClientSession::failAllChannels);
+        sessions.clear();
         logger.info("Closed all client channels on shutdown");
     }
 

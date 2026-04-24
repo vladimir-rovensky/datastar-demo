@@ -48,6 +48,7 @@ public class Response {
     public static ServerResponse html(EscapedHtml content) {
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)
+                .header("Vary", "X-tabID")
                 .body(content.toString());
     }
 

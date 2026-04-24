@@ -6,6 +6,8 @@ import com.bookie.domain.entity.TradeDirection;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CompletableFuture;
+
 import static com.bookie.infra.builders.BondBuilder.aBond;
 import static com.bookie.infra.builders.TradeBuilder.aTrade;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,7 +17,8 @@ public class TradeTicketTest extends TestBase {
     @Test
     public void disablesBookButtonWhenBooking() {
         givenExistingBonds(aBond("CSP1"));
-        getTradeDAO().setBookDelay(10);
+        CompletableFuture<Void> bookSignal = new CompletableFuture<>();
+        getTradeDAO().setBookAvailableSignal(bookSignal);
 
         var trades = page.switchToTrades();
 
@@ -27,6 +30,7 @@ public class TradeTicketTest extends TestBase {
         ticket.confirm();
 
         assertThat(ticket.getConfirmButton().isClickable(), Matchers.equalTo(false));
+        bookSignal.complete(null);
     }
 
 }

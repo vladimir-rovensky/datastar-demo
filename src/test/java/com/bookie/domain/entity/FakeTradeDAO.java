@@ -1,20 +1,20 @@
 package com.bookie.domain.entity;
 
-import com.bookie.infra.Util;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class FakeTradeDAO implements TradeDAO {
 
     private final Map<Long, Trade> trades = new LinkedHashMap<>();
-    private long bookDelay = 0;
+    private CompletableFuture<Void> bookAvailable = CompletableFuture.completedFuture(null);
 
     public void reset() {
         trades.clear();
-        bookDelay = 0;
+        bookAvailable.complete(null);
+        bookAvailable = CompletableFuture.completedFuture(null);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class FakeTradeDAO implements TradeDAO {
     @Override
     public void saveAll(List<Trade> tradesToSave) {
         for (Trade trade : tradesToSave) {
-            Util.sleep(this.bookDelay);
+            this.bookAvailable.join();
             trades.put(trade.getId(), trade.clone());
         }
     }
@@ -45,7 +45,7 @@ public class FakeTradeDAO implements TradeDAO {
         return trades.remove(id);
     }
 
-    public void setBookDelay(long delay) {
-        this.bookDelay = delay;
+    public void setBookAvailableSignal(CompletableFuture<Void> signal) {
+        this.bookAvailable = signal;
     }
 }

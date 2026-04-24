@@ -10,6 +10,9 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.AriaRole;
 
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -97,4 +100,15 @@ public class Page {
         return this;
     }
 
+    public Page blockRoute(String pattern, Function<Integer, CompletableFuture<Void>> getUnblockSignal) {
+        AtomicInteger callCount = new AtomicInteger(0);
+
+        this.page.route(pattern, r -> {
+            var callNumber = callCount.incrementAndGet();
+            var signal = getUnblockSignal.apply(callNumber);
+            signal.thenRun(r::resume);
+        });
+
+        return this;
+    }
 }

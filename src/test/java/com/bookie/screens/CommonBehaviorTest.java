@@ -3,9 +3,13 @@ package com.bookie.screens;
 import com.bookie.TestBase;
 import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
+import com.bookie.infra.Util;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import static com.bookie.infra.builders.BondBuilder.aBond;
@@ -41,4 +45,33 @@ public class CommonBehaviorTest extends TestBase {
         otherTrades.verifyTradeDisplayed(0, trade, bond);
     }
 
+    @Test
+    @Disabled("Enable when request ordering is implemented")
+    public void handlesRequestOrdering() {
+        givenExistingBonds(aBond("CSP1"));
+
+        var securitites = page.switchToSecurities("CSP1");
+        securitites.switchToEditMode();
+        securitites.switchToRedemption();
+
+        var signalMap = Map.of(
+                1, new CompletableFuture<Void>(),
+                2, new CompletableFuture<Void>(),
+                3, new CompletableFuture<Void>());
+
+        page.blockRoute("**/securities/input/issueSize", signalMap::get);
+
+        securitites.getIssueSize().setValue(10);
+        securitites.getIssueSize().setValue(100);
+        securitites.getIssueSize().setValue(1000);
+
+        signalMap.get(3).complete(null);
+        Util.sleep(10);
+        signalMap.get(2).complete(null);
+        Util.sleep(10);
+        signalMap.get(1).complete(null);
+        Util.sleep(10);
+
+        securitites.getIssueSize().verifyValue(1000);
+    }
 }

@@ -30,7 +30,13 @@ public class SessionRegistry implements SmartLifecycle {
     }
 
     public synchronized <T> T getScreen(ServerRequest req, Class<T> clazz) {
-        return getSession(req).getScreen(clazz);
+        var session = getSession(req);
+
+        if(session == null) {
+            throw new UserFacingException("Your user session expired, please refresh the page.");
+        }
+
+        return session.getScreen(clazz);
     }
 
     public synchronized <T extends BaseScreen> ClientSession getOrCreateSession(Class<T> screenType, ServerRequest request) {

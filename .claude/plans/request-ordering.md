@@ -31,7 +31,7 @@ Guarantee that fetch requests issued by the client reach the server in the order
 | `PUT /security/resetSchedule` (add entry) | **POST** `/security/{cusip}/edit/resetSchedule` |
 | `DELETE /security/resetSchedule/{id}` | `DELETE /security/{cusip}/edit/resetSchedule/{id}` |
 | same for callSchedule / putSchedule / sinkingFundSchedule | `.../{cusip}/edit/<schedule>[/{id}]` with the same POST/PUT swap |
-| `POST /security/updates` | unchanged |
+| `POST /security/updates` | **GET** `/security?updates` |
 | `GET /security/{cusip}/{section}` | **GET** `/security/{cusip}?section={section}` |
 
 Ordering rationale: field and schedule operations live under `/security/{cusip}/edit/...`. Edit-start (`POST /{cusip}/edit`) and cancel (`DELETE /{cusip}/edit`) share the `/{cusip}/edit` path, which is prefix-parent of all field/schedule paths → both wait for any in-flight field/schedule work. Section render (`GET /{cusip}`) and save (`PUT /{cusip}`) share the `/{cusip}` path, which is the prefix of `/{cusip}/edit` and everything below → both wait for everything. Field updates on the same path serialize via the queue and coalesce (PUT is idempotent under method inference). Fields on different paths (different field names) run in parallel. Rapid Edit clicks are POST so they queue rather than coalesce, but this is harmless — the server handler is idempotent (no-op if already editing), and the UI swaps the button anyway.
@@ -47,7 +47,7 @@ The cusip must be available on the client at render time so actions can embed it
 | `POST /trades/modify/{id}` (opens modify popup) | unchanged — screen action, popup opener |
 | `GET /trades/delete/{id}` (opens delete confirmation) | unchanged |
 | `POST /trades/delete/{id}` (executes delete) | `DELETE /trades/{id}` |
-| `POST /trades/updates` | unchanged |
+| `POST /trades/updates` | **GET** `/trades?updates` |
 | `GET /trades` | unchanged |
 
 `Trade` becomes a real resource under `/trades/{id}`. The confirm-opener `GET /trades/delete/{id}` and the actual-delete `DELETE /trades/{id}` now live on different paths, which is fine — the confirm just opens a popup, and the user clicking "Delete" in the popup fires the DELETE. No race.
@@ -81,7 +81,11 @@ Rationale:
 All grid operations are idempotent (applying the same sort/filter/viewport twice yields the same result), so they become PUTs. Viewport in particular benefits: rapid scroll events will coalesce via idempotent replacement, capping the queue at one running + one pending.
 
 ### PositionsScreen
-No changes.
+
+| Current | New |
+|---------|-----|
+| `POST /positions/updates` | **GET** `/positions?updates` |
+| `GET /positions` | unchanged |
 
 ## Implementation Steps
 
@@ -142,7 +146,13 @@ No changes.
    - Change `POST column-picker`, `POST sort/{columnName}`, `POST filter`, `POST viewport` to PUT.
    - Update all call sites that build these URLs (within `DataGrid.java` itself — `X.post(endpoint + "/sort/" + ...)` etc. become `X.put(...)`).
 
-8. **Manual verification** — with a browser devtools Network tab open:
+8. **Order the update channels** — modify all three screens' `setupRoutes` and the `BaseScreen.getUpdateURL()` / `connectUpdates` wiring.
+   - Change each screen's update channel from `POST /{screen}/updates` to `GET /{screen}?updates`. Route via `RequestPredicates.GET("").and(RequestPredicates.queryParam("updates", __ -> true))` so `GET /{screen}` without the query param still matches the list/redirect handlers.
+   - Update `BaseScreen.getUpdateURL()` return values: `SecuritiesScreen` → `"/security?updates"`, `TradesScreen` → `"/trades?updates"`, `PositionsScreen` → `"/positions?updates"`.
+   - Update `Shell.java`'s `getUpdateRequestAttribute()` to emit `X.get(this.updateURL)` instead of `X.post(this.updateURL)` (keeping `withOpenWhenHidden` and the existing `retry: 'always'` options).
+   - Rationale for putting ordering here: the updates fetch now sits at path `/{screen}`, which is a prefix of all resource ops under `/{screen}/...`. During initial connect and reconnect, resource ops block until SSE headers arrive, closing the race where a resource mutation's SSE patch could be lost on a not-yet-established channel. GET also lets `retry: 'always'` coalesce via idempotent replacement rather than piling up retry entries.
+
+9. **Manual verification** — with a browser devtools Network tab open:
    - Stress test: rapidly change `issueSize` several times (type → backspace → type); confirm requests fire one at a time and the final server value matches the last input. Before this change, requests overlap and the final value was often wrong.
    - Edit/save/cancel race: click Edit → rapidly type in a field → click Save; Save must run after the last field update.
    - Add-row: spam-click "Add" on a schedule; confirm the number of entries added equals the number of clicks (POST add-row is non-idempotent and queues them all).

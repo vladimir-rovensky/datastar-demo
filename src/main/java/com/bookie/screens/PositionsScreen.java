@@ -44,11 +44,12 @@ public class PositionsScreen extends BaseScreen {
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
+                .route(RequestPredicates.GET("").and(RequestPredicates.param("updates", _ -> true)),
+                        request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
                 .GET("", request -> sessionRegistry
                         .getOrCreateSession(PositionsScreen.class, request)
                         .getScreen(PositionsScreen.class)
                         .initialRender(request))
-                .POST("updates", request -> connectUpdates(sessionRegistry, PositionsScreen.class, request))
                 .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, PositionsScreen.class).positionGrid))
                 .build();
     }
@@ -60,7 +61,7 @@ public class PositionsScreen extends BaseScreen {
 
         this.positionGrid = DataGrid.withColumns(
                         column("CUSIP", Position::getCusip)
-                                .withRenderer(p -> link("securities/" + p.getCusip() + "/general", p.getCusip())),
+                                .withRenderer(p -> link("security/" + p.getCusip() + "?section=general", p.getCusip())),
                         column("Book", Position::getBook),
                         column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Current Position", Position::getCurrentPosition)
@@ -106,7 +107,7 @@ public class PositionsScreen extends BaseScreen {
 
     @Override
     protected String getUpdateURL() {
-        return RoutePrefix + "/updates";
+        return RoutePrefix + "?updates";
     }
 
     public synchronized ServerResponse initialRender(ServerRequest request) {

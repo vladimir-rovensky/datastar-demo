@@ -29,7 +29,7 @@ public class TestAppConfig {
         MutablePropertySources sources = new MutablePropertySources();
         sources.addFirst(new MapPropertySource("testProperties", Map.of(
             "bookie.version", "test",
-            "bookie.cache.enabled", "false",
+            "bookie.cache-enabled", "false",
             "bookie.open-when-hidden", "true",
             "bookie.session.timeout-seconds", "60"
         )));

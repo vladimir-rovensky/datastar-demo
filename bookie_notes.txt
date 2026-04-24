@@ -18,6 +18,3 @@ Solved
     - scripts - IIFE + document.currentScript
     - styles - CSS scopes
 * Possible DataStar bug in data-indicator? Fixed in v1
-
-TODO
-* commands / ordering

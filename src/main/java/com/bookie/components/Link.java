@@ -44,7 +44,8 @@ public class Link implements Renderable {
                 if(!evt.ctrlKey && !evt.metaKey && !evt.shiftKey && !evt.altKey && evt.button===0) { evt.preventDefault(); history.pushState(null,'','${href}'); ${getAction}; }
                 """,
                 "href", href,
-                "getAction", X.get(href).withExcludeAllSignals());
+                "getAction", X.get(href)
+                        .withRequestCancellation(true));
     }
 
 }

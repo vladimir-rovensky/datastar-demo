@@ -4,7 +4,6 @@ import com.bookie.TestBase;
 import com.bookie.domain.entity.Trade;
 import com.bookie.domain.entity.TradeDirection;
 import com.bookie.infra.Util;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -46,7 +45,6 @@ public class CommonBehaviorTest extends TestBase {
     }
 
     @Test
-    @Disabled("Enable when request ordering is implemented")
     public void handlesRequestOrdering() {
         givenExistingBonds(aBond("CSP1"));
 

@@ -16,11 +16,14 @@ import static com.bookie.screens.Shell.shell;
 
 public abstract class BaseScreen {
 
-    @Value("${bookie.cache.enabled:true}")
+    @Value("${bookie.cache-enabled:true}")
     private boolean cacheEnabled;
 
     @Value("${bookie.open-when-hidden:false}")
     private boolean openWhenHidden;
+
+    @Value("${bookie.order-requests:true}")
+    private boolean orderRequests;
 
     private AtomicReference<RouteInfo> routeInfo;
     private ClientChannel channel;
@@ -57,6 +60,7 @@ public abstract class BaseScreen {
                 .withTitle(title)
                 .withUpdateURL(getUpdateURL())
                 .withOpenWhenHidden(openWhenHidden)
+                .withOrderRequests(orderRequests)
                 .withToolbar(getToolbarContent())
                 .withContent(getContent())
                 .render();

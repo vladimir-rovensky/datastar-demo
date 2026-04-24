@@ -47,9 +47,8 @@ public class TradeTicketPopup {
         return RouterFunctions.route()
                 .POST("buy", _ -> this.openBuyTicket())
                 .POST("sell", _ -> this.openSellTicket())
-                .POST("cancel", _ -> this.close())
-                .POST("input", this::onInput)
-                .POST("book", this::onBookTrade)
+                .DELETE("", _ -> this.close())
+                .PUT("", this::onInput)
                 .build();
     }
 
@@ -118,7 +117,7 @@ public class TradeTicketPopup {
                 </div>
                 """,
 
-                "inputAction", X.post("/tradeTicket/input"),
+                "inputAction", X.put("/tradeTicket").withRequestCancellation(true),
                 "tradeId", ticket.getId(),
 
                 "cusip", formField("CUSIP")
@@ -158,8 +157,8 @@ public class TradeTicketPopup {
                 <button class="btn-large ${btnClass}" data-on:click="${bookAction}" data-indicator:_booking data-attr:disabled="$_fetching || $_booking || !${valid}">${btnLabel}</button>
                 <button data-on:click="${cancelAction}">Cancel</button>
                 """,
-                "bookAction", X.post("/tradeTicket/book"),
-                "cancelAction", X.post("/tradeTicket/cancel"),
+                "bookAction", isModify ? X.put("/trades/" + ticket.getId()) : X.post("/trades"),
+                "cancelAction", X.delete("/tradeTicket"),
                 "valid", isValid,
                 "btnClass", btnClass,
                 "btnLabel", btnLabel);

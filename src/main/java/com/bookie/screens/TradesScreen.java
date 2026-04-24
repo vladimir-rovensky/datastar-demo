@@ -37,7 +37,7 @@ import static com.bookie.infra.TemplatingEngine.html;
 public class TradesScreen extends BaseScreen {
 
     private final TradeRepository tradeRepository;
-    private final TradeTicketPopup tradeTicketPopup;
+    private final TradeTicketPopup tradeTicket;
     private final BondRepository bondRepository;
 
     private List<Trade> trades = new ArrayList<>();
@@ -49,30 +49,33 @@ public class TradesScreen extends BaseScreen {
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
         return RouterFunctions.route()
+                .route(RequestPredicates.GET("").and(RequestPredicates.param("updates", _ -> true)),
+                        request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
                 .GET("", request -> sessionRegistry
                         .getOrCreateSession(TradesScreen.class, request)
                         .getScreen(TradesScreen.class)
                         .initialRender(request))
-                .POST("updates", request -> connectUpdates(sessionRegistry, TradesScreen.class, request))
+                .POST("", request -> sessionRegistry.getScreen(request, TradesScreen.class).tradeTicket.onBookTrade(request))
+                .PUT("{id}", request -> sessionRegistry.getScreen(request, TradesScreen.class).tradeTicket.onBookTrade(request))
                 .POST("modify/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openModifyTicket(request))
                 .GET("delete/{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .openDeleteConfirmation(request))
-                .POST("delete/{id}", request -> sessionRegistry
+                .DELETE("{id}", request -> sessionRegistry
                         .getScreen(request, TradesScreen.class)
                         .deleteTradeById(request))
                 .nest(RequestPredicates.path("/grid"), b -> DataGrid.setupRoutes(b, r -> sessionRegistry.getScreen(r, TradesScreen.class).tradeGrid))
                 .build();
     }
 
-    public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicketPopup,
+    public TradesScreen(TradeRepository tradeRepository, TradeTicketPopup tradeTicket,
                         BondRepository bondRepository, EventBus eventBus) {
         super("Trades");
 
         this.tradeRepository = tradeRepository;
-        this.tradeTicketPopup = tradeTicketPopup;
+        this.tradeTicket = tradeTicket;
         this.bondRepository = bondRepository;
 
         this.eventSubscriptions.add(eventBus.subscribeBatched()
@@ -91,7 +94,7 @@ public class TradesScreen extends BaseScreen {
         this.tradeGrid = DataGrid.withColumns(
                         column("ID", Trade::getId),
                         column("CUSIP", Trade::getCusip)
-                                .withRenderer(t -> link("securities/" + t.getCusip() + "/general", t.getCusip())),
+                                .withRenderer(t -> link("security/" + t.getCusip() + "?section=general", t.getCusip())),
                         column("Description", t -> getBond(t.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Book", Trade::getBook),
                         column("Type", Trade::getDirection),
@@ -128,7 +131,7 @@ public class TradesScreen extends BaseScreen {
 
     @Override
     protected String getUpdateURL() {
-        return RoutePrefix + "/updates";
+        return RoutePrefix + "?updates";
     }
 
     public synchronized ServerResponse initialRender(ServerRequest request) {
@@ -148,8 +151,8 @@ public class TradesScreen extends BaseScreen {
                         <button class="btn-primary" data-on:click="${confirmAction}">Confirm</button>
                         <button data-on:click="${cancelAction}">Cancel</button>
                         """,
-                        "confirmAction", X.post("/trades/delete/" + tradeId),
-                        "cancelAction", X.post("/tradeTicket/cancel")))
+                        "confirmAction", X.delete("/trades/" + tradeId),
+                        "cancelAction", X.delete("/tradeTicket")))
                 .render();
         return Popup.open(content);
     }
@@ -167,7 +170,7 @@ public class TradesScreen extends BaseScreen {
     public ServerResponse openModifyTicket(ServerRequest request) {
         var tradeID = Long.parseLong(request.pathVariable("id"));
         var trade = tradeRepository.findById(tradeID);
-        return Popup.open(tradeTicketPopup.render(trade));
+        return Popup.open(tradeTicket.render(trade));
     }
 
     public DataGrid<Trade> getTradeGrid() {

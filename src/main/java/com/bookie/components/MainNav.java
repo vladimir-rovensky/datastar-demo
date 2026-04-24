@@ -53,7 +53,7 @@ public class MainNav implements Renderable {
     }
 
     public Link getSecuritiesLink() {
-        var securitiesPath = "securities/" + routeInfo.activeCusip() + "/" + routeInfo.activeSection();
+        var securitiesPath = "security/" + routeInfo.activeCusip() + "?section=" + routeInfo.activeSection();
         return link(securitiesPath, "Securities").withActive("Securities".equals(activeTitle));
     }
 }

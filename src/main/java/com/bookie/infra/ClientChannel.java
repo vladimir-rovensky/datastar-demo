@@ -42,6 +42,7 @@ public class ClientChannel {
         });
 
         addStream(builder);
+        heartbeat();
     }
 
     public synchronized boolean isAlive() {

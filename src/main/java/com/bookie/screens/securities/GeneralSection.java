@@ -63,7 +63,7 @@ public class GeneralSection {
                     </style>
                 </div>
                 """,
-                "inputAction", X.post(html("'/securities/input/' + evt.target.name"))
+                "inputAction", X.put(html("'/security/" + bond.getCusip() + "/edit/' + evt.target.name"))
                         .withRequestCancellation(false)
                         .withIncludeSignals(html("new RegExp(evt.target.name)")),
                 "cusip", bond.getCusip(),

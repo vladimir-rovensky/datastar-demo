@@ -147,22 +147,32 @@ input.loading { opacity: 0; }
     height: 100%;
     &[data-error] input, &[data-error] select { border-color: var(--clr-error); }
     &[data-error] number-input { --input-border-color: var(--clr-error); }
+    &[data-error] {
+        anchor-name: --error-anchor;
+        anchor-scope: --error-anchor;
+    }
     &[data-error]::after {
         content: attr(data-error);
-        display: none;
-        position: absolute;
-        top: calc(100% + var(--sp-xs));
-        left: 0;
+        position: fixed;
+        position-anchor: --error-anchor;
+        inset: auto;
+        top: calc(anchor(bottom) + var(--sp-xs));
+        left: anchor(left);
         background-color: var(--clr-error-bg);
         border: 1px solid var(--clr-error);
         color: var(--clr-error);
         padding: var(--sp-xs) var(--sp-sm);
         font-size: var(--fs-xs);
         white-space: nowrap;
-        z-index: var(--z-toolbar);
+        z-index: var(--z-tooltip);
         pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
     }
-    &[data-error]:hover::after { display: block; }
+    &[data-error]:hover::after {
+        opacity: 1;
+        visibility: visible;
+    }
     &:has(input.loading, number-input.loading)::before {
         content: "";
         position: absolute;
@@ -466,9 +476,11 @@ input.loading { opacity: 0; }
         flex-direction: column;
         gap: var(--sp-xs);
         font-size: var(--fs-xs);
-        text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--clr-text-muted);
+
+        text-transform: uppercase;
+        & * { text-transform: none; }
     }
     input, select { width: 100%; }
 }

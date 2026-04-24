@@ -63,7 +63,7 @@ public class IncomeSection {
                     </style>
                 </div>
                 """,
-                "inputAction", X.post(html("'/securities/input/' + evt.target.name"))
+                "inputAction", X.put(html("'/security/" + bond.getCusip() + "/edit/' + evt.target.name"))
                         .withRequestCancellation(false)
                         .withIncludeSignals(html("new RegExp(evt.target.name)")),
                 "couponType", formField("Coupon Type").withInput(selectInput("couponType", CouponType.class, bond.getCouponType()).withDisabled(disabled))
@@ -91,7 +91,7 @@ public class IncomeSection {
                             </div>
                         </div>
                 """,
-                "resetScheduleAction", X.post("/securities/resetSchedule").withIncludeSignals("resetSchedule.*"),
+                "resetScheduleAction", X.put("/security/" + bond.getCusip() + "/edit/resetSchedule").withIncludeSignals("resetSchedule.*"),
                 "grid",
                 DataGrid
                     .withColumns(
@@ -108,8 +108,8 @@ public class IncomeSection {
                     .withRows(resetSchedule)
                     .withRowID(Bond.ResetEntry::getId)
                     .withRowIDSignal(r -> "resetSchedule." + r.getId() + ".id")
-                    .onDeleteRow(!disabled ? r -> X.delete("/securities/resetSchedule/" + r.getId()).render() : null)
-                    .onAddRow(!disabled ? X.put("/securities/resetSchedule").render() : null)
+                    .onDeleteRow(!disabled ? r -> X.delete("/security/" + bond.getCusip() + "/edit/resetSchedule/" + r.getId()).render() : null)
+                    .onAddRow(!disabled ? X.post("/security/" + bond.getCusip() + "/edit/resetSchedule").render() : null)
                     .withNoRowsMessage("No Reset Schedule")
                     .render());
     }

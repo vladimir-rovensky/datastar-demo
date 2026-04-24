@@ -2,6 +2,7 @@ package com.bookie.infra;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.bookie.infra.TemplatingEngine.html;
 
@@ -13,10 +14,11 @@ public class FetchBuilder implements Renderable {
     private final String renderedUrl;
     private Boolean openWhenHidden = true;
     private Retry retry = Retry.NEVER;
-    private boolean excludeAllSignals;
+    private Boolean excludeAllSignals;
     private String includeSignals;
-    private boolean requestCancellation = true;
+    private boolean requestCancellation = false;
     private String payload;
+    private Boolean idempotent = null;
 
     FetchBuilder(String method, String renderedUrl) {
         this.method = method;
@@ -63,6 +65,11 @@ public class FetchBuilder implements Renderable {
         return this;
     }
 
+    public FetchBuilder withIdempotent(boolean value) {
+        this.idempotent = value;
+        return this;
+    }
+
     @Override
     public EscapedHtml render() {
         var options = buildOptions();
@@ -86,7 +93,7 @@ public class FetchBuilder implements Renderable {
             options.add("retryMaxCount: 0");
         }
 
-        if (excludeAllSignals) {
+        if (shouldExcludeAllSignals()) {
             options.add("filterSignals: {exclude: /.*/}");
         } else if (includeSignals != null) {
             options.add("filterSignals: {include: " + includeSignals + "}");
@@ -100,6 +107,14 @@ public class FetchBuilder implements Renderable {
             options.add("payload: " + payload);
         }
 
+        if (idempotent != null) {
+            options.add("headers: {'X-Idempotent': '" + idempotent + "'}");
+        }
+
         return options;
+    }
+
+    private boolean shouldExcludeAllSignals() {
+        return Optional.ofNullable(excludeAllSignals).orElse("get".equals(method));
     }
 }

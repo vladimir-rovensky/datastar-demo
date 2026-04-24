@@ -15,6 +15,7 @@ public class Shell {
     private String title = "";
     private String updateURL;
     private boolean openWhenHidden;
+    private boolean orderRequests = true;
     private EscapedHtml content = EscapedHtml.blank();
     private EscapedHtml toolbarContent = EscapedHtml.blank();
 
@@ -49,6 +50,11 @@ public class Shell {
         return this;
     }
 
+    public Shell withOrderRequests(boolean orderRequests) {
+        this.orderRequests = orderRequests;
+        return this;
+    }
+
     public EscapedHtml render() {
         var tabId = routeInfo.tabId().localID();
         var nav = mainNav()
@@ -64,16 +70,8 @@ public class Shell {
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
                     <link rel="stylesheet" href="/global-styles.css">
 
-                    <script>
-                        //We include the tabID with every request to make it easier on the backend. Would be nice if DataStar had a global way to do this.        \s
-                        const _fetch = window.fetch;
-                        window.fetch = (url, opts = {}) => {
-                            if (opts.headers?.['Datastar-Request']) {
-                                opts.headers['X-tabID'] = '${tabId}';
-                            }
-                            return _fetch(url, opts);
-                        };
-                    </script>
+                    <script>window.__tabID = '${tabId}'; window.__orderRequests = ${orderRequests};</script>
+                    <script src="/fetch-monkeypatch.js"></script>
 
                     <script type="module" src="/datastar1.0.0.RC8.js"></script>
                     <script type="module" src="/number-input.js"></script>
@@ -120,8 +118,8 @@ public class Shell {
                 """,
                 "title", title,
                 "tabId", tabId,
-                "popstateAction", X.get(html("window.location.pathname + window.location.search"))
-                        .withExcludeAllSignals(),
+                "orderRequests", orderRequests,
+                "popstateAction", X.get(html("window.location.pathname + window.location.search")),
                 "healthIndicator", getHealthIndicator(),
                 "updateRequest", getUpdateRequestAttribute(),
                 "nav", nav,
@@ -145,9 +143,10 @@ public class Shell {
 
         return html("""
                 data-init="${action}"
-        """, "action", X.post(this.updateURL)
+        """, "action", X.get(this.updateURL)
                 .withOpenWhenHidden(this.openWhenHidden)
-                .withRetry(Retry.ALWAYS));
+                .withRetry(Retry.ALWAYS)
+                .withRequestCancellation(true));
     }
 
     private EscapedHtml getHealthIndicator() {

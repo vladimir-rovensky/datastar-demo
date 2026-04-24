@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -42,7 +43,7 @@ public class Router {
     @Value("${bookie.version}")
     private String appVersion;
 
-    @Value("${bookie.cache.enabled:true}")
+    @Value("${bookie.cache-enabled:true}")
     private boolean cacheEnabled;
 
     public Router(SessionRegistry sessionRegistry, AutowireCapableBeanFactory beanFactory) {
@@ -122,6 +123,7 @@ public class Router {
         return switch (throwable) {
             case EOFException ignored -> ServerResponse.ok().build();
             case HttpMessageNotReadableException ignored -> ServerResponse.ok().build();
+            case AsyncRequestNotUsableException ignored -> ServerResponse.ok().build();
             default -> {
                 logger.error("Unexpected Exception thrown", throwable);
                 yield Response.html(Notification.notification(html("Unexpected Server Error - please refresh the page."))

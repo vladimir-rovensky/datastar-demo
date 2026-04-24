@@ -71,11 +71,11 @@ public class DataGrid<TRow> {
     public static <T> void setupRoutes(RouterFunctions.Builder builder, Function<ServerRequest, DataGrid<T>> getGrid) {
         builder
                 .GET("column-picker", request -> getGrid.apply(request).openColumnPicker())
-                .POST("column-picker", request -> getGrid.apply(request).applyColumnPicker(request))
+                .PUT("column-picker", request -> getGrid.apply(request).applyColumnPicker(request))
                 .DELETE("column-picker", request -> getGrid.apply(request).cancelColumnPicker())
-                .POST("sort/{columnName}", request -> getGrid.apply(request).applySort(request.pathVariable("columnName")))
-                .POST("filter", request -> getGrid.apply(request).applyFilter(request))
-                .POST("viewport", request -> getGrid.apply(request).applyViewport(request));
+                .PUT("sort/{columnName}", request -> getGrid.apply(request).applySort(request.pathVariable("columnName")))
+                .PUT("filter", request -> getGrid.apply(request).applyFilter(request))
+                .PUT("viewport", request -> getGrid.apply(request).applyViewport(request));
     }
 
     public synchronized EscapedHtml render() {
@@ -85,7 +85,7 @@ public class DataGrid<TRow> {
             if (endpoint != null) {
                 return html("""
                         <div class="data-grid-th sortable" role="columnheader" data-on:click="${sortAction}">${h}${indicator}</div>""",
-                        "sortAction", X.post(endpoint + "/sort/" + c.getName()),
+                        "sortAction", X.put(endpoint + "/sort/" + c.getName()),
                         "h", c.header,
                         "indicator", getSortIndicator(c));
             }
@@ -105,7 +105,7 @@ public class DataGrid<TRow> {
                 ? html("""
                         data-on:scroll__throttle.50ms.trailing="if(el.prevScrollTop !== undefined && el.prevScrollTop !== el.scrollTop) { ${scrollAction}; } el.prevScrollTop = el.scrollTop;"
                         """,
-                        "scrollAction", X.post(endpoint + "/viewport")
+                        "scrollAction", X.put(endpoint + "/viewport")
                                 .withPayload("{scrollTop: el.scrollTop, viewportHeight: el.clientHeight}"))
                 : EscapedHtml.blank();
 
@@ -113,7 +113,7 @@ public class DataGrid<TRow> {
                 ? html("""
                         data-on:data-grid-viewport-resize__debounce_150="${resizeAction}"
                         """,
-                        "resizeAction", X.post(endpoint + "/viewport")
+                        "resizeAction", X.put(endpoint + "/viewport")
                                 .withPayload("{scrollTop: el.scrollTop, viewportHeight: el.clientHeight}"))
                 : EscapedHtml.blank();
 
@@ -158,7 +158,7 @@ public class DataGrid<TRow> {
                         <button class="btn-primary" data-on:click="${okAction}">OK</button>
                         <button data-on:click="${cancelAction}">Cancel</button>
                         """,
-                        "okAction", X.post(pickerPath),
+                        "okAction", X.put(pickerPath),
                         "cancelAction", X.delete(pickerPath)))
                 .render();
         return Popup.open(content);
@@ -263,7 +263,7 @@ public class DataGrid<TRow> {
 
         var filterCells = EscapedHtml.concat(visibleColumns, column -> html("""
                 <div class="data-grid-filter-cell" data-on:change="${filterAction}">${input}</div>""",
-                "filterAction", X.post(endpoint + "/filter"),
+                "filterAction", X.put(endpoint + "/filter"),
                 "input", TextInput.textInput(this.id + ".filter." + column.getName(), filters.get(column.getName()))));
 
         return html("""

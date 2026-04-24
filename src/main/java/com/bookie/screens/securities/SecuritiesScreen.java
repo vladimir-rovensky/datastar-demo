@@ -60,6 +60,7 @@ public class SecuritiesScreen extends BaseScreen {
                 .POST("/{cusip}/edit", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).startEdit())
                 .PUT("/{cusip}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).saveEdit(request))
                 .DELETE("/{cusip}/edit", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).cancelEdit())
+                .PUT("", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).lookupCusip(request))
                 .PUT("/{cusip}/edit/resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).handleResetScheduleUpdate(request))
                 .POST("/{cusip}/edit/resetSchedule", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).addResetEntry(request))
                 .DELETE("/{cusip}/edit/resetSchedule/{id}", request -> sessionRegistry.getScreen(request, SecuritiesScreen.class).deleteResetEntry(request))
@@ -105,7 +106,25 @@ public class SecuritiesScreen extends BaseScreen {
         var cusip = request.pathVariable("cusip");
         var section = request.param("section").orElse(BondSection.GENERAL.getPath());
 
-        if(!Objects.equals(cusip, getCurrentCusip())) {
+        currentSection = BondSection.fromPath(section);
+
+        startLoadingCusip(cusip);
+
+        return handleInitialRender(request, this::render);
+    }
+
+    public synchronized ServerResponse lookupCusip(ServerRequest request) throws Exception {
+        var body = request.body(new ParameterizedTypeReference<Map<String, String>>() {});
+        var cusip = body.get("cusipLookup").trim();
+
+        startLoadingCusip(cusip);
+
+        triggerUpdate();
+        return ServerResponse.ok().build();
+    }
+
+    private void startLoadingCusip(String cusip) {
+        if (!Objects.equals(cusip, getCurrentCusip())) {
             currentBond = null;
             editingBond = null;
             if (NO_CUSIP.equals(cusip)) {
@@ -117,13 +136,9 @@ public class SecuritiesScreen extends BaseScreen {
             }
         }
 
-        currentSection = BondSection.fromPath(section);
-
         updateRouteInfo(getRouteInfo()
                 .withActiveCusip(cusip)
                 .withActiveSection(currentSection.getPath()));
-
-        return handleInitialRender(request, this::render);
     }
 
     private String getCurrentCusip() {
@@ -177,7 +192,15 @@ public class SecuritiesScreen extends BaseScreen {
         var generalLink = link("security/" + currentCusip + "?section=" + BondSection.GENERAL.getPath(), BondSection.GENERAL.getLabel()).withActive(currentSection == BondSection.GENERAL);
         var incomeLink = link("security/" + currentCusip + "?section=" + BondSection.INCOME.getPath(), BondSection.INCOME.getLabel()).withActive(currentSection == BondSection.INCOME);
         var redemptionLink = link("security/" + currentCusip + "?section=" + BondSection.REDEMPTION.getPath(), BondSection.REDEMPTION.getLabel()).withActive(currentSection == BondSection.REDEMPTION);
-        var navigateToCusip = "if($cusipLookup.trim()) window.location.href='/security/'+$cusipLookup.trim()+'?section=" + currentSection.getPath() + "'";
+
+        var loadCusip = X.put("/security")
+                .withIncludeSignals("cusipLookup")
+                .withPushStateTo("'/security/' + $cusipLookup.trim() + '?section=" + currentSection.getPath() + "'");
+
+        var navigateToCusip = html("""
+                if($cusipLookup.trim()) { ${loadCusip}; }
+                """, "loadCusip", loadCusip);
+
         var editActions = renderEditActions();
 
         return html("""

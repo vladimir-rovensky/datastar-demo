@@ -8,6 +8,8 @@ import org.springframework.lang.NonNull;
 
 import java.time.LocalDate;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 public class SecuritiesPageObject {
     private final Page page;
     private final HealthIndicatorHelper healthIndicator;
@@ -20,8 +22,13 @@ public class SecuritiesPageObject {
     public SecuritiesPageObject loadCusip(String cusip) {
         page.getByPlaceholder("CUSIP").fill(cusip);
         ButtonHelper.getByLabel(getToolbar(), "Load").click();
+        waitForSecurityToLoad();
         healthIndicator.waitUntilHealthy();
         return this;
+    }
+
+    private void waitForSecurityToLoad() {
+        assertThat(page.getByRole(AriaRole.MAIN)).not().containsText("Please load a CUSIP in the top-left.");
     }
 
     public SecuritiesPageObject switchToEditMode() {

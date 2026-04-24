@@ -267,7 +267,7 @@ public class DataGrid<TRow> {
                 "input", TextInput.textInput(this.id + ".filter." + column.getName(), filters.get(column.getName()))));
 
         return html("""
-                <div class="data-grid-filter-row">${actionCell}${cells}</div>""",
+                <div class="data-grid-filter-row" aria-label="Filter Row">${actionCell}${cells}</div>""",
                 "actionCell", filterActionCell,
                 "cells", filterCells);
     }

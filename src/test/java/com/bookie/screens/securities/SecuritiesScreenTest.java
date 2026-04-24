@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static com.bookie.infra.builders.BondBuilder.aBond;
 import static com.bookie.infra.builders.TradeBuilder.aTrade;
@@ -63,6 +64,24 @@ public class SecuritiesScreenTest extends TestBase {
         saveBonds(bond);
 
         page.assertWarningShown("This bond was modified by someone else");
+    }
+
+    @Test
+    public void loadingCusipPreservesSession() {
+        givenExistingBonds(aBond("CSP1"), aBond("CSP2"));
+        givenExistingTrades(
+                aTrade("CSP1", TradeDirection.BUY, 10_000),
+                aTrade("CSP2", TradeDirection.BUY, 10_000));
+
+        page.switchToTrades()
+                .getGrid()
+                .setFilter("CUSIP", "CSP2");
+
+        page.switchToSecurities("CSP1");
+
+        page.switchToTrades()
+                .getGrid()
+                .verifyAllValuesInColumn("CUSIP", List.of("CSP2"));
     }
 
 }

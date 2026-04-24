@@ -2,6 +2,7 @@ package com.bookie.infra;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.AriaRole;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -37,6 +38,20 @@ public class DataGridHelper {
                 .stream()
                 .map(r -> new GridRowHelper(r, this))
                 .toList();
+    }
+
+    public void verifyAllValuesInColumn(String header, List<String> expected) {
+        var colIndex = getColumnIndexByHeader(header);
+
+        var cells = getRows().stream()
+                .map(r -> r.getCell(colIndex))
+                .toList();
+
+        for (var i = 0; i < expected.size(); i++) {
+            cells.get(i).verifyText(expected.get(i));
+        }
+
+        Assertions.assertEquals(expected.size(), cells.size());
     }
 
     private int getColumnIndexByHeader(String header) {
@@ -78,6 +93,15 @@ public class DataGridHelper {
 
     public void verifyRowCount(int count) {
         assertThat(this.root.getByRole(AriaRole.ROW)).hasCount(count);
+    }
+
+    public void setFilter(String header, String filter) {
+        var columnIndex = getColumnIndexByHeader(header) - 1; //No Action cell in filter row
+        this.root.getByLabel("Filter Row")
+                .locator(".data-grid-filter-cell")
+                .nth(columnIndex)
+                .locator("input")
+                .fill(filter);
     }
 
     public static class GridRowHelper {

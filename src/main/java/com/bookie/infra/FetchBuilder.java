@@ -19,6 +19,8 @@ public class FetchBuilder implements Renderable {
     private boolean requestCancellation = false;
     private String payload;
     private Boolean idempotent = null;
+    private boolean pushState = false;
+    private String pushStateUrl = null;
 
     FetchBuilder(String method, String renderedUrl) {
         this.method = method;
@@ -70,11 +72,27 @@ public class FetchBuilder implements Renderable {
         return this;
     }
 
+    public FetchBuilder withPushState() {
+        this.pushState = true;
+        return this;
+    }
+
+    public FetchBuilder withPushStateTo(String urlExpression) {
+        this.pushState = true;
+        this.pushStateUrl = urlExpression;
+        return this;
+    }
+
     @Override
     public EscapedHtml render() {
         var options = buildOptions();
         var optionsSuffix = options.isEmpty() ? "" : ", {" + String.join(", ", options) + "}";
-        return html("@" + method + "(" + renderedUrl + optionsSuffix + ")");
+        var fetchAction = "@" + method + "(" + renderedUrl + optionsSuffix + ")";
+        if (pushState) {
+            var stateUrl = pushStateUrl != null ? pushStateUrl : renderedUrl;
+            return html("history.pushState(null,''," + stateUrl + "); " + fetchAction);
+        }
+        return html(fetchAction);
     }
 
     private List<String> buildOptions() {

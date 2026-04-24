@@ -23,18 +23,18 @@ Guarantee that fetch requests issued by the client reach the server in the order
 
 | Current | New |
 |---------|-----|
-| `POST /security/input/{field}` | **PUT** `/security/{cusip}/{field}` |
+| `POST /security/input/{field}` | **PUT** `/security/{cusip}/edit/{field}` |
 | `POST /security/save` | **PUT** `/security/{cusip}` |
-| `POST /security/edit` | **PATCH** `/security/{cusip}` (body: `{mode: "edit"}`) |
-| `POST /security/cancel` | **PATCH** `/security/{cusip}` (body: `{mode: "view"}`) |
-| `POST /security/resetSchedule` (bulk update) | **PUT** `/security/{cusip}/resetSchedule` |
-| `PUT /security/resetSchedule` (add entry) | **POST** `/security/{cusip}/resetSchedule` |
-| `DELETE /security/resetSchedule/{id}` | `DELETE /security/{cusip}/resetSchedule/{id}` |
-| same for callSchedule / putSchedule / sinkingFundSchedule | `.../{cusip}/<schedule>[/{id}]` with the same POST/PUT swap |
+| `POST /security/edit` | `POST /security/{cusip}/edit` |
+| `POST /security/cancel` | `DELETE /security/{cusip}/edit` |
+| `POST /security/resetSchedule` (bulk update) | **PUT** `/security/{cusip}/edit/resetSchedule` |
+| `PUT /security/resetSchedule` (add entry) | **POST** `/security/{cusip}/edit/resetSchedule` |
+| `DELETE /security/resetSchedule/{id}` | `DELETE /security/{cusip}/edit/resetSchedule/{id}` |
+| same for callSchedule / putSchedule / sinkingFundSchedule | `.../{cusip}/edit/<schedule>[/{id}]` with the same POST/PUT swap |
 | `POST /security/updates` | unchanged |
 | `GET /security/{cusip}/{section}` | **GET** `/security/{cusip}?section={section}` |
 
-Ordering rationale: `PATCH/PUT/GET /security/{cusip}` all share the exact path `/security/{cusip}`, so they serialize with each other AND act as prefix blockers for field/schedule operations under `/security/{cusip}/...`. This gives us: edit-mode toggles wait for in-flight field updates, section switches wait for in-flight field updates, and save waits for everything — all via the prefix rule with no special-casing. PATCH is used for edit/cancel because mode is idempotent (toggling to "edit" twice = same state), so rapid clicks coalesce.
+Ordering rationale: field and schedule operations live under `/security/{cusip}/edit/...`. Edit-start (`POST /{cusip}/edit`) and cancel (`DELETE /{cusip}/edit`) share the `/{cusip}/edit` path, which is prefix-parent of all field/schedule paths → both wait for any in-flight field/schedule work. Section render (`GET /{cusip}`) and save (`PUT /{cusip}`) share the `/{cusip}` path, which is the prefix of `/{cusip}/edit` and everything below → both wait for everything. Field updates on the same path serialize via the queue and coalesce (PUT is idempotent under method inference). Fields on different paths (different field names) run in parallel. Rapid Edit clicks are POST so they queue rather than coalesce, but this is harmless — the server handler is idempotent (no-op if already editing), and the UI swaps the button anyway.
 
 Note the POST↔PUT swap on the schedule endpoints: the original code had POST=bulk-update / PUT=add-entry, which is backwards from HTTP convention. The new scheme (PUT=bulk-update / POST=add-entry) matches convention AND gives correct idempotency inference for free.
 
@@ -107,22 +107,24 @@ No changes.
      - `<script>window.__tabID = '${tabId}';</script>`
      - `<script src="/fetch-monkeypatch.js"></script>` — **before** the existing DataStar script tag.
 
-3. **Extend `FetchBuilder` with PATCH and `withIdempotent(boolean)`** — modify `src/main/java/com/bookie/infra/FetchBuilder.java` and `src/main/java/com/bookie/infra/HtmlExtensions.java`.
-   - `HtmlExtensions.X.patch(url)` — add `patch(String)` and `patch(EscapedHtml)` entry points returning `new FetchBuilder("patch", ...)`. DataStar already supports `@patch` in its JS.
-   - `FetchBuilder`: new nullable field `private Boolean idempotent = null;` (null = method-based inference on the client). New method `public FetchBuilder withIdempotent(boolean value)`. In `buildOptions()`: when `idempotent != null`, append `headers: {'X-Idempotent': 'true'}` or `'false'` to the DataStar options object; when null, emit nothing. No call sites use this yet; it's an escape hatch for future cases.
+3. **Add `withIdempotent(boolean)` to `FetchBuilder`** — modify `src/main/java/com/bookie/infra/FetchBuilder.java`.
+   - New nullable field `private Boolean idempotent = null;` (null = method-based inference on the client).
+   - New method `public FetchBuilder withIdempotent(boolean value)` that sets the field.
+   - In `buildOptions()`: when `idempotent != null`, append `headers: {'X-Idempotent': 'true'}` or `'false'` to the DataStar options object. When null, emit nothing (client infers from method).
+   - No call sites use this yet; it's an escape hatch for future cases where method verb and desired idempotency diverge.
 
 4. **Refactor SecuritiesScreen routes** — modify `src/main/java/com/bookie/screens/securities/SecuritiesScreen.java`.
    - Rename the URL prefix from `/securities` to `/security` (update the `RoutePrefix` constant). The Java package `com.bookie.screens.securities` and class `SecuritiesScreen` stay — only the HTTP route changes.
    - Update `setupRoutes` per the SecuritiesScreen table:
      - `GET /{cusip}` — replaces `GET /{cusip}/{section}`. Read section from `request.param("section")`, default to "general".
-     - `PATCH /{cusip}` — handles edit/cancel based on body `{mode: "edit"|"view"}`. Replaces the separate edit/cancel routes.
+     - `POST /{cusip}/edit` — start edit (was `POST /edit`). Handler must be idempotent — no-op if already editing.
+     - `DELETE /{cusip}/edit` — cancel edit (was `POST /cancel`).
      - `PUT /{cusip}` — save (was `POST /save`).
-     - `PUT /{cusip}/{field}` — field updates (was `POST /input/{field}`).
-     - Schedules: `PUT /{cusip}/<schedule>` (bulk), `POST /{cusip}/<schedule>` (add), `DELETE /{cusip}/<schedule>/{id}` (delete). Note the POST↔PUT swap from the current code.
+     - `PUT /{cusip}/edit/{field}` — field updates (was `POST /input/{field}`).
+     - Schedules: `PUT /{cusip}/edit/<schedule>` (bulk), `POST /{cusip}/edit/<schedule>` (add), `DELETE /{cusip}/edit/<schedule>/{id}` (delete). Note the POST↔PUT swap from the current code.
    - Update the root redirect from `/security/nocusip/general` to `/security/nocusip`.
    - Update handler signatures to read `{cusip}` from the path and verify it matches `currentBond.getCusip()` (or `editingBond`); mismatch → 409.
-   - Merge `startEdit` and `cancelEdit` into a single `handleModeChange(ServerRequest)` that dispatches on the body mode value.
-   - Update client call sites that build these URLs: `renderEditActions` (edit uses `X.patch` with `mode: "edit"` body, cancel uses `X.patch` with `mode: "view"` body, save uses `X.put`), `GeneralSection` / `IncomeSection` / `RedemptionSection` `data-on:change` action (now `X.put`), schedule add/delete actions, and section `link()` calls (now `security/{cusip}?section={section}`). All call sites have the cusip in scope via `getActiveBond().getCusip()`.
+   - Update client call sites that build these URLs: `renderEditActions` (edit uses `X.post("/security/" + cusip + "/edit")`, cancel uses `X.delete(...)`, save uses `X.put("/security/" + cusip)`), `GeneralSection` / `IncomeSection` / `RedemptionSection` `data-on:change` action (now `X.put` to `/security/{cusip}/edit/{field}`), schedule add/delete actions (now under `/edit/`), and section `link()` calls (now `security/{cusip}?section={section}`). All call sites have the cusip in scope via `getActiveBond().getCusip()`.
 
 5. **Refactor TradesScreen delete route** — modify `src/main/java/com/bookie/screens/TradesScreen.java`.
    - Rename `POST /delete/{id}` handler route to `DELETE /{id}` (the handler body is unchanged).

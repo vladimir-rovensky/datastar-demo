@@ -30,12 +30,12 @@ docker build -t bookie .
 docker run -p 8080:8080 bookie
 
 # hosting
-https://bookie-134905816864.us-central1.run.app - google
+https://bookie-134905816864.us-central1.run.app - google (US)
 
-https://datastar-demo-production.up.railway.app - railway
+https://datastar-demo-production.up.railway.app - railway (EU)
 
-https://datastar-demo.onrender.com - render
+https://datastar-demo.onrender.com - render (slow startup, US)
 
-https://p01--datastar-demo--btj9mtm8rgjs.code.run - northflank
+https://p01--datastar-demo--btj9mtm8rgjs.code.run - northflank (EU, doesn't work)
 
 https://containers.back4app.com/ - temporary URL only (60 mins)

@@ -36,7 +36,13 @@ public class SecuritiesPageObject {
     }
 
     public SecuritiesPageObject switchToEditMode() {
-        ButtonHelper.getByLabel(getToolbar(), "Edit").click();
+        getEditButton().click();
+        return this;
+    }
+
+    public SecuritiesPageObject switchToIncome() {
+        LinkHelper.getByLabel(getToolbar(), "Income").click();
+        healthIndicator.waitUntilHealthy();
         return this;
     }
 
@@ -66,11 +72,32 @@ public class SecuritiesPageObject {
         return this;
     }
 
+    public SecuritiesPageObject addResetRow(LocalDate date, Number rate) {
+        getResetScheduleGrid().addRow();
+
+        var resetRow = this.getResetScheduleGrid().getLastRow();
+        resetRow.getCell("Reset Date").getDateInput().setValue(date);
+        resetRow.getCell("New Rate").getNumberInput().setValue(rate);
+        return this;
+    }
+
+    public SecuritiesPageObject deleteResetRow(int index) {
+        getResetScheduleGrid().getRow(index).delete();
+        return this;
+    }
+
     public DataGridHelper getSinkScheduleGrid() {
-        var sinkSchedulePanel = page.getByRole(AriaRole.HEADING)
-                .filter(new Locator.FilterOptions().setHasText("Sink Schedule"))
-                .locator("..");
-        return DataGridHelper.find(sinkSchedulePanel);
+        return getGridByLabel("Sink Schedule");
+    }
+
+    public DataGridHelper getResetScheduleGrid() {
+        return getGridByLabel("Reset Schedule");
+    }
+
+    private DataGridHelper getGridByLabel(String labe) {
+        return DataGridHelper.find(page.getByRole(AriaRole.HEADING)
+                .filter(new Locator.FilterOptions().setHasText(labe))
+                .locator(".."));
     }
 
     public void addSinkRow() {
@@ -78,7 +105,16 @@ public class SecuritiesPageObject {
     }
 
     public void save() {
-        ButtonHelper.getByLabel(getToolbar(), "Save").click();
+        getSaveButton().click();
+        getEditButton().verifyButtonExists();
+    }
+
+    private ButtonHelper getSaveButton() {
+        return ButtonHelper.getByLabel(getToolbar(), "Save");
+    }
+
+    private ButtonHelper getEditButton() {
+        return ButtonHelper.getByLabel(getToolbar(), "Edit");
     }
 
     private Locator getToolbar() {

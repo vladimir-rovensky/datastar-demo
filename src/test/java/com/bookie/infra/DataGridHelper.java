@@ -24,6 +24,10 @@ public class DataGridHelper {
         return new GridRowHelper(this.root.getByRole(AriaRole.ROW).first(), this);
     }
 
+    public GridRowHelper getLastRow() {
+        return new GridRowHelper(this.root.getByRole(AriaRole.ROW).last(), this);
+    }
+
     public GridRowHelper getSingleRow() {
         return new GridRowHelper(this.root.getByRole(AriaRole.ROW), this);
     }

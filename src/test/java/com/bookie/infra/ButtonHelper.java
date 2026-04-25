@@ -27,11 +27,22 @@ public class ButtonHelper {
                 .first());
     }
 
-    public void click() {
+    public ButtonHelper click() {
         this.root.click();
+        return this;
     }
 
     public boolean isClickable() {
         return this.root.isEnabled() && this.root.isVisible();
+    }
+
+    public ButtonHelper verifyButtonExists() {
+        assertThat(root).not().isEmpty();
+        return this;
+    }
+
+    public ButtonHelper verifyButtonDoesNotExist() {
+        assertThat(root).isEmpty();
+        return this;
     }
 }

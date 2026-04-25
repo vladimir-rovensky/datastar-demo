@@ -147,7 +147,7 @@ public class RedemptionSection {
                     </style>
                 </div>
                 """,
-                "inputAction", X.put(html("'/security/" + bond.getCusip() + "/edit/' + evt.target.name"))
+                "inputAction", X.put(html("'/security/${cusip}/edit/' + evt.target.name", "cusip", bond.getCusip()))
                         .withRequestCancellation(false)
                         .withIncludeSignals(html("new RegExp(evt.target.name)")),
                 "issueSize", formField("Issue Size").withInput(numberInput("issueSize", bond.getIssueSize()).withFormat("currency").withDisabled(disabled))

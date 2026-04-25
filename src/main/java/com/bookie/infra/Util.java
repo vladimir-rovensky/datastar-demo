@@ -31,10 +31,6 @@ public class Util {
         }
     }
 
-    public static long nonce() {
-        return nonce++;
-    }
-
     public static String toKebabCase(String camelCase) {
         return camelCase.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase();
     }

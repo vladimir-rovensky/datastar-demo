@@ -1,34 +1,40 @@
 package com.bookie.infra;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.math.BigDecimal;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
 public class Format {
 
-    private static final DateTimeFormatter usLocalDateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-    private static final SimpleDateFormat usDateFormat = new SimpleDateFormat("MM/dd/yyyy");
-    private static final NumberFormat DecimalFormat = createNumberFormat();
+    private static final ZoneId US_EASTERN = ZoneId.of("America/New_York");
+    private static final DateTimeFormatter usDateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+    private static final DateTimeFormatter usDateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
 
     public static String dateTime(Date date) {
         if (date == null) {
             return "";
         }
-        return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(date);
+
+        return date.toInstant().atZone(US_EASTERN).format(usDateTimeFormatter);
     }
 
     public static String usDate(LocalDate date) {
-        return date.format(usLocalDateFormatter);
+        if(date == null) {
+            return "";
+        }
+
+        return date.format(usDateFormatter);
     }
 
     public static String usDate(Date date) {
-        return usDateFormat.format(date);
+        if(date == null) {
+            return "";
+        }
+
+        return date.toInstant().atZone(US_EASTERN).toLocalDate().format(usDateFormatter);
     }
 
     public static String bool(boolean value) {
@@ -48,13 +54,6 @@ public class Format {
     }
 
     public static String decimal(BigDecimal decimal) {
-        return DecimalFormat.format(decimal);
-    }
-
-    private static @NotNull NumberFormat createNumberFormat() {
-        NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.US);
-        numberFormat.setMinimumFractionDigits(2);
-        numberFormat.setMaximumFractionDigits(2);
-        return numberFormat;
+        return String.format(Locale.US, "%,.2f", decimal);
     }
 }

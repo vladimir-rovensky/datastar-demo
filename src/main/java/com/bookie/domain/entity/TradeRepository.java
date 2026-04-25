@@ -104,6 +104,10 @@ public class TradeRepository {
     public synchronized boolean deleteTrade(Long id) {
 
         var trade = dao.findById(id);
+        if(trade == null) {
+            return true;
+        }
+
         var currentPosition = positionService.getPosition(trade.getPositionKey());
         var newPosition = positionService.getUpdatedPosition(currentPosition, trade, null);
         if (validatePosition(newPosition) != null) {

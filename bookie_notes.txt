@@ -1,8 +1,8 @@
 Open
-* State management - state on the client (TradeTicketPopup) vs state on the server.
-* Had to monkey patch fetch to auto-include header.
+* State management - state on the client (TradeTicketPopup) vs state on the server (vs state in the URL?)
+* Had to monkey patch fetch to auto-include header, request ordering. Possibly solved by plugins.
 * Clearing signals on popup hide - expected signals to auto-clear when their defining element is removed - not the case.
-* Missing JavaScript API - would be useful when doing the dragging, e.g. DataStar.setSignal('dx', x);
+* Missing JavaScript API - would be useful when doing the dragging, setting defaults etc. e.g. DataStar.setSignal('dx', x);
 * Update channel needs retry: always, otherwise doesn't work
 * Including all signals when fetching feels wierd, every get gets all of them serialized
 * Attributes only processed if different - gotcha with Cancel
@@ -18,3 +18,22 @@ Solved
     - scripts - IIFE + document.currentScript
     - styles - CSS scopes
 * Possible DataStar bug in data-indicator? Fixed in v1
+
+Features
+* inline validation
+* single codebase (validation)
+* editor support - language injection, live reload, hot reload
+* Server updates (positions updated on trade changes)
+* DataGrid
+    - sort
+    - filter
+    - column picker
+    - virtual scrolling
+* HTTP caching
+* structured data editing (security screen - data grids)
+* data re-calculation (Outstanding Size)
+* automated tests, tracing
+* request ordering
+* health indicator, error handling (cusip not found), reconnect on hidden
+* Boosted hyperlinks
+* Per-tab state

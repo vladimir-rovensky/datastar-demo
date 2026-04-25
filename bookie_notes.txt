@@ -20,10 +20,11 @@ Solved
 * Possible DataStar bug in data-indicator? Fixed in v1
 
 Features
-* inline validation
+* 2 runtime dependencies - DataStar, Spring Boot
+* general data entry, inline validation, async calcs (pricing)
+* Server updates (positions updated on trade changes)
 * single codebase (validation)
 * editor support - language injection, live reload, hot reload
-* Server updates (positions updated on trade changes)
 * DataGrid
     - sort
     - filter

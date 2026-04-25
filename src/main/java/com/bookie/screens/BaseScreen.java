@@ -95,6 +95,7 @@ public abstract class BaseScreen {
 
         return ServerResponse.ok()
                 .header(HttpHeaders.ETAG, currentETag)
+                .header("Vary", "Accept-Encoding, X-tabID")
                 .header(HttpHeaders.CACHE_CONTROL, "max-age=0, must-revalidate")
                 .contentType(MediaType.TEXT_HTML)
                 .body(body);

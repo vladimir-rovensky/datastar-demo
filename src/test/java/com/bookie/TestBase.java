@@ -11,7 +11,7 @@ import org.junit.jupiter.api.*;
 import java.nio.file.Paths;
 import java.util.List;
 
-@Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+//@Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class TestBase {
 

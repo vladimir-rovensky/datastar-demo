@@ -104,7 +104,7 @@ public abstract class BaseScreen {
         return routeInfo.get().tabId().localID() + "-" + this.stateVersion;
     }
 
-    public boolean hasPendingUpdate() {
+    public synchronized boolean hasPendingUpdate() {
         return stateVersion > renderedStateVersion;
     }
 

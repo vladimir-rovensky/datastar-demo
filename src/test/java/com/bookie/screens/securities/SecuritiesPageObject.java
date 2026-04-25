@@ -20,11 +20,15 @@ public class SecuritiesPageObject {
     }
 
     public SecuritiesPageObject loadCusip(String cusip) {
-        page.getByPlaceholder("CUSIP").fill(cusip);
-        ButtonHelper.getByLabel(getToolbar(), "Load").click();
+        startLoadingSecurity(cusip);
         waitForSecurityToLoad();
         healthIndicator.waitUntilHealthy();
         return this;
+    }
+
+    public void startLoadingSecurity(String cusip) {
+        page.getByPlaceholder("CUSIP").fill(cusip);
+        ButtonHelper.getByLabel(getToolbar(), "Load").click();
     }
 
     private void waitForSecurityToLoad() {

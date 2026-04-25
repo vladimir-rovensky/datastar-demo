@@ -111,4 +111,16 @@ public class Page {
 
         return this;
     }
+
+    public void verifyURL(String subpath) {
+        this.page.waitForURL(subpath);
+    }
+
+    public void back() {
+        this.page.goBack();
+    }
+
+    public void forward() {
+        this.page.goForward();
+    }
 }

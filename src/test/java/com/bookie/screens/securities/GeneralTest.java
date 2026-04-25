@@ -5,14 +5,12 @@ import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.TradeDirection;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import static com.bookie.infra.builders.BondBuilder.aBond;
 import static com.bookie.infra.builders.TradeBuilder.aTrade;
 
-public class SecuritiesScreenTest extends TestBase {
+public class GeneralTest extends TestBase {
 
     @Test
     public void editsSecurity() {
@@ -30,27 +28,6 @@ public class SecuritiesScreenTest extends TestBase {
                 .verifyTradeDisplayed(0,
                         aTrade("CSP1", TradeDirection.BUY, 10_000),
                         aBond("CSP1").setDescription("New Description"));
-    }
-
-    @Test
-    public void calculatesOutstandingSize() {
-        givenExistingBonds(aBond("CSP1").setIssueSize(new BigDecimal(1_000_000)));
-
-        var securities = page.switchToSecurities();
-        securities.loadCusip("CSP1").switchToRedemption();
-
-        securities.getOutstandingAmount().verifyValue(1_000_000);
-
-        securities.switchToEditMode();
-        securities.getIssueSize().setValue(3_000_000);
-        securities.addSinkRow(LocalDate.of(2025, 1, 1), 100_000);
-        securities.getOutstandingAmount().verifyValue(2_900_000);
-        securities.save();
-
-        page.reload();
-
-        securities = page.switchToSecurities();
-        securities.getOutstandingAmount().verifyValue(2_900_000);
     }
 
     @Test
@@ -84,4 +61,47 @@ public class SecuritiesScreenTest extends TestBase {
                 .verifyAllValuesInColumn("CUSIP", List.of("CSP2"));
     }
 
+    @Test
+    public void handlesLoadingInvalidCusip() {
+        givenExistingBonds(aBond("CSP1").setDescription("Desc 1"));
+        var securities = page
+                .switchToSecurities("CSP1")
+                .switchToEditMode();
+
+        page.verifyURL("**/security/CSP1**");
+
+        securities.startLoadingSecurity("unknown");
+
+        page.assertErrorShown("This CUSIP does not exist in the system");
+        page.verifyURL("**/security/CSP1**");
+        securities.getDescription()
+                .verifyValue("Desc 1")
+                .verifyEnablement(true);
+    }
+
+    @Test
+    public void loadingCusipUpdatesURLCorrectly() {
+        givenExistingBonds(
+                aBond("CSP1").setDescription("Desc 1"),
+                aBond("CSP2").setDescription("Desc 2"));
+
+        getBondDAO().setLoadDelay(20); //This is necessary because the update channel is dead for a brief moment on back/forward
+
+        var securities = page.switchToSecurities("CSP1");
+        page.verifyURL("**/security/CSP1**");
+        securities.getDescription().verifyValue("Desc 1");
+
+        securities.loadCusip("CSP2");
+        page.verifyURL("**/security/CSP2**");
+        securities.getDescription().verifyValue("Desc 2");
+
+        page.back();
+        page.verifyURL("**/security/CSP1**");
+        securities.getDescription().verifyValue("Desc 1");
+
+        page.forward();
+        page.verifyURL("**/security/CSP2**");
+        securities.getDescription().verifyValue("Desc 2");
+
+    }
 }

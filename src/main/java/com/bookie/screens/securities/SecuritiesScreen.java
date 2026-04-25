@@ -1,5 +1,6 @@
 package com.bookie.screens.securities;
 
+import com.bookie.components.Notification;
 import com.bookie.domain.entity.Bond;
 import com.bookie.domain.entity.BondRepository;
 import com.bookie.infra.EventBus;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.bookie.components.Link.link;
@@ -44,7 +46,7 @@ public class SecuritiesScreen extends BaseScreen {
     private Bond editingBond;
     private BondSection currentSection;
 
-    private boolean isLoading = false;
+    private final AtomicInteger loadingCount = new AtomicInteger(0);
     private boolean isModifiedBySomeoneElse = false;
 
     public static RouterFunction<ServerResponse> setupRoutes(SessionRegistry sessionRegistry) {
@@ -108,7 +110,7 @@ public class SecuritiesScreen extends BaseScreen {
 
         currentSection = BondSection.fromPath(section);
 
-        startLoadingCusip(cusip);
+        startLoadingCusip(cusip, false);
 
         return handleInitialRender(request, this::render);
     }
@@ -117,28 +119,27 @@ public class SecuritiesScreen extends BaseScreen {
         var body = request.body(new ParameterizedTypeReference<Map<String, String>>() {});
         var cusip = body.get("cusipLookup").trim();
 
-        startLoadingCusip(cusip);
+        startLoadingCusip(cusip, true);
 
         triggerUpdate();
         return ServerResponse.ok().build();
     }
 
-    private void startLoadingCusip(String cusip) {
-        if (!Objects.equals(cusip, getCurrentCusip())) {
-            currentBond = null;
-            editingBond = null;
-            if (NO_CUSIP.equals(cusip)) {
-                isLoading = false;
-            } else {
-                isLoading = true;
-                var targetCusip = cusip;
-                Util.startAsync(() -> finishLoading(bondRepository.findBondByCusip(targetCusip)));
-            }
+    private void startLoadingCusip(String cusip, boolean updateURL) {
+        if (Objects.equals(cusip, getRouteInfo().activeCusip())) {
+            return;
         }
 
         updateRouteInfo(getRouteInfo()
                 .withActiveCusip(cusip)
                 .withActiveSection(currentSection.getPath()));
+
+        if (NO_CUSIP.equals(cusip)) {
+            currentBond = null;
+            editingBond = null;
+        } else {
+            loadCusip(cusip, updateURL);
+        }
     }
 
     private String getCurrentCusip() {
@@ -175,7 +176,7 @@ public class SecuritiesScreen extends BaseScreen {
                 "styles", getStyles(),
                 "topBar", topBar,
                 "body", body,
-                "loader", loader(isLoading, "Loading Security..."));
+                "loader", loader(loadingCount.get() != 0, "Loading Security..."));
     }
 
     private EscapedHtml renderSection() {
@@ -193,9 +194,7 @@ public class SecuritiesScreen extends BaseScreen {
         var incomeLink = link("security/" + currentCusip + "?section=" + BondSection.INCOME.getPath(), BondSection.INCOME.getLabel()).withActive(currentSection == BondSection.INCOME);
         var redemptionLink = link("security/" + currentCusip + "?section=" + BondSection.REDEMPTION.getPath(), BondSection.REDEMPTION.getLabel()).withActive(currentSection == BondSection.REDEMPTION);
 
-        var loadCusip = X.put("/security")
-                .withIncludeSignals("cusipLookup")
-                .withPushStateTo("'/security/' + $cusipLookup.trim() + '?section=" + currentSection.getPath() + "'");
+        var loadCusip = X.put("/security").withIncludeSignals("cusipLookup");
 
         var navigateToCusip = html("""
                 if($cusipLookup.trim()) { ${loadCusip}; }
@@ -206,7 +205,7 @@ public class SecuritiesScreen extends BaseScreen {
         return html("""
                 <div class="toolbar secondary" role="toolbar" aria-label="Subsections" data-signals="{cusipLookup: '${cusipValue}'}">
                     <div class="cusip-lookup">
-                        <input type="text" data-bind="cusipLookup" placeholder="CUSIP" data-on:keydown.enter="${navigateToCusip}">
+                        <input type="text" data-bind="cusipLookup" placeholder="CUSIP">
                         <button data-on:click="${navigateToCusip}">Load</button>
                     </div>
                     <div class="toolbar-separator"></div>
@@ -295,15 +294,38 @@ public class SecuritiesScreen extends BaseScreen {
         return ServerResponse.ok().build();
     }
 
-    private synchronized void finishLoading(Bond bond) {
-        if (bond != null && !bond.getCusip().equals(getRouteInfo().activeCusip())) {
-            return;
-        }
+    private synchronized void loadCusip(String cusip, boolean updateURL) {
+        loadingCount.incrementAndGet();
 
-        currentBond = bond;
-        isLoading = false;
-        isModifiedBySomeoneElse = false;
-        triggerUpdate();
+        Util.startAsync(() -> {
+            var bond = bondRepository.findBondByCusip(cusip);
+            finishLoadingCusip(bond, updateURL);
+        });
+    }
+
+    private synchronized void finishLoadingCusip(Bond bond, boolean updateURL) {
+        try {
+            if (bond != null && !bond.getCusip().equals(getRouteInfo().activeCusip())) {
+                return;
+            }
+
+            if (bond != null) {
+                currentBond = bond;
+                editingBond = null;
+                isModifiedBySomeoneElse = false;
+
+                if (updateURL) {
+                    getChannel().updateURL(RoutePrefix + "/" + bond.getCusip() + "?section=" + currentSection.getPath());
+                }
+            } else {
+                getChannel().updateFragment(notification(html("This CUSIP does not exist in the system."))
+                        .withStyle(Notification.NotificationStyle.ERROR)
+                        .render());
+            }
+        } finally {
+            loadingCount.decrementAndGet();
+            triggerUpdate();
+        }
     }
 
     private synchronized void onBondSaved(BondSavedEvent event) {

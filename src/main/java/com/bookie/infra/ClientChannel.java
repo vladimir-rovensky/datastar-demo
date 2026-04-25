@@ -73,6 +73,10 @@ public class ClientChannel {
                 .send(), true);
     }
 
+    public synchronized ClientChannel updateURL(String url) {
+        return executeScript("history.pushState(null,'','" + url + "')");
+    }
+
     public synchronized ClientChannel executeScript(String script) {
         @SuppressWarnings("BadExpressionStatementJS")
         EscapedHtml scriptFragment = html("""

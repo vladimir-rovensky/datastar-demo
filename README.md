@@ -36,6 +36,4 @@ https://datastar-demo-production.up.railway.app - railway (EU)
 
 https://datastar-demo.onrender.com - render (slow startup, US)
 
-https://p01--datastar-demo--btj9mtm8rgjs.code.run - northflank (EU, doesn't work)
-
-https://containers.back4app.com/ - temporary URL only (60 mins)
+https://bookie.containers.snapdeploy.dev - snapdeploy (slow startup, US)

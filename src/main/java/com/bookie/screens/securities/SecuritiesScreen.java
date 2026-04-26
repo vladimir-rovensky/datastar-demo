@@ -160,9 +160,8 @@ public class SecuritiesScreen extends BaseScreen {
                         """)
                 : renderSection();
 
-        var refreshLink = link("security/" + getCurrentCusip() + "?section=" + currentSection.getPath(), "refresh");
         var topBar = isModifiedBySomeoneElse
-                ? notification(html("This bond was modified by someone else. Please ${refreshLink} the page.", "refreshLink", refreshLink)).withStyle(warning).inline().render()
+                ? notification(html("This bond was modified by someone else. Please refresh the page.")).withStyle(warning).inline().render()
                 : secondaryToolbar;
 
         return html("""

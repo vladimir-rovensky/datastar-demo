@@ -399,11 +399,13 @@ public class DataGrid<TRow> {
 
         var id = getRowID.apply(row);
         var idSignalAttr = getIdSignalAttr(row, id);
+        var stripedClass = rowIndex % 2 == 0 ? "data-grid-row-even" : "";
 
         //noinspection CssInvalidPropertyValue,CssInvalidFunction
         return html("""
-                <div class="data-grid-row" id="${rowID}" role="row" style="position: absolute; top: 0; width: 100%; height: ${rowHeight}px; transform: translateY(${translateY}px)" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
+                <div class="data-grid-row ${stripedClass}" id="${rowID}" role="row" style="position: absolute; top: 0; width: 100%; height: ${rowHeight}px; transform: translateY(${translateY}px)" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
                 "rowID", id,
+                "stripedClass", stripedClass,
                 "rowHeight", ROW_HEIGHT_PX,
                 "translateY", rowIndex * ROW_HEIGHT_PX,
                 "dblClick", dblClick,

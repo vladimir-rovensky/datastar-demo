@@ -316,8 +316,8 @@ input.loading { opacity: 0; }
 }
 
 .data-grid-row:hover .data-grid-action-cell { background-color: var(--clr-surface-hi); }
-.striped-rows .data-grid-row:nth-child(even) .data-grid-action-cell { background-color: var(--clr-bg-alt); }
-.striped-rows .data-grid-row:nth-child(even):hover .data-grid-action-cell { background-color: var(--clr-surface-hi); }
+.striped-rows .data-grid-row.data-grid-row-even .data-grid-action-cell { background-color: var(--clr-bg-alt); }
+.striped-rows .data-grid-row.data-grid-row-even:hover .data-grid-action-cell { background-color: var(--clr-surface-hi); }
 
 .data-grid-body {
     flex: 1;
@@ -337,9 +337,9 @@ input.loading { opacity: 0; }
     grid-template-columns: var(--cols);
     min-width: fit-content;
     //animation: data-grid-row-fadein 100ms ease-out;
-    .striped-rows &:nth-child(even) { background-color: var(--clr-bg-alt); }
+    .striped-rows &.data-grid-row-even { background-color: var(--clr-bg-alt); }
     &:hover { background-color: var(--clr-surface-hi); }
-    .striped-rows &:nth-child(even):hover { background-color: var(--clr-surface-hi); }
+    .striped-rows &.data-grid-row-even:hover { background-color: var(--clr-surface-hi); }
 }
 
 .data-grid-cell,

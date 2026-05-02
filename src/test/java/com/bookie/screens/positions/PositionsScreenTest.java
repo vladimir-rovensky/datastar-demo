@@ -93,4 +93,24 @@ public class PositionsScreenTest extends TestBase {
         var positions = page.switchToPositions();
         positions.verifyPositionsDisplayed(aPosition("CSP1", "CREDIT-NY", 20_000));
     }
+
+    @Test
+    public void showsAggregatePositions() {
+        trace(() -> {
+        givenExistingBonds(aBond("CSP1"));
+
+        givenExistingTrades(
+                aTrade("CSP1", TradeDirection.BUY, 100_000).setBook("CREDIT-NY"),
+                aTrade("CSP1", TradeDirection.BUY, 200_000).setBook("CREDIT-LN"));
+
+        var positions = page.switchToPositions();
+
+        positions.getGrid().getSummaryRow().getCell("Current Position").verifyText("$300,000.00");
+        positions.getGrid().getSummaryRow().getCell("Settled Position").verifyText("$300,000.00");
+
+        positions.getGrid().setFilter("Book", "LN");
+        positions.getGrid().getSummaryRow().getCell("Current Position").verifyText("$200,000.00");
+        positions.getGrid().getSummaryRow().getCell("Settled Position").verifyText("$200,000.00");
+        });
+    }
 }

@@ -14,6 +14,7 @@ public class DataGridColumn<TRow> {
     public Function<TRow, Renderable> renderer;
     @SuppressWarnings("rawtypes")
     public Function format = DataGridColumn::defaultFormat;
+    public DataGrid.SummaryType summaryType;
 
     public boolean visible = true;
 
@@ -34,6 +35,11 @@ public class DataGridColumn<TRow> {
 
     public DataGridColumn<TRow> withVisible(boolean visible) {
         this.visible = visible;
+        return this;
+    }
+
+    public DataGridColumn<TRow> withSummaryType(DataGrid.SummaryType summaryType) {
+        this.summaryType = summaryType;
         return this;
     }
 

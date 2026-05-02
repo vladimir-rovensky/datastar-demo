@@ -13,6 +13,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import static com.bookie.infra.HtmlExtensions.X;
 import static com.bookie.infra.TemplatingEngine.html;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class DataGrid<TRow> {
     public static final int ROW_HEIGHT_PX = 36;
 
     public enum SortDirection { Ascending, Descending }
+    public enum SummaryType { Sum }
 
     private final List<DataGridColumn<TRow>> columns;
     private Function<TRow, EscapedHtml> onRowDoubleClick;
@@ -126,7 +128,8 @@ public class DataGrid<TRow> {
                         <div class="data-grid-header">${actionHeader}${headers}</div>
                         ${filterRow}
                     </div>
-                    <div id="${bodyId}" class="data-grid-body fill-height">${resizeScript}${rows}</div>
+                    <div id="${bodyId}" class="data-grid-body">${resizeScript}${rows}</div>
+                    ${footer}
                 </div>
                 """,
                 "id", this.id,
@@ -139,7 +142,8 @@ public class DataGrid<TRow> {
                 "headers", headerCells,
                 "filterRow", filterRow,
                 "resizeScript", resizeScript,
-                "rows", bodyRows);
+                "rows", bodyRows,
+                "footer", this.getFooter(displayRows));
     }
 
     private ServerResponse openColumnPicker() {
@@ -403,7 +407,9 @@ public class DataGrid<TRow> {
 
         //noinspection CssInvalidPropertyValue,CssInvalidFunction
         return html("""
-                <div class="data-grid-row ${stripedClass}" id="${rowID}" role="row" style="position: absolute; top: 0; width: 100%; height: ${rowHeight}px; transform: translateY(${translateY}px)" ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
+                <div class="data-grid-row ${stripedClass}" id="${rowID}" role="row" aria-label="Data Row"
+                    style="position: absolute; top: 0; width: 100%; height: ${rowHeight}px; transform: translateY(${translateY}px)" 
+                    ${dblClick} ${rowIDSignal} ${attrs}>${actionCell}${cells}</div>""",
                 "rowID", id,
                 "stripedClass", stripedClass,
                 "rowHeight", ROW_HEIGHT_PX,
@@ -431,6 +437,52 @@ public class DataGrid<TRow> {
                 <div id="${cellID}" class="data-grid-cell" role="gridcell">${value}</div>""",
                 "cellID", getCellId(row, column),
                 "value", displayValue);
+    }
+
+    private EscapedHtml getFooter(List<TRow> rows) {
+        var cols = getVisibleColumns();
+
+        if(cols.stream().noneMatch(c -> c.summaryType != null)) {
+            return EscapedHtml.blank();
+        }
+
+        return html("""   
+                <div class="data-grid-footer">
+                    ${summaryRow}
+                </div>
+        """, "summaryRow", getSummaryRow(rows, cols));
+    }
+
+    private EscapedHtml getSummaryRow(List<TRow> rows, List<DataGridColumn<TRow>> cols) {
+        var actionCell = hasActionColumn()
+                ? html("""      
+                    <div class="data-grid-summary-cell" role="gridcell"></div>""")
+                : EscapedHtml.blank();
+
+        var summaryCells = EscapedHtml.concat(cols, c -> this.getSummaryCell(
+                rows, c));
+
+        return html("""
+                <div class="data-grid-summary-row" role="row" aria-label="Summary Row">
+                ${actionCell} ${summaryCells}
+                </div>
+                """, "actionCell", actionCell, "summaryCells", summaryCells);
+    }
+
+    private EscapedHtml getSummaryCell(List<TRow> rows, DataGridColumn<TRow> column) {
+        @SuppressWarnings("unchecked") var content = column.summaryType == null
+                ? EscapedHtml.blank()
+                : column.format.apply(getSummaryValue(rows, column));
+
+        return html("""
+                    <div class="data-grid-summary-cell" role='gridcell'>${content}</div>
+                    """, "content", content);
+    }
+
+    private Object getSummaryValue(List<TRow> rows, DataGridColumn<TRow> column) {
+        return rows.stream()
+                .map(r -> (BigDecimal) column.getValue.apply(r))
+                .reduce(BigDecimal.ZERO, (a, b) -> a != null && b != null ? a.add(b) : null);
     }
 
     @SuppressWarnings("unchecked")

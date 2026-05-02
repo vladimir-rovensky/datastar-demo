@@ -140,6 +140,7 @@ public class RedemptionSection {
                             display: flex;
                             flex-direction: column;
                             gap: var(--sp-sm);
+                            min-height:0;
                         }
 
                         .data-grid-cell input { width: 100%; }

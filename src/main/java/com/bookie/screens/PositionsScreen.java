@@ -65,9 +65,11 @@ public class PositionsScreen extends BaseScreen {
                         column("Book", Position::getBook),
                         column("Description", p -> getBond(p.getCusip()).map(Bond::getDescription).orElse("")),
                         column("Current Position", Position::getCurrentPosition)
-                                .withFormat(Format::usd),
+                                .withFormat(Format::usd)
+                                .withSummaryType(DataGrid.SummaryType.Sum),
                         column("Settled Position", Position::getSettledPosition)
-                                .withFormat(Format::usd),
+                                .withFormat(Format::usd)
+                                .withSummaryType(DataGrid.SummaryType.Sum),
                         column("Last Activity", Position::getLastActivity)
                                 .withFormat(Format::dateTime))
                 .columns(CommonColumns.bondColumns(p -> getBond(p.getCusip())))

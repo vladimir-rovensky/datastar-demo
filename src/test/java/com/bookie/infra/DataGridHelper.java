@@ -21,23 +21,23 @@ public class DataGridHelper {
     }
 
     public GridRowHelper getFirstRow() {
-        return new GridRowHelper(this.root.getByRole(AriaRole.ROW).first(), this);
+        return new GridRowHelper(this.getAllDataRowElements().first(), this);
     }
 
     public GridRowHelper getLastRow() {
-        return new GridRowHelper(this.root.getByRole(AriaRole.ROW).last(), this);
+        return new GridRowHelper(this.getAllDataRowElements().last(), this);
     }
 
     public GridRowHelper getSingleRow() {
-        return new GridRowHelper(this.root.getByRole(AriaRole.ROW), this);
+        return new GridRowHelper(getAllDataRowElements(), this);
     }
 
     public GridRowHelper getRow(int index) {
-        return new GridRowHelper(this.root.getByRole(AriaRole.ROW).nth(index), this);
+        return new GridRowHelper(this.getAllDataRowElements().nth(index), this);
     }
 
     public List<GridRowHelper> getRows() {
-        return this.root.getByRole(AriaRole.ROW)
+        return getAllDataRowElements()
                 .all()
                 .stream()
                 .map(r -> new GridRowHelper(r, this))
@@ -70,7 +70,7 @@ public class DataGridHelper {
     public GridRowHelper getRowByCellValues(String header1, String value1, String header2, String value2) {
         var columnIndex1 = getColumnIndexByHeader(header1);
         var columnIndex2 = getColumnIndexByHeader(header2);
-        Locator rowLocator = this.root.getByRole(AriaRole.ROW);
+        Locator rowLocator = getAllDataRowElements();
         var row = rowLocator
                 .filter(new Locator.FilterOptions().setHas(
                         rowLocator.page().getByRole(AriaRole.GRIDCELL).nth(columnIndex1).getByText(value1)))
@@ -82,7 +82,7 @@ public class DataGridHelper {
 
     public GridRowHelper getRowByCellValue(String header, String value) {
         var columnIndex = getColumnIndexByHeader(header);
-        Locator rowLocator = this.root.getByRole(AriaRole.ROW);
+        Locator rowLocator = getAllDataRowElements();
         var row = rowLocator.filter(
                 new Locator.FilterOptions().setHas(
                         rowLocator.page().getByRole(AriaRole.GRIDCELL).nth(columnIndex).getByText(value)));
@@ -90,22 +90,32 @@ public class DataGridHelper {
         return new GridRowHelper(row, this);
     }
 
+    public GridRowHelper getSummaryRow() {
+        var root = this.root.getByRole(AriaRole.ROW, new Locator.GetByRoleOptions().setName("Summary Row"));
+        return new GridRowHelper(root, this);
+    }
+
     public void assertNoRows() {
-        assertThat(this.root.getByRole(AriaRole.ROW)).hasCount(0);
+        assertThat(getAllDataRowElements()).hasCount(0);
         assertThat(this.root).containsText("Nothing here...");
     }
 
+    private Locator getAllDataRowElements() {
+        return this.root.getByRole(AriaRole.ROW, new Locator.GetByRoleOptions().setName("Data Row"));
+    }
+
     public void verifyRowCount(int count) {
-        assertThat(this.root.getByRole(AriaRole.ROW)).hasCount(count);
+        assertThat(getAllDataRowElements()).hasCount(count);
     }
 
     public void setFilter(String header, String filter) {
         var columnIndex = getColumnIndexByHeader(header) - 1; //No Action cell in filter row
-        this.root.getByLabel("Filter Row")
+        var input = this.root.getByLabel("Filter Row")
                 .locator(".data-grid-filter-cell")
                 .nth(columnIndex)
-                .locator("input")
-                .fill(filter);
+                .locator("input");
+        input.fill(filter);
+        input.blur();
     }
 
     public static class GridRowHelper {
